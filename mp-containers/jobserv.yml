@@ -1,0 +1,64 @@
+timeout: 300
+triggers:
+  - name: gateway-image-triggers
+    type: git_poller
+    params:
+      GIT_URL: |
+        https://github.com/foundriesio/gateway-containers.git
+      GIT_POLL_REFS: "refs/heads/master"
+    runs:
+      - name: gateway-{loop}
+        container: docker:dind
+        privileged: true
+        loop-on:
+          - param: host-tag
+            values: [aarch64, armhf, amd64]
+        script-repo:
+          name: fio
+          path: mp-containers/build.sh
+    email:
+      users: 'andy@foundries.io, tyler@foundries.io'
+
+  - name: core-image-triggers
+    type: git_poller
+    params:
+      GIT_URL: https://github.com/foundriesio/core-containers.git
+      GIT_POLL_REFS: "refs/heads/master"
+    runs:
+      - name: core-{loop}
+        container: docker:dind
+        privileged: true
+        loop-on:
+          - param: host-tag
+            values: [aarch64, armhf, amd64]
+        script-repo:
+          name: fio
+          path: mp-containers/build.sh
+    email:
+      users: 'andy@foundries.io, tyler@foundries.io'
+
+  - name: extra-image-triggers
+    type: git_poller
+    params:
+      GIT_URL: |
+        https://github.com/foundriesio/extra-containers.git
+      GIT_POLL_REFS: "refs/heads/master"
+    runs:
+      - name: extra-{loop}
+        container: docker:dind
+        privileged: true
+        loop-on:
+          - param: host-tag
+            values: [aarch64, armhf, amd64]
+        script-repo:
+          name: fio
+          path: mp-containers/build.sh
+    email:
+      users: 'andy@foundries.io, tyler@foundries.io'
+
+params:
+  archive: /archive
+
+script-repos:
+  fio:
+    clone-url: https://github.com/foundriesio/ci-scripts
