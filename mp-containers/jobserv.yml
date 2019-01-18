@@ -56,6 +56,25 @@ triggers:
     email:
       users: 'andy@foundries.io, tyler@foundries.io'
 
+  - name: rc-tag
+    type: git_poller
+    params:
+      GIT_URL: "https://github.com/foundriesio/containers-manifest"
+      GIT_POLL_REFS: "refs/heads/master"
+    runs:
+      - name: tag-{loop}
+        host-tag: multiarch-osf
+        container: docker:dind
+        privileged: true
+        loop-on:
+          - param: PRODUCT
+            values: [gateway, core, extra]
+        script-repo:
+          name: fio
+          path: mp-containers/rc-tag.sh
+    email:
+      users: 'andy@foundries.io'
+
 params:
   archive: /archive
 
