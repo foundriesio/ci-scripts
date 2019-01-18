@@ -1,8 +1,7 @@
 #!/bin/sh -e
-set -o pipefail
 
-indent() { sed 's/^/|  /'; echo "|--" ;}
-function status { echo == $(date "+%F %T") $* ; }
+HERE=$(dirname $(readlink -f $0))
+source $HERE/../helpers.sh
 
 status Installing dependencies needed for script
 apk --no-cache add file git | indent
