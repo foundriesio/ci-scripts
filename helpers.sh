@@ -12,6 +12,7 @@ function require_params {
 		eval val='$'$x
 		if [ -z $val ] ; then
 			echo Missing required parameter: \$$x
+			exit 1
 		fi
 	done
 }
