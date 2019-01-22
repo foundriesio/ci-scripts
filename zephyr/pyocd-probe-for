@@ -1,0 +1,39 @@
+#!/usr/bin/python3
+import argparse
+import os
+import sys
+
+import pyudev
+
+from pyocd.core.helpers import ConnectHelper
+
+
+def udev_mappings():
+    mappings = {}
+    ctx = pyudev.Context()
+    syspath = '/sys/class/tty'
+    for tty in [x for x in os.listdir(syspath) if x.startswith('ttyACM')]:
+        d = pyudev.Devices.from_path(ctx, os.path.join(syspath, tty))
+        assert(b'DAP' in d.parent.parent.attributes.get('product'))
+        mappings[d.parent.parent.attributes.get('serial').decode()] = tty
+    return mappings
+
+
+def device_find(board_name):
+    mappings = udev_mappings()
+    sessions = ConnectHelper.get_sessions_for_all_connected_probes(
+        blocking=False)
+    for s in sessions:
+        if s.board.name == board_name:
+            return s.board.unique_id, mappings[s.board.unique_id]
+    sys.exit('Unable to find pyocd board with name: %s' % board_name)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        '''Find a pyocd board by name print its uid and tty''')
+    parser.add_argument('board_name')
+    args = parser.parse_args()
+
+    board_id, board_tty = device_find(args.board_name)
+    print('%s|%s' % ('/dev/' + board_tty, board_id))
