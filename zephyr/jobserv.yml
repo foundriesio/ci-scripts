@@ -1,0 +1,33 @@
+timeout: 30   # the qemu testing can take some time
+email:
+  users: 'ci-notifications@foundries.io'
+triggers:
+  - name: upstream-merge
+    type: git_poller
+    params:
+      GIT_URL: https://github.com/zephyrproject-rtos/zephyr.git
+      GIT_POLL_REFS: "refs/heads/master"
+    runs:
+      - name: sanity-qemu-{loop}
+        container: zephyrprojectrtos/zephyr-build
+        host-tag: amd64
+        script-repo:
+          name: fio
+          path: zephyr/sanity.sh
+        loop-on:
+          - param: PLATFORM
+            values: [frdm_k64f, reel_board, nrf52840_pca10056]
+        params:
+          FLAKY_TESTS: |
+            kernel/init
+            kernel/sched/schedule_api
+            kernel/timer/timer_api
+            kernel/timer/timer_monotonic
+            cmsis_rtos_v1
+
+params:
+  archive: /archive
+
+script-repos:
+  fio:
+    clone-url: https://github.com/foundriesio/ci-scripts
