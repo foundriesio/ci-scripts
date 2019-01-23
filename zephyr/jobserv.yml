@@ -38,6 +38,18 @@ triggers:
             kernel/timer/timer_monotonic
             cmsis_rtos_v1
 
+      - name: zephyr-sample-mcumgr-{loop}
+        container: hub.foundries.io/zmp-sdk
+        host-tag: amd64
+        script-repo:
+          name: fio
+          path: zephyr/sample.sh
+        params:
+            APP: samples/subsys/mgmt/mcumgr/smp_svr/
+        loop-on:
+          - param: PLATFORM
+            values: [reel_board, nrf52840_pca10056]
+
 params:
   archive: /archive
 
