@@ -39,7 +39,7 @@ triggers:
             cmsis_rtos_v1
 
       - name: zephyr-sample-mcumgr-{loop}
-        container: hub.foundries.io/zmp-sdk
+        container: zephyrprojectrtos/zephyr-build
         host-tag: amd64
         script-repo:
           name: fio
