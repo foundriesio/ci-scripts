@@ -216,8 +216,7 @@ triggers:
     type: simple
     runs:
       - name: lmp-ota-raspberrypi3-64
-        container: registry.foundries.io/development/microplatforms/linux/extra-containers/ota-runner
-        container-auth: registry-auth
+        container: hub.foundries.io/ota-runner
         host-tag: raspberrypi3-64-ota
         privileged: true
         test-grepping:
@@ -225,14 +224,13 @@ triggers:
           result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
         script-repo:
           name: fio
-          path: lmp/ota-test.py
+          path: lmp/ota.sh
 
   - name: ota-intel-corei7-64
     type: simple
     runs:
       - name: lmp-ota-intel-corei7-64
-        container: registry.foundries.io/development/microplatforms/linux/extra-containers/ota-runner
-        container-auth: registry-auth
+        container: hub.foundries.io/ota-runner
         host-tag: amd64-ota
         privileged: true
         test-grepping:
@@ -240,14 +238,13 @@ triggers:
           result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
         script-repo:
           name: fio
-          path: lmp/ota-test.py
+          path: lmp/ota.sh
 
   - name: ota-dragonboard-410c
     type: simple
     runs:
       - name: lmp-ota-dragonboard-410c
-        container: registry.foundries.io/development/microplatforms/linux/extra-containers/ota-runner
-        container-auth: registry-auth
+        container: hub.foundries.io/ota-runner
         host-tag: dragonboard-410c-ota
         privileged: true
         test-grepping:
@@ -255,14 +252,13 @@ triggers:
           result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
         script-repo:
           name: fio
-          path: lmp/ota-test.py
+          path: lmp/ota.sh
 
   - name: ota-hikey
     type: simple
     runs:
       - name: lmp-ota-hikey
-        container: registry.foundries.io/development/microplatforms/linux/extra-containers/ota-runner
-        container-auth: registry-auth
+        container: hub.foundries.io/ota-runner
         host-tag: hikey-ota
         privileged: true
         test-grepping:
@@ -270,14 +266,13 @@ triggers:
           result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
         script-repo:
           name: fio
-          path: lmp/ota-test.py
+          path: lmp/ota.sh
 
   - name: ota-raspberrypi0-wifi
     type: simple
     runs:
       - name: lmp-ota-raspberrypi0-wifi
-        container: registry.foundries.io/development/microplatforms/linux/extra-containers/ota-runner
-        container-auth: registry-auth
+        container: hub.foundries.io/ota-runner
         host-tag: raspberrypi0-wifi-ota
         privileged: true
         test-grepping:
@@ -285,7 +280,7 @@ triggers:
           result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
         script-repo:
           name: fio
-          path: lmp/ota-test.py
+          path: lmp/ota.sh
 
 params:
   archive: /archive
