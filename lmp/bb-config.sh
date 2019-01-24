@@ -21,7 +21,8 @@ GARAGE_TARGET_VERSION = "${H_BUILD}"
 GARAGE_TARGET_URL = "https://foundries.io/b/development/lmp/${H_BUILD}/"
 EOFEOF
 
-if [ -n "$SOTA_PACKED_CREDENTIALS" ] && [ -f $SOTA_PACKED_CREDENTIALS ] ; then
+if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then
+	status "SOTA_PACKED_CREDENTIALS not found, disabling OSTree publishing logic"
 	cat << EOFEOF >> conf/local.conf
 SOTA_PACKED_CREDENTIALS = ""
 EOFEOF
