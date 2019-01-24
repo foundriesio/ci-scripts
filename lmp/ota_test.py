@@ -11,14 +11,13 @@ from helpers import (
     require_env, require_secrets, test_start,
     test_case_ctx, secret_get, test_case,
 )
+from helpers import __file__ as helpers_file
+from host_tests import __file__ as host_tests_file
 
 
 def _create_reboot_script(cold):
     # Reboot support in the worker uses "script" and not a "script-repo", so
     # we have to copy what we need in order to make this work:
-    helpers = os.path.join(os.path.dirname(__file__), '../helpers.py')
-    host_tests = os.path.join(os.path.dirname(__file__), 'host_tests.py')
-
     if cold:
         script = '/archive/execute-on-cold-reboot'
         arg = 'cold'
@@ -28,12 +27,12 @@ def _create_reboot_script(cold):
     with open(script, 'w') as fout:
         fout.write('#!/bin/sh -ex\n')
         fout.write('cat > /tmp/helpers.py <<EIEIO\n')
-        with open(helpers) as f:
+        with open(helpers_file) as f:
             fout.write(f.read())
         fout.write('EIEIO\n')
 
         fout.write('cat > /tmp/host_tests.py <<EIEIO\n')
-        with open(host_tests) as f:
+        with open(host_tests_file) as f:
             fout.write(f.read())
         fout.write('EIEIO\n')
 
@@ -125,7 +124,7 @@ def _run_host_tests():
         async with future as conn:
             print('copying tests to host')
             await asyncssh.scp(
-                '/tmp/lmp_host_tests.py', (conn, '/tmp/lmp-host-tests'))
+                host_tests_file, (conn, '/tmp/lmp-host-tests'))
             print('running tests on host via ssh')
             result = await conn.run('python3 /tmp/lmp-host-tests ' + worker)
             test_case('sshd', 'PASSED')
