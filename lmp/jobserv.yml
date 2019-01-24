@@ -1,0 +1,290 @@
+timeout: 540  # a build with no cache is quite slow
+triggers:
+  - name: build-release
+    type: git_poller
+    email:
+      users: 'ci-notifications@foundries.io'
+    params:
+      GIT_URL: |
+        https://github.com/foundriesio/lmp-manifest.git
+      GIT_POLL_REFS: |
+        refs/heads/master
+    runs:
+      # supported images that have OTA
+      - name: supported-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - raspberrypi3-64
+        triggers:
+          - name: ota-{loop}
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-gateway-image
+          OSTREE_BRANCHNAME: lmp
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      - name: supported-cl-som-imx7
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        params:
+          MACHINE: cl-som-imx7
+          DISTRO: lmp
+          IMAGE: lmp-gateway-image
+          OSTREE_BRANCHNAME: lmp
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # other images that have OTA
+      - name: other-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - intel-corei7-64
+              - hikey
+              - dragonboard-410c
+              - raspberrypi0-wifi
+        triggers:
+          - name: ota-{loop}
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-gateway-image
+          OSTREE_BRANCHNAME: lmp
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # mini images
+      - name: other-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - qemuriscv64
+              - freedom-u540
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-mini-image
+          OSTREE_BRANCHNAME: lmp
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # Other images with no OTA
+      - name: other-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - beaglebone-yocto
+              - colibri-imx7
+              - cubox-i
+              - dragonboard-820c
+              - hikey960
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-gateway-image
+          OSTREE_BRANCHNAME: lmp
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+  - name: Code Review
+    type: github_pr
+    runs:
+      - name: build-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - raspberrypi3-64
+              - intel-corei7-64
+              - hikey
+              - dragonboard-410c
+              - raspberrypi0-wifi
+        triggers:
+          - name: ota-{loop}
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-gateway-image
+          OSTREE_BRANCHNAME: lmp-premerge
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      - name: build-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - cl-som-imx7
+              - beaglebone-yocto
+        triggers:
+          - name: lava-{loop}
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-gateway-image
+          OSTREE_BRANCHNAME: lmp-premerge
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      - name: build-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - qemuriscv64
+              - freedom-u540
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-mini-image
+          OSTREE_BRANCHNAME: lmp-premerge
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      - name: build-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - colibri-imx7
+              - cubox-i
+              - dragonboard-820c
+              - hikey960
+        params:
+          DISTRO: lmp
+          IMAGE: lmp-gateway-image
+          OSTREE_BRANCHNAME: lmp-premerge
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+  - name: lava-cl-som-imx7
+    type: lava_pr
+    runs:
+      - name: lmp-premerge-test-cl-som-imx7
+        container: hub.foundries.io/zmp-sdk
+        host-tag: amd64
+        script-repo:
+          name: fio
+          path: lmp/lava.sh
+
+  - name: lava-beaglebone-yocto
+    type: lava_pr
+    runs:
+      - name: lmp-premerge-test-beaglebone-yocto
+        container: hub.foundries.io/zmp-sdk
+        host-tag: amd64
+        script-repo:
+          name: fio
+          path: lmp/lava.sh
+
+  - name: ota-raspberrypi3-64
+    type: simple
+    runs:
+      - name: lmp-ota-raspberrypi3-64
+        container: hub.foundries.io/ota-runner
+        host-tag: raspberrypi3-64-ota
+        privileged: true
+        test-grepping:
+          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
+          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
+        script-repo:
+          name: fio
+          path: lmp/ota.sh
+
+  - name: ota-intel-corei7-64
+    type: simple
+    runs:
+      - name: lmp-ota-intel-corei7-64
+        container: hub.foundries.io/ota-runner
+        host-tag: amd64-ota
+        privileged: true
+        test-grepping:
+          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
+          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
+        script-repo:
+          name: fio
+          path: lmp/ota.sh
+
+  - name: ota-dragonboard-410c
+    type: simple
+    runs:
+      - name: lmp-ota-dragonboard-410c
+        container: hub.foundries.io/ota-runner
+        host-tag: dragonboard-410c-ota
+        privileged: true
+        test-grepping:
+          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
+          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
+        script-repo:
+          name: fio
+          path: lmp/ota.sh
+
+  - name: ota-hikey
+    type: simple
+    runs:
+      - name: lmp-ota-hikey
+        container: hub.foundries.io/ota-runner
+        host-tag: hikey-ota
+        privileged: true
+        test-grepping:
+          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
+          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
+        script-repo:
+          name: fio
+          path: lmp/ota.sh
+
+  - name: ota-raspberrypi0-wifi
+    type: simple
+    runs:
+      - name: lmp-ota-raspberrypi0-wifi
+        container: hub.foundries.io/ota-runner
+        host-tag: raspberrypi0-wifi-ota
+        privileged: true
+        test-grepping:
+          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
+          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
+        script-repo:
+          name: fio
+          path: lmp/ota.sh
+
+params:
+  archive: /archive
+
+script-repos:
+  fio:
+    clone-url: https://github.com/foundriesio/ci-scripts
