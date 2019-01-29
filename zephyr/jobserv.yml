@@ -23,6 +23,7 @@ triggers:
 
       - name: sanity-qemu-{loop}
         container: zephyrprojectrtos/zephyr-build
+        container-user: root
         host-tag: amd64
         script-repo:
           name: fio
@@ -40,6 +41,7 @@ triggers:
 
       - name: zephyr-sample-mcumgr-{loop}
         container: zephyrprojectrtos/zephyr-build
+        container-user: root
         host-tag: amd64
         script-repo:
           name: fio
