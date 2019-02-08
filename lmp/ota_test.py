@@ -71,12 +71,18 @@ def flash_main():
     _create_reboot_script(True)
 
 
+def _host_connect():
+    # TEMP HACK. The lastest asyncssh wants to use ed25519, but that's not in
+    # 3.8 version of alpine's openssl. Once we are one 3.9, we can remove
+    kex_algs = ('diffie-hellman-group-exchange-sha256',)
+    return asyncssh.connect('172.17.0.1', known_hosts=None,
+                            username='osf', password='osf', kex_algs=kex_algs)
+
+
 def ostree_hash():
     # find the ostree hash the device has booted into
     async def ssh():
-        future = asyncssh.connect(
-            '172.17.0.1', known_hosts=None, username='osf', password='osf')
-        async with future as conn:
+        async with _host_connect() as conn:
             return await conn.run('ostree admin status')
 
     try:
@@ -119,9 +125,7 @@ def _run_host_tests():
     worker = os.environ['H_WORKER']
 
     async def ssh():
-        future = asyncssh.connect(
-            '172.17.0.1', known_hosts=None, username='osf', password='osf')
-        async with future as conn:
+        async with _host_connect() as conn:
             print('copying tests to host')
             await asyncssh.scp(
                 host_tests_file, (conn, '/tmp/lmp-host-tests'))
