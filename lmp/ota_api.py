@@ -25,7 +25,10 @@ def _host_connect():
 
 
 class MySSHClientSession(asyncssh.SSHClientSession):
-    COMPLETE_MSG = 'Created empty /run/aktualizr/ostree-pending-update'
+    COMPLETE_MSG = (
+        'Created empty /run/aktualizr/ostree-pending-update',
+        'got AllInstallsComplete event',
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,11 +37,13 @@ class MySSHClientSession(asyncssh.SSHClientSession):
     def data_received(self, data, datatype):
         print(data, end='')
 
-        if self.COMPLETE_MSG in data:
-            self.log('detected updated completion, exiting')
-            self.channel.terminate()
-            self.channel.close()
-        elif self.deadline and time.time() > self.deadline:
+        for m in self.COMPLETE_MSG:
+            if m in data:
+                self.log('detected updated completion, exiting')
+                self.channel.terminate()
+                self.channel.close()
+                break
+        if self.deadline and time.time() > self.deadline:
             self.log('Timeout waiting for update to complete')
             self.channel.terminate()
             self.channel.close()
@@ -47,6 +52,7 @@ class MySSHClientSession(asyncssh.SSHClientSession):
     def connection_lost(self, exc):
         if exc:
             self.log('SSH session error: ' + str(exc))
+            raise
 
 
 def _wait_on_update(log):
