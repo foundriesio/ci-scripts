@@ -1,10 +1,6 @@
 import asyncio
-import atexit
-import os
 import sys
 import time
-
-from signal import SIGINT
 
 import asyncssh
 import requests
@@ -20,52 +16,59 @@ def lmp_headers():
     return {'OSF-TOKEN': secret('osftok')}
 
 
-def _wait_on_update(log, device_url):
-    # 144 * 5 = 720 seconds = 12 minutes
-    for i in range(144):
-        try:
-            r = requests.get(device_url, headers=lmp_headers())
-            if r.status_code == 200:
-                status = r.json()['status']
-                if status == 'UpToDate':
-                    return
-                log('waiting status = ' + status)
-            else:
-                log('error checking update status: %d\n%s' % (
-                    r.status_code, r.text))
-        except Exception as e:
-            log('Error checking on: %s\n  %r' % (device_url, e))
-        time.sleep(5)
-
-    raise UpdateError('Timeout waiting for device update')
+def _host_connect():
+    # TEMP HACK. The lastest asyncssh wants to use ed25519, but that's not in
+    # 3.8 version of alpine's openssl. Once we are one 3.9, we can remove
+    kex_algs = ('diffie-hellman-group-exchange-sha256',)
+    return asyncssh.connect('172.17.0.1', known_hosts=None,
+                            username='osf', password='osf', kex_algs=kex_algs)
 
 
-def _tail_journal(log):
-    p = os.fork()
-    if p:
-        atexit.register(os.kill, p, SIGINT)
-        return
+class MySSHClientSession(asyncssh.SSHClientSession):
+    COMPLETE_MSG = 'Created empty /run/aktualizr/ostree-pending-update'
 
-    log('Tailing journal on host')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.channel = self.log = self.deadline = None
 
+    def data_received(self, data, datatype):
+        print(data, end='')
+
+        if self.COMPLETE_MSG in data:
+            self.log('detected updated completion, exiting')
+            self.channel.terminate()
+            self.channel.close()
+        elif self.deadline and time.time() > self.deadline:
+            self.log('Timeout waiting for update to complete')
+            self.channel.terminate()
+            self.channel.close()
+            raise UpdateError('Timeout waiting for device update')
+
+    def connection_lost(self, exc):
+        if exc:
+            self.log('SSH session error: ' + str(exc))
+
+
+def _wait_on_update(log):
     async def ssh():
-        future = asyncssh.connect(
-            '172.17.0.1', known_hosts=None, username='osf', password='osf')
-        async with future as conn:
-            await conn.run('journalctl -f', stdout='/archive/journal.log')
-
+        async with _host_connect() as conn:
+            chan, session = await conn.create_session(
+                MySSHClientSession, 'sudo -S journalctl -f')
+            session.channel = chan
+            session.log = log
+            session.deadline = time.time() + (60 * 15)   # wait 15 minutes
+            chan.write('osf\n')
+            chan.write_eof()
+            await chan.wait_closed()
     try:
         asyncio.get_event_loop().run_until_complete(ssh())
     except (OSError, asyncssh.Error) as exc:
         sys.exit('SSH connection failed: ' + str(exc))
     except KeyboardInterrupt:
         pass
-    sys.exit(0)
 
 
 def update_device(log, device, ostree_hash):
-    _tail_journal(log)
-
     url = 'https://api.foundries.io' + device['url']
     r = requests.put(
         url, json={'image': {'hash': ostree_hash}}, headers=lmp_headers())
@@ -74,7 +77,7 @@ def update_device(log, device, ostree_hash):
             url, r.status_code, r.text))
     log('requested update: %r' % r.text)
     log('waiting for update queue to complete')
-    _wait_on_update(log, url)
+    _wait_on_update(log)
     log('device updated')
 
 
