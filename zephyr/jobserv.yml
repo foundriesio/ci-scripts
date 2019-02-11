@@ -13,6 +13,8 @@ triggers:
         container-user: root
         container-entrypoint: ""
         host-tag: amd64
+        triggers:
+          - name: sanity-test
         params:
           SAVE_OUTDIR: "1"
           PLATFORM: nrf52_blenano2
@@ -54,6 +56,22 @@ triggers:
         loop-on:
           - param: PLATFORM
             values: [reel_board, nrf52840_pca10056]
+
+  - name: sanity-test
+    type: simple
+    runs:
+      - name: sanity-test-nrf52
+        container: hub.foundries.io/zmp-sdk
+        container-user: root
+        container-entrypoint: ""
+        host-tag: zephyr-nrf52
+        privileged: true
+        params:
+          PYOCD_BOARD_NAME: RedBearLab-BLE-Nano2
+        script-repo:
+          name: fio
+          path: zephyr/sanity-device.sh
+
 
 params:
   archive: /archive

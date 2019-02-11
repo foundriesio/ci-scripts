@@ -4,7 +4,11 @@ HERE=$(dirname $(readlink -f $0))
 TMPDIR=${TMPDIR-/tmp}
 
 tmpdir=$(mktemp -p $TMPDIR -d test_build.XXXX)
-trap "echo removing tempdir; rm -rf $tmpdir" TERM INT EXIT
+if [ -z "$KEEP" ] ; then
+	trap "echo removing tempdir; rm -rf $tmpdir" TERM INT EXIT
+else
+	echo "temp directory created at: tmpdir"
+fi
 
 git clone https://github.com/zephyrproject-rtos/zephyr.git $tmpdir
 cd $tmpdir
