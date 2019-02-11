@@ -16,7 +16,7 @@ docker run --rm -it -w $PWD \
 	-v $parent:$parent \
 	-e GIT_SHA=master \
 	-e PLATFORM=nrf52_blenano2 \
-	zephyrprojectrtos/zephyr-build $HERE/sanity.sh
+	zephyrprojectrtos/zephyr-build $HERE/sanity-compile.sh
 
 echo "Junit Results"
 cat $tmpdir/junit.xml

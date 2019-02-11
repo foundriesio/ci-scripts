@@ -17,7 +17,7 @@ docker run --rm -it --privileged -w $PWD \
 	-e GIT_SHA=master \
 	-e PLATFORM=nrf52_blenano2 \
 	-e PYOCD_BOARD_NAME=RedBearLab-BLE-Nano2 \
-	zephyrprojectrtos/zephyr-build $HERE/sanity.sh
+	zephyrprojectrtos/zephyr-build $HERE/sanity-compile.sh
 
 echo "Junit Results"
 cat $tmpdir/junit.xml
