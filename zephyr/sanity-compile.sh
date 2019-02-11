@@ -30,8 +30,12 @@ if [ -n "$PYOCD_BOARD_NAME" ] ; then
 	extra_args="--device-testing --device-serial $board_tty -e kernel"
 fi
 
-status "Running sanitycheck"
 . zephyr-env.sh
+
+status "Generating test list"
+sanitycheck --platform $PLATFORM --outdir /tmp/outdir -v --ninja --enable-slow --save-tests /archive/test-list
+
+status "Compiling tests"
 set -x
 sanitycheck  \
 	--platform $PLATFORM \
@@ -40,8 +44,11 @@ sanitycheck  \
 	--enable-slow \
 	--verbose \
 	--ninja \
-	$extra_args \
+	--load-tests /archive/test-list \
 || true
 
 cp ./scripts/sanity_chk/last_sanity.xml /archive/junit.xml
-
+if [ -n "$SAVE_OUTDIR" ] ; then
+	status "Saving outdir..."
+	cd /tmp && $HERE/archive.py
+fi
