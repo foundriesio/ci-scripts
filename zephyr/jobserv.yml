@@ -8,27 +8,28 @@ triggers:
       GIT_URL: https://github.com/zephyrproject-rtos/zephyr.git
       GIT_POLL_REFS: "refs/heads/master"
     runs:
-      #- name: sanity-nrf52
-      #  container: zephyrprojectrtos/zephyr-build
-      #  host-tag: zephyr-nrf52
-      #  privileged: true
-      #  params:
-      #    PLATFORM: nrf52_blenano2
-      #    PYOCD_BOARD_NAME: RedBearLab-BLE-Nano2
-      #    FLAKY_TESTS: |
-      #      tests/kernel/interrupt
-      #  script-repo:
-      #    name: fio
-      #    path: zephyr/sanity.sh
+      - name: sanity-compile-nrf52
+        container: zephyrprojectrtos/zephyr-build
+        container-user: root
+        container-entrypoint: ""
+        host-tag: amd64
+        params:
+          SAVE_OUTDIR: "1"
+          PLATFORM: nrf52_blenano2
+          FLAKY_TESTS: |
+            tests/kernel/interrupt
+        script-repo:
+          name: fio
+          path: zephyr/sanity-compile.sh
 
-      - name: sanity-qemu-{loop}
+      - name: sanity-compile-{loop}
         container: zephyrprojectrtos/zephyr-build
         container-user: root
         container-entrypoint: ""
         host-tag: amd64
         script-repo:
           name: fio
-          path: zephyr/sanity.sh
+          path: zephyr/sanity-compile.sh
         loop-on:
           - param: PLATFORM
             values: [frdm_k64f, reel_board, nrf52840_pca10056]
