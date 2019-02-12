@@ -18,8 +18,9 @@ run git checkout jobserv-run
 
 
 status "Applying board-id patch"
-run git fetch origin pull/11851/head:board-id
-run git merge -m merge_with_boardid board-id
+run git fetch https://github.com/zephyrproject-rtos/zephyr.git pull/11851/head:board-id
+run git cherry-pick f4920ec0c869c4292502acb80cfc799a4c52bdc9
+run git cherry-pick 9d8490620ef3b956584b9ef87e084bfba29deee0
 
 status "Getting test list"
 run wget -O /tmp/test-list ${H_TRIGGER_URL}test-list
