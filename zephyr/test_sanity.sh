@@ -10,9 +10,9 @@ git clone https://github.com/zephyrproject-rtos/zephyr.git $tmpdir
 cd $tmpdir
 
 parent=$(dirname $HERE)
-docker run --rm -it -w $PWD \
+docker run --rm -it -w /repo \
 	-v $PWD:/archive \
-	-v $PWD:$PWD \
+	-v $PWD:/repo \
 	-v $parent:$parent \
 	-e SAVE_OUTDIR=1 \
 	-e GIT_SHA=master \
