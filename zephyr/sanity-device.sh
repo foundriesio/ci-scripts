@@ -55,8 +55,10 @@ sanitycheck  \
 	--ninja \
 	--no-clean \
 	--load-tests /tmp/test-list \
+	--test-only \
 	--device-testing \
 	--device-serial $board_tty \
+	--west-flash-option=--board-id=$board_uid \
 	-e kernel \
 || true
 
