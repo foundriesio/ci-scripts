@@ -4,7 +4,7 @@ HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
 require_params PLATFORM PYOCD_BOARD_NAME H_TRIGGER_URL
 
-if [ -z $SUDO_USER ] ; then
+if [ -z $SUDO_USER ] && [ $(id -u) -ne 0 ] ; then
 	status "Running script with: sudo $0 $*"
 	exec sudo -E $0 $*
 fi
