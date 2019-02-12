@@ -24,7 +24,7 @@ run git cherry-pick 9d8490620ef3b956584b9ef87e084bfba29deee0
 
 status "Getting test list"
 run wget -O /tmp/test-list ${H_TRIGGER_URL}test-list
-run wget -O /tmp/outdir.tgz ${H_TRIGGER_URL}outdir.tgz
+run wget -O /tmp/outdir.tgz --progress=dot -e dotbytes=1M ${H_TRIGGER_URL}outdir.tgz
 tar -C /tmp -xzf /tmp/outdir.tgz
 
 status "Installing dependencies"
