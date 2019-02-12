@@ -2,15 +2,22 @@
 
 HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
-require_params PLATFORM PYOCD_BOARD_NAME H_TRIGGER_URL
+require_params PLATFORM PYOCD_BOARD_NAME H_TRIGGER_URL GIT_URL GIT_SHA
 
 if [ -z $SUDO_USER ] && [ $(id -u) -ne 0 ] ; then
 	status "Running script with: sudo $0 $*"
 	exec sudo -E $0 $*
 fi
 
-status "Applying board-id patch"
+status "Checking out zephyr source"
 run git_config
+run git clone $GIT_URL /repo
+cd repo
+run git branch jobserv-run $GIT_SHA
+run git checkout jobserv-run
+
+
+status "Applying board-id patch"
 run git fetch origin pull/11851/head:board-id
 run git merge -m merge_with_boardid board-id
 

@@ -10,15 +10,12 @@ else
 	echo "temp directory created at: tmpdir"
 fi
 
-git clone https://github.com/zephyrproject-rtos/zephyr.git $tmpdir
-cd $tmpdir
-
 parent=$(dirname $HERE)
-docker run --rm -it --privileged -w /repo \
+docker run --rm -it --privileged -w $PWD \
 	-v $PWD:/archive \
-	-v $PWD:/repo \
 	-v $parent:$parent \
 	-e H_TRIGGER_URL="https://api.foundries.io/projects/zephyr/builds/4834/runs/sanity-compile-nrf52/" \
+	-e GIT_URL="https://github.com/foundriesio/zephyr.git" \
 	-e GIT_SHA=master \
 	-e PLATFORM=nrf52_blenano2 \
 	-e PYOCD_BOARD_NAME=RedBearLab-BLE-Nano2 \
