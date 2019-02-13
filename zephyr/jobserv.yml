@@ -19,7 +19,9 @@ triggers:
           SAVE_OUTDIR: "1"
           PLATFORM: nrf52_blenano2
           FLAKY_TESTS: |
+            tests/benchmarks/sched
             tests/kernel/interrupt
+            tests/kernel/sched/schedule_api
         script-repo:
           name: fio
           path: zephyr/sanity-compile.sh
