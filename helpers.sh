@@ -5,7 +5,7 @@ set -o pipefail
 function indent { sed 's/^/|  /'; echo "|--" ;}
 function status { echo == $(date "+%F %T") $* ; }
 
-function run { status "Running: $*"; $* 2>&1 | indent ; }
+function run { set -o pipefail; status "Running: $*"; $* 2>&1 | indent ; }
 
 function require_params {
 	for x in $* ; do
