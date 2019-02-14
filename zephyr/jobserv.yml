@@ -2,6 +2,27 @@ timeout: 30   # the qemu testing can take some time
 email:
   users: 'ci-notifications@foundries.io'
 triggers:
+  - name: fio-pull-request
+    type: github_pr
+    runs:
+      - name: sanity-compile-nrf52
+        container: zephyrprojectrtos/zephyr-build
+        container-user: root
+        container-entrypoint: ""
+        host-tag: amd64
+        triggers:
+          - name: sanity-test
+        params:
+          SAVE_OUTDIR: "1"
+          PLATFORM: nrf52_blenano2
+          FLAKY_TESTS: |
+            tests/benchmarks/sched
+            tests/kernel/interrupt
+            tests/kernel/sched/schedule_api
+        script-repo:
+          name: fio
+          path: zephyr/sanity-compile.sh
+
   - name: upstream-merge
     type: git_poller
     params:
