@@ -9,12 +9,16 @@ if [ -z $SUDO_USER ] && [ $(id -u) -ne 0 ] ; then
 	exec sudo -E $0 $*
 fi
 
-status "Checking out zephyr source"
-run git_config
-run git clone $GIT_URL /repo
-cd repo
-run git branch jobserv-run $GIT_SHA
-run git checkout jobserv-run
+if [ ! -d /repo ] ; then
+	status "Checking out zephyr source"
+	run git_config
+	run git clone $GIT_URL /repo
+	cd repo
+	run git branch jobserv-run $GIT_SHA
+	run git checkout jobserv-run
+else
+	cd /repo
+fi
 
 
 status "Applying board-id patch"
