@@ -136,8 +136,8 @@ triggers:
             values:
               - cl-som-imx7
               - beaglebone-yocto
-        triggers:
-          - name: lava-{loop}
+        #triggers:
+        #  - name: lava-{loop}
         params:
           IMAGE: lmp-gateway-image
           OSTREE_BRANCHNAME: lmp-premerge
