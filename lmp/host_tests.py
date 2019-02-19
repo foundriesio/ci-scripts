@@ -83,7 +83,7 @@ def _check_network(interface, test_label, dst='8.8.8.8'):
 def _test_doanac_hikey():
     _check_network('wlan0', 'wifi')
     if _check_bt_device('D4:E7:DD:63:FE:94'):
-        _check_leshan_ep('osf:sn:dd63fe94')
+        _check_leshan_ep('zmp:sn:dd63fe94')
 
 
 def _test_doanac_rpi3():
