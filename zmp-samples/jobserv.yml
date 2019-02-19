@@ -1,0 +1,39 @@
+# The long run here is the device testing part. 25 minutes is enough for a nano2
+timeout: 25
+triggers:
+  - name: Code Review
+    type: github_pr
+    runs:
+      - name: fota-compile-nrf52
+        container: zephyrprojectrtos/zephyr-build
+        container-user: root
+        container-entrypoint: ""
+        host-tag: amd64
+        params:
+          PLATFORM: nrf52_blenano2
+        triggers:
+          - name: fota-test
+        script-repo:
+          name: fio
+          path: zmp-samples/fota-compile.sh
+
+  - name: fota-test
+    type: simple
+    runs:
+      - name: fota-dm-lwm2m
+        container: registry.foundries.io/development/cloudplatforms/infrastructure/mp-e2e/mp-e2e
+        container-auth: registry-auth
+        privileged: true
+        host-tag: aarch64-e2e
+        params:
+          SCP_BT_CONFIG: /home/osf/gateway-containers/bt-joiner/bt-joiner-config/bluetooth_6lowpand.conf
+        script-repo:
+          name: fio
+          path: zmp-samples/fota-test.sh
+
+params:
+  archive: /archive
+
+script-repos:
+  fio:
+    clone-url: https://github.com/foundriesio/ci-scripts
