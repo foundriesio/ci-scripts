@@ -87,6 +87,7 @@ params:
     tests/benchmarks/sched
     tests/kernel/interrupt
     tests/kernel/sched/schedule_api
+    tests/kernel/mem_slab/mslab_threadsafe
 
 script-repos:
   fio:
