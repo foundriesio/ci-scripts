@@ -15,10 +15,6 @@ triggers:
         params:
           SAVE_OUTDIR: "1"
           PLATFORM: nrf52_blenano2
-          FLAKY_TESTS: |
-            tests/benchmarks/sched
-            tests/kernel/interrupt
-            tests/kernel/sched/schedule_api
         script-repo:
           name: fio
           path: zephyr/sanity-compile.sh
@@ -39,10 +35,6 @@ triggers:
         params:
           SAVE_OUTDIR: "1"
           PLATFORM: nrf52_blenano2
-          FLAKY_TESTS: |
-            tests/benchmarks/sched
-            tests/kernel/interrupt
-            tests/kernel/sched/schedule_api
         script-repo:
           name: fio
           path: zephyr/sanity-compile.sh
@@ -58,13 +50,6 @@ triggers:
         loop-on:
           - param: PLATFORM
             values: [frdm_k64f, reel_board, nrf52840_pca10056]
-        params:
-          FLAKY_TESTS: |
-            kernel/init
-            kernel/sched/schedule_api
-            kernel/timer/timer_api
-            kernel/timer/timer_monotonic
-            cmsis_rtos_v1
 
       - name: zephyr-sample-mcumgr-{loop}
         container: zephyrprojectrtos/zephyr-build
@@ -98,6 +83,10 @@ triggers:
 
 params:
   archive: /archive
+  FLAKY_TESTS: |
+    tests/benchmarks/sched
+    tests/kernel/interrupt
+    tests/kernel/sched/schedule_api
 
 script-repos:
   fio:
