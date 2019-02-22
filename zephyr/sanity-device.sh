@@ -57,7 +57,6 @@ sanitycheck  \
 	--outdir /tmp/outdir \
 	--enable-slow \
 	--verbose \
-	--ninja \
 	--no-clean \
 	--load-tests /tmp/test-list \
 	--test-only \

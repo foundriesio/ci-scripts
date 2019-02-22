@@ -22,7 +22,6 @@ sanitycheck  \
 	--outdir /tmp/outdir \
 	--enable-slow \
 	--verbose \
-	--ninja \
 	--load-tests /archive/test-list \
 || true
 
