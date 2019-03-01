@@ -13,7 +13,7 @@ if [ ! -d /repo ] ; then
 	status "Checking out zephyr source"
 	run git_config
 	run git clone $GIT_URL /repo
-	cd repo
+	cd /repo
 	run git branch jobserv-run $GIT_SHA
 	run git checkout jobserv-run
 else
@@ -58,6 +58,7 @@ sanitycheck  \
 	--enable-slow \
 	--verbose \
 	--no-clean \
+	--disable-size-report \
 	--load-tests /tmp/test-list \
 	--test-only \
 	--device-testing \

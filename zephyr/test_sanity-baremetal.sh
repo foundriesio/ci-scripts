@@ -11,10 +11,10 @@ else
 fi
 
 parent=$(dirname $HERE)
-docker run --rm -it --privileged -w $PWD \
+docker run --rm -it --privileged -w $PWD --entrypoint="" \
 	-v $PWD:/archive \
 	-v $parent:$parent \
-	-e H_TRIGGER_URL="https://api.foundries.io/projects/zephyr/builds/4834/runs/sanity-compile-nrf52/" \
+	-e H_TRIGGER_URL="https://api.foundries.io/projects/zephyr/builds/5131/runs/sanity-compile-nrf52/" \
 	-e GIT_URL="https://github.com/foundriesio/zephyr.git" \
 	-e GIT_SHA=master \
 	-e PLATFORM=nrf52_blenano2 \
