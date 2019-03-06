@@ -26,6 +26,11 @@ function repo_sync {
 	status "Repo syncing sources..."
 
 	git_config
+	if [ -f /secrets/git.http.extraheader ] ; then
+		domain=$(echo $GIT_URL | cut -d/  -f3)
+		status "Adding git config extraheader for $domain"
+		git config --global http.https://${domain}.extraheader "$(cat /secrets/git.http.extraheader)"
+	fi
 	repo init --no-clone-bundle -u $*
 	repo sync
 	if [ -d "$archive" ] ; then

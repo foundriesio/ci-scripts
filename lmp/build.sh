@@ -12,7 +12,7 @@ git branch pr-branch $GIT_SHA
 mkdir /srv/oe
 cd /srv/oe
 repo_sync $manifest
-
+cat /root/.gitconfig >>  /home/builder/.gitconfig
 
 mkdir build conf
 cache="/var/cache/bitbake/downloads"
