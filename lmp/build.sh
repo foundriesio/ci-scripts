@@ -15,8 +15,13 @@ repo_sync $manifest
 
 
 mkdir build conf
-ln -s /var/cache/bitbake/downloads downloads
-ln -s /var/cache/bitbake/sstate-cache-${DISTRO} sstate-cache
+cache="/var/cache/bitbake/downloads"
+[ -d $cache ] || (mkdir $cache; chown builder $cache)
+ln -s $cache downloads
+
+cache="/var/cache/bitbake/sstate-cache-${DISTRO}"
+[ -d $cache ] || (mkdir $cache; chown builder $cache)
+ln -s $cache sstate-cache
 
 export EULA_stih410b2260=1
 
