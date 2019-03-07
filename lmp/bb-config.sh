@@ -18,7 +18,7 @@ SOTA_PACKED_CREDENTIALS = "${SOTA_PACKED_CREDENTIALS}"
 OSTREE_BRANCHNAME = "${MACHINE}-${OSTREE_BRANCHNAME}"
 GARAGE_SIGN_REPO = "/tmp/garage_sign_repo"
 GARAGE_TARGET_VERSION = "${H_BUILD}"
-GARAGE_TARGET_URL = "https://foundries.io/b/development/lmp/${H_BUILD}/"
+GARAGE_TARGET_URL = "https://ci.foundries.io/projects/${H_PROJECT}/builds/${H_BUILD}"
 EOFEOF
 
 if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then
