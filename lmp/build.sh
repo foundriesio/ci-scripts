@@ -6,16 +6,6 @@ require_params MACHINE IMAGE GIT_SHA
 
 DISTRO="${DISTRO-lmp}"
 
-## HACK
-if [ -f /secrets/git.http.extraheader ] ; then
-	status "Installing latest version of git to handle private repositories"
-	apt update
-	apt install -y libpcre2-8-0
-	add-apt-repository -yu ppa:git-core/ppa
-	apt install -y git
-fi
-## ENDHACK
-
 manifest="file://$(pwd)/.git -b $GIT_SHA"
 # repo init won't work off detached heads, so do this to work around:
 git branch pr-branch $GIT_SHA
