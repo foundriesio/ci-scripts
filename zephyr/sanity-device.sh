@@ -24,8 +24,8 @@ fi
 status "Applying board-id patch"
 git_config
 run git fetch https://github.com/zephyrproject-rtos/zephyr.git pull/11851/head:board-id
-run git cherry-pick f4920ec0c869c4292502acb80cfc799a4c52bdc9
-run git cherry-pick 9d8490620ef3b956584b9ef87e084bfba29deee0
+run git cherry-pick b85208b1cf
+run git cherry-pick 1ae428c4f3
 
 status "Getting test list"
 run wget -O /tmp/test-list ${H_TRIGGER_URL}test-list
