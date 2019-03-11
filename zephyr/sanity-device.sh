@@ -24,8 +24,8 @@ fi
 status "Applying board-id patch"
 git_config
 run git fetch https://github.com/zephyrproject-rtos/zephyr.git pull/11851/head:board-id
-run git cherry-pick b85208b1cf
-run git cherry-pick 1ae428c4f3
+run git cherry-pick 7f57d460bb
+run git cherry-pick 340bf62d80
 
 status "Getting test list"
 run wget -O /tmp/test-list ${H_TRIGGER_URL}test-list
@@ -63,7 +63,7 @@ sanitycheck  \
 	--test-only \
 	--device-testing \
 	--device-serial $board_tty \
-	--west-flash-option=--board-id=$board_uid \
+	--west-flash=--board-id=$board_uid \
 	-e kernel \
 || true
 
