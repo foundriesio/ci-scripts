@@ -89,6 +89,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - apalis-imx6
               - beaglebone-yocto
               - colibri-imx7
               - cubox-i
@@ -170,6 +171,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - apalis-imx6
               - colibri-imx7
               - cubox-i
               - dragonboard-820c
