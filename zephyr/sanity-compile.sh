@@ -9,6 +9,8 @@ for b in ${FLAKY_TESTS//\\n/ } ; do
 	rm -rf $b
 done
 
+run pip3 install -U west
+
 . zephyr-env.sh
 
 status "Generating test list"
