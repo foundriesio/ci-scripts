@@ -51,7 +51,6 @@ triggers:
             values:
               - intel-corei7-64
               - hikey
-              - dragonboard-410c
               - raspberrypi0-wifi
         triggers:
           - name: ota-{loop}
@@ -93,7 +92,6 @@ triggers:
               - beaglebone-yocto
               - colibri-imx7
               - cubox-i
-              - dragonboard-820c
               - hikey960
         params:
           IMAGE: lmp-gateway-image
@@ -116,7 +114,6 @@ triggers:
               - raspberrypi3-64
               - intel-corei7-64
               - hikey
-              - dragonboard-410c
               - raspberrypi0-wifi
         triggers:
           - name: ota-{loop}
@@ -174,7 +171,6 @@ triggers:
               - apalis-imx6
               - colibri-imx7
               - cubox-i
-              - dragonboard-820c
               - hikey960
         params:
           IMAGE: lmp-gateway-image
@@ -225,20 +221,6 @@ triggers:
       - name: lmp-ota-intel-corei7-64
         container: hub.foundries.io/ota-runner
         host-tag: amd64-ota
-        privileged: true
-        test-grepping:
-          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
-          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
-        script-repo:
-          name: fio
-          path: lmp/ota.sh
-
-  - name: ota-dragonboard-410c
-    type: simple
-    runs:
-      - name: lmp-ota-dragonboard-410c
-        container: hub.foundries.io/ota-runner
-        host-tag: dragonboard-410c-ota
         privileged: true
         test-grepping:
           test-pattern: "^Starting Test Suite: (?P<name>\\S+)"

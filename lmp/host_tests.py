@@ -103,18 +103,11 @@ def _test_doanac_intel():
     _check_network('enp2s0', 'ethernet')
 
 
-def _test_doanac_410c():
-    _check_network('eth0', 'usb-ethernet')
-    if _check_bt_device('D4:E7:64:15:92:32'):
-        _check_hawkbit_ep('nrf52_blenano2-64159232')
-        _check_mqtt('nrf52_blenano2-64159232')
-
 
 DOANAC = '59db9c9a1c85010019e023cc'
 DEVICES = {
     # ota+/jobserv name:  (POLIS_ID, test_function)
     'doanac-minnowboard': (DOANAC, _test_doanac_intel),
-    'doanac-dragonboard-410c': (DOANAC, _test_doanac_410c),
     'doanac-hikey-1': (DOANAC, _test_doanac_hikey),
     'doanac-raspberrypi0-wifi': (DOANAC, _test_doanac_rpi0),
     'doanac-rpi3-64-2': (DOANAC, _test_doanac_rpi3),
