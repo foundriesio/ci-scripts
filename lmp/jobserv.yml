@@ -93,6 +93,7 @@ triggers:
               - colibri-imx7
               - cubox-i
               - hikey960
+              - qemuarm64
         params:
           IMAGE: lmp-gateway-image
           OSTREE_BRANCHNAME: lmp
@@ -172,6 +173,7 @@ triggers:
               - colibri-imx7
               - cubox-i
               - hikey960
+              - qemuarm64
         params:
           IMAGE: lmp-gateway-image
           OSTREE_BRANCHNAME: lmp-premerge
