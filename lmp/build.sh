@@ -34,6 +34,8 @@ DEPLOY_DIR_IMAGE=$(cat build/image_dir)
 
 # Prepare files to publish
 rm -f ${DEPLOY_DIR_IMAGE}/*.txt
+## Only publish wic.gz
+rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 
 # FIXME: Sparse images here, until it gets done by OE
 case "${MACHINE}" in
