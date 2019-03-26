@@ -12,6 +12,8 @@ done
 run pip3 install -U west
 
 . zephyr-env.sh
+run west init -l
+run west update
 
 status "Generating test list"
 sanitycheck --platform $PLATFORM --outdir /tmp/outdir -v --ninja --enable-slow --save-tests /archive/test-list
