@@ -17,11 +17,8 @@ def lmp_headers():
 
 
 def _host_connect():
-    # TEMP HACK. The lastest asyncssh wants to use ed25519, but that's not in
-    # 3.8 version of alpine's openssl. Once we are one 3.9, we can remove
-    kex_algs = ('diffie-hellman-group-exchange-sha256',)
     return asyncssh.connect('172.17.0.1', known_hosts=None,
-                            username='osf', password='osf', kex_algs=kex_algs)
+                            username='osf', password='osf')
 
 
 class MySSHClientSession(asyncssh.SSHClientSession):
