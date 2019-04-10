@@ -6,12 +6,23 @@ require_params MACHINE IMAGE GIT_SHA
 
 DISTRO="${DISTRO-lmp}"
 
-manifest="file://$(pwd)/.git -b $GIT_SHA"
-# repo init won't work off detached heads, so do this to work around:
-git branch pr-branch $GIT_SHA
-mkdir /srv/oe
-cd /srv/oe
-repo_sync $manifest
+if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
+	status "Build triggered by change to lmp-manifest"
+	manifest="file://$(pwd)/.git -b $GIT_SHA"
+	# repo init won't work off detached heads, so do this to work around:
+	git branch pr-branch $GIT_SHA
+	mkdir /srv/oe && cd /srv/oe
+	repo_sync $manifest
+else
+	repourl="$(dirname ${GIT_URL})/lmp-manifest.git"
+	layer="$(basename ${GIT_URL%.git})"
+	status "Build triggered by change to OE layer: $layer"
+	status "Will repo sync from $repourl"
+	mkdir /srv/oe && cd /srv/oe
+	repo_sync $repourl
+	run rm -rf layers/$layer
+	run ln -s /repo layers/$layer
+fi
 cat /root/.gitconfig >>  /home/builder/.gitconfig
 
 mkdir build conf
