@@ -71,7 +71,6 @@ triggers:
           - param: MACHINE
             values:
               - qemuriscv64
-              - freedom-u540
         params:
           IMAGE: lmp-mini-image
           OSTREE_BRANCHNAME: lmp
@@ -153,7 +152,6 @@ triggers:
           - param: MACHINE
             values:
               - qemuriscv64
-              - freedom-u540
         params:
           IMAGE: lmp-mini-image
           OSTREE_BRANCHNAME: lmp-premerge
