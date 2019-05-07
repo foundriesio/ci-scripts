@@ -31,7 +31,7 @@ function repo_sync {
 		status "Adding git config extraheader for $domain"
 		git config --global http.https://${domain}.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
-	repo init --no-clone-bundle -u $*
+	repo init --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
 	repo sync
 	if [ -d "$archive" ] ; then
 		status "Generating pinned manifest"
