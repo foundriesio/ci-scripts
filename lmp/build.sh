@@ -81,6 +81,7 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/ovmf.* ${archive}/other/ || true
 	# Copy the bootloader used by RISC-V targets
 	cp ${DEPLOY_DIR_IMAGE}/bbl* ${archive}/other/ || true
+	cp ${DEPLOY_DIR_IMAGE}/fw_* ${archive}/other/ || true
 
 	# Make the main img.gz be in the root of the archive
 	mv ${archive}/other/lmp-*.img.gz ${archive}/ || true
