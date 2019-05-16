@@ -20,13 +20,6 @@ else
 	cd /repo
 fi
 
-
-status "Applying board-id patch"
-git_config
-run git fetch https://github.com/zephyrproject-rtos/zephyr.git pull/11851/head:board-id
-run git cherry-pick 7f57d460bb
-run git cherry-pick 340bf62d80
-
 status "Getting test list"
 run wget -O /tmp/test-list ${H_TRIGGER_URL}test-list
 run wget -O /tmp/outdir.tgz --progress=dot -e dotbytes=1M ${H_TRIGGER_URL}outdir.tgz
