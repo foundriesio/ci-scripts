@@ -82,8 +82,6 @@ def _check_network(interface, test_label, dst='8.8.8.8'):
 
 def _test_doanac_hikey():
     _check_network('wlan0', 'wifi')
-    if _check_bt_device('D4:E7:DD:63:FE:94'):
-        _check_leshan_ep('zmp:sn:dd63fe94')
 
 
 def _test_doanac_rpi3():
@@ -95,13 +93,10 @@ def _test_doanac_rpi3():
 
 def _test_doanac_rpi0():
     _check_network('wlan0', 'wifi')
-    if _check_bt_device('D6:E7:46:2F:A6:2D'):
-        _check_leshan_ep('462fa62d')
 
 
 def _test_doanac_intel():
     _check_network('enp2s0', 'ethernet')
-
 
 
 DOANAC = '59db9c9a1c85010019e023cc'
