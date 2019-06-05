@@ -17,6 +17,9 @@ status "Overriding the west manifest's $APP with cloned value in /repo"
 run rm -rf $APP
 run ln -s /repo ./$APP
 
+# use west config values if available
+west config --global zephyr.base-prefer configfile
+
 status "Compiling $APP bootloader"
 run west build -s mcuboot/boot/zephyr -d build-mcuboot -b $PLATFORM
 
