@@ -16,6 +16,17 @@ triggers:
         script-repo:
           name: fio
           path: zmp-samples/fota-compile.sh
+      - name: fota-compile-{loop}
+        container: zephyrprojectrtos/zephyr-build
+        container-user: root
+        container-entrypoint: ""
+        host-tag: amd64
+        script-repo:
+          name: fio
+          path: zmp-samples/fota-compile.sh
+        loop-on:
+          - param: PLATFORM
+            values: [nrf52_blenano2, frdm_k64f, reel_board]
 
   - name: fota-test
     type: simple
