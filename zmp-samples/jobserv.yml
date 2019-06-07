@@ -4,13 +4,13 @@ triggers:
   - name: Code Review
     type: github_pr
     runs:
-      - name: fota-compile-nrf52
+      - name: fota-compile-nrf52840_pca10056
         container: zephyrprojectrtos/zephyr-build
         container-user: root
         container-entrypoint: ""
         host-tag: amd64
         params:
-          PLATFORM: nrf52_blenano2
+          PLATFORM: nrf52840_pca10056
         triggers:
           - name: fota-test
         script-repo:
