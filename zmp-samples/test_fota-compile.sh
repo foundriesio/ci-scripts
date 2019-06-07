@@ -20,5 +20,5 @@ docker run --rm -it -w /repo \
 	-v $PWD/repo:/repo \
 	-v $parent:$parent \
 	-e SAVE_OUTDIR=1 \
-	-e PLATFORM=nrf52_blenano2 \
+	-e PLATFORM=nrf52840_pca10056 \
 	zephyrprojectrtos/zephyr-build $HERE/fota-compile.sh
