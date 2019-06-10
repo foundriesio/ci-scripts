@@ -23,7 +23,7 @@ triggers:
     type: git_poller
     params:
       GIT_URL: https://github.com/zephyrproject-rtos/zephyr.git
-      GIT_POLL_REFS: "refs/heads/master"
+      GIT_POLL_REFS: "refs/heads/v1.14-branch"
     runs:
       - name: sanity-compile-nrf52
         container: zephyrprojectrtos/zephyr-build
