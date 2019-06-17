@@ -35,7 +35,7 @@ triggers:
         container: registry.foundries.io/development/cloudplatforms/infrastructure/mp-e2e/mp-e2e
         container-auth: registry-auth
         privileged: true
-        host-tag: aarch64-e2e
+        host-tag: zephyr-e2e
         params:
           SCP_BT_CONFIG: /home/osf/gateway-containers/bt-joiner/bt-joiner-config/bluetooth_6lowpand.conf
         script-repo:
