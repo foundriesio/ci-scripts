@@ -5,7 +5,7 @@ triggers:
   - name: fio-pull-request
     type: github_pr
     runs:
-      - name: sanity-compile-nrf52
+      - name: sanity-compile-nrf52840_pca10056
         container: zephyrprojectrtos/zephyr-build
         container-user: root
         container-entrypoint: ""
@@ -14,7 +14,7 @@ triggers:
           - name: sanity-test
         params:
           SAVE_OUTDIR: "1"
-          PLATFORM: nrf52_blenano2
+          PLATFORM: nrf52840_pca10056
         script-repo:
           name: fio
           path: zephyr/sanity-compile.sh
@@ -25,7 +25,7 @@ triggers:
       GIT_URL: https://github.com/zephyrproject-rtos/zephyr.git
       GIT_POLL_REFS: "refs/heads/v1.14-branch"
     runs:
-      - name: sanity-compile-nrf52
+      - name: sanity-compile-nrf52840_pca10056
         container: zephyrprojectrtos/zephyr-build
         container-user: root
         container-entrypoint: ""
@@ -34,7 +34,7 @@ triggers:
           - name: sanity-test
         params:
           SAVE_OUTDIR: "1"
-          PLATFORM: nrf52_blenano2
+          PLATFORM: nrf52840_pca10056
         script-repo:
           name: fio
           path: zephyr/sanity-compile.sh
@@ -49,7 +49,7 @@ triggers:
           path: zephyr/sanity-compile.sh
         loop-on:
           - param: PLATFORM
-            values: [frdm_k64f, reel_board, nrf52840_pca10056]
+            values: [frdm_k64f, reel_board, nrf52_blenano2]
 
       - name: zephyr-sample-mcumgr-{loop}
         container: zephyrprojectrtos/zephyr-build
@@ -68,14 +68,14 @@ triggers:
   - name: sanity-test
     type: simple
     runs:
-      - name: sanity-test-nrf52
+      - name: sanity-test-nrf52840_pca10056
         container: zephyrprojectrtos/zephyr-build
         container-user: root
         container-entrypoint: ""
-        host-tag: zephyr-nrf52
+        host-tag: zephyr-nrf52840_pca10056
         privileged: true
         params:
-          PYOCD_BOARD_NAME: RedBearLab-BLE-Nano2
+          PYOCD_BOARD_NAME: nRF52840-DK
         script-repo:
           name: fio
           path: zephyr/sanity-device.sh
