@@ -1,4 +1,4 @@
-timeout: 30   # the qemu testing can take some time
+timeout: 60   # the qemu testing can take some time
 email:
   users: 'ci-notifications@foundries.io'
 triggers:
