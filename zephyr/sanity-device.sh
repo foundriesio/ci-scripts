@@ -56,7 +56,7 @@ sanitycheck  \
 	--test-only \
 	--device-testing \
 	--device-serial $board_tty \
-	--west-flash=--board-id=$board_uid \
+	--west-flash="-r pyocd --board-id=$board_uid" \
 	-e kernel \
 || true
 
