@@ -24,12 +24,6 @@ status "Compiling $APP bootloader"
 run west build -s mcuboot/boot/zephyr -d build-mcuboot -b $PLATFORM
 
 status "Compiling $APP application"
-if [ $PLATFORM = "frdm_k64f" ]; then
-	echo 'CONFIG_NET_DHCPV4=y' >> $APP/boards/frdm_k64f-local.conf
-	# 192.168.0.118 = andy's minnowboard
-	echo 'CONFIG_NET_CONFIG_PEER_IPV4_ADDR="192.168.0.118"' >> $APP/boards/frdm_k64f-local.conf
-	echo 'CONFIG_LWM2M_FIRMWARE_UPDATE_PULL_COAP_PROXY_ADDR="coap://192.168.0.118:5682"' >> $APP/boards/frdm_k64f-local.conf
-fi
 run west build -s $APP -d build-$APP -b $PLATFORM
 run west sign -t imgtool -d build-$APP -- --key mcuboot/root-rsa-2048.pem
 
