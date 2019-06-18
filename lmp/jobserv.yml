@@ -185,7 +185,7 @@ triggers:
     type: lava_pr
     runs:
       - name: lmp-premerge-test-cl-som-imx7
-        container: hub.foundries.io/zmp-sdk
+        container: hub.foundries.io/lmp-sdk
         host-tag: amd64
         script-repo:
           name: fio
@@ -195,7 +195,7 @@ triggers:
     type: lava_pr
     runs:
       - name: lmp-premerge-test-beaglebone-yocto
-        container: hub.foundries.io/zmp-sdk
+        container: hub.foundries.io/lmp-sdk
         host-tag: amd64
         script-repo:
           name: fio
