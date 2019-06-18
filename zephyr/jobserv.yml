@@ -72,7 +72,7 @@ triggers:
         container: zephyrprojectrtos/zephyr-build
         container-user: root
         container-entrypoint: ""
-        host-tag: zephyr-nrf52840_pca10056
+        host-tag: zephyr-nrf52840-pca10056
         privileged: true
         params:
           PYOCD_BOARD_NAME: nRF52840-DK
