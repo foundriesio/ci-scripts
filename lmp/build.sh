@@ -24,6 +24,7 @@ else
 	run ln -s /repo layers/$layer
 fi
 cat /root/.gitconfig >>  /home/builder/.gitconfig
+cp /root/.netrc /home/builder/.netrc || true
 
 mkdir build conf
 cache="/var/cache/bitbake/downloads"
