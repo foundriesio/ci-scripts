@@ -80,11 +80,27 @@ def _check_network(interface, test_label, dst='8.8.8.8'):
         test_case(test_label, 'FAILED')
 
 
+def _check_systemd_job(job_name):
+    try:
+        subprocess.check_call(['systemctl', 'is-active', '--quiet', job_name])
+        test_case('systemd-job-' + job_name, 'PASSED')
+    except Exception:
+        test_case('systemd-job-' + job_name, 'FAILED')
+
+
+def _check_core_systemd_jobs():
+    _check_systemd_job("systemd-networkd-wait-online.service");
+    _check_systemd_job("systemd-timesyncd.service");
+    _check_systemd_job("aktualizr.service");
+
+
 def _test_doanac_hikey():
+    _check_core_systemd_jobs()
     _check_network('wlan0', 'wifi')
 
 
 def _test_doanac_rpi3():
+    _check_core_systemd_jobs()
     _check_network('wlan0', 'wifi', '192.168.0.1')
     _check_network('eth0', 'ethernet')
     if _check_bt_device('D4:E7:43:91:CC:43'):
@@ -92,10 +108,12 @@ def _test_doanac_rpi3():
 
 
 def _test_doanac_rpi0():
+    _check_core_systemd_jobs()
     _check_network('wlan0', 'wifi')
 
 
 def _test_doanac_intel():
+    _check_core_systemd_jobs()
     _check_network('enp2s0', 'ethernet')
 
 
