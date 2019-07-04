@@ -91,7 +91,6 @@ triggers:
               - beaglebone-yocto
               - colibri-imx7
               - cubox-i
-              - hikey960
               - qemuarm64
         params:
           IMAGE: lmp-gateway-image
@@ -170,7 +169,6 @@ triggers:
               - apalis-imx6
               - colibri-imx7
               - cubox-i
-              - hikey960
               - qemuarm64
         params:
           IMAGE: lmp-gateway-image
