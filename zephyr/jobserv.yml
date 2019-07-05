@@ -84,10 +84,16 @@ triggers:
 params:
   archive: /archive
   FLAKY_TESTS: |
+    samples/drivers/led_lp5562
+    samples/subsys/usb/cdc_acm
+    samples/subsys/usb/cdc_acm_composite
+    samples/subsys/usb/dfu
+    samples/subsys/usb/testusb
     tests/benchmarks/sched
     tests/kernel/interrupt
     tests/kernel/sched/schedule_api
     tests/kernel/mem_slab/mslab_threadsafe
+    tests/subsys/fs/nffs_fs_api/large
 
 script-repos:
   fio:
