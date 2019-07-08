@@ -51,7 +51,6 @@ triggers:
             values:
               - intel-corei7-64
               - hikey
-              - raspberrypi0-wifi
         triggers:
           - name: ota-{loop}
         params:
@@ -113,7 +112,6 @@ triggers:
               - raspberrypi3-64
               - intel-corei7-64
               - hikey
-              - raspberrypi0-wifi
         triggers:
           - name: ota-{loop}
         params:
@@ -233,20 +231,6 @@ triggers:
       - name: lmp-ota-hikey
         container: hub.foundries.io/ota-runner
         host-tag: hikey-ota
-        privileged: true
-        test-grepping:
-          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
-          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
-        script-repo:
-          name: fio
-          path: lmp/ota.sh
-
-  - name: ota-raspberrypi0-wifi
-    type: simple
-    runs:
-      - name: lmp-ota-raspberrypi0-wifi
-        container: hub.foundries.io/ota-runner
-        host-tag: raspberrypi0-wifi-ota
         privileged: true
         test-grepping:
           test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
