@@ -107,11 +107,6 @@ def _test_doanac_rpi3():
         _check_leshan_ep('4391cc43')
 
 
-def _test_doanac_rpi0():
-    _check_core_systemd_jobs()
-    _check_network('wlan0', 'wifi')
-
-
 def _test_doanac_intel():
     _check_core_systemd_jobs()
     _check_network('enp2s0', 'ethernet')
@@ -122,7 +117,6 @@ DEVICES = {
     # ota+/jobserv name:  (POLIS_ID, test_function)
     'doanac-minnowboard': (DOANAC, _test_doanac_intel),
     'doanac-hikey-1': (DOANAC, _test_doanac_hikey),
-    'doanac-raspberrypi0-wifi': (DOANAC, _test_doanac_rpi0),
     'doanac-rpi3-64-2': (DOANAC, _test_doanac_rpi3),
     'doanac-x86-qemu-1': (DOANAC, _test_doanac_intel),
 }
