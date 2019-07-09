@@ -50,7 +50,6 @@ triggers:
           - param: MACHINE
             values:
               - intel-corei7-64
-              - hikey
         triggers:
           - name: ota-{loop}
         params:
@@ -111,7 +110,6 @@ triggers:
             values:
               - raspberrypi3-64
               - intel-corei7-64
-              - hikey
         triggers:
           - name: ota-{loop}
         params:
@@ -217,20 +215,6 @@ triggers:
       - name: lmp-ota-intel-corei7-64
         container: hub.foundries.io/ota-runner
         host-tag: amd64-ota
-        privileged: true
-        test-grepping:
-          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
-          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
-        script-repo:
-          name: fio
-          path: lmp/ota.sh
-
-  - name: ota-hikey
-    type: simple
-    runs:
-      - name: lmp-ota-hikey
-        container: hub.foundries.io/ota-runner
-        host-tag: hikey-ota
         privileged: true
         test-grepping:
           test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
