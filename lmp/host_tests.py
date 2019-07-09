@@ -94,11 +94,6 @@ def _check_core_systemd_jobs():
     _check_systemd_job("aktualizr.service");
 
 
-def _test_doanac_hikey():
-    _check_core_systemd_jobs()
-    _check_network('wlan0', 'wifi')
-
-
 def _test_doanac_rpi3():
     _check_core_systemd_jobs()
     _check_network('wlan0', 'wifi', '192.168.0.1')
@@ -116,7 +111,6 @@ DOANAC = '59db9c9a1c85010019e023cc'
 DEVICES = {
     # ota+/jobserv name:  (POLIS_ID, test_function)
     'doanac-minnowboard': (DOANAC, _test_doanac_intel),
-    'doanac-hikey-1': (DOANAC, _test_doanac_hikey),
     'doanac-rpi3-64-2': (DOANAC, _test_doanac_rpi3),
     'doanac-x86-qemu-1': (DOANAC, _test_doanac_intel),
 }
