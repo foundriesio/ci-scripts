@@ -2,7 +2,7 @@
 set -o pipefail
 
 HERE=$(dirname $(readlink -f $0))
-source $HERE/../helpers.sh
+. $HERE/../helpers.sh
 
 require_params FACTORY
 
@@ -37,7 +37,7 @@ for i in `seq 10` ; do
 	fi
 done
 
-TAG=${GIT_SHA:0:6}
+TAG=$(git log -1 --format=%h)
 
 if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker

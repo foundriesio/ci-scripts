@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/sh -eu
 
 HERE=$(dirname $(readlink -f $0))
 TMPDIR=${TMPDIR-/tmp}

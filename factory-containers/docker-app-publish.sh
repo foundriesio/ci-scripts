@@ -2,12 +2,12 @@
 set -o pipefail
 
 HERE=$(dirname $(readlink -f $0))
-source $HERE/../helpers.sh
+. $HERE/../helpers.sh
 
 require_params FACTORY
 
 CREDENTIALS=/var/cache/bitbake/credentials.zip
-TAG=${GIT_SHA:0:6}
+TAG=$(git log -1 --format=%h)
 
 tufrepo=$(mktemp -u -d)
 
@@ -22,7 +22,7 @@ for app in $apps ; do
 done
 
 newsha=$(sha256sum ${tufrepo}/roles/unsigned/targets.json)
-if [[ "$sha" = "$newsha" ]] && [[ -n "$apps" ]] ; then
+if [ "$sha" = "$newsha" ] && [ -n "$apps" ] ; then
 	# there are two outcomes when pushing apps:
 	# 1) the repo has online keys and the targets.json on the server was
 	#    updated
