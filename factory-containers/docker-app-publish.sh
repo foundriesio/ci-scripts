@@ -1,4 +1,5 @@
 #!/bin/sh -e
+# Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: Apache-2.0
 set -o pipefail
 
 HERE=$(dirname $(readlink -f $0))
