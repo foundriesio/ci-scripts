@@ -7,6 +7,8 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
+run apk --no-cache add git
+
 CREDENTIALS=/var/cache/bitbake/credentials.zip
 TAG=$(git log -1 --format=%h)
 
