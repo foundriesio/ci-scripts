@@ -90,6 +90,8 @@ triggers:
               - colibri-imx7
               - cubox-i
               - qemuarm64
+              - raspberrypi3
+              - raspberrypi4
         params:
           IMAGE: lmp-gateway-image
           OSTREE_BRANCHNAME: lmp
@@ -166,6 +168,8 @@ triggers:
               - colibri-imx7
               - cubox-i
               - qemuarm64
+              - raspberrypi3
+              - raspberrypi4
         params:
           IMAGE: lmp-gateway-image
           OSTREE_BRANCHNAME: lmp-premerge
