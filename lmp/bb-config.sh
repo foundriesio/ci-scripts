@@ -19,6 +19,7 @@ OSTREE_BRANCHNAME = "${MACHINE}-${OSTREE_BRANCHNAME}"
 GARAGE_SIGN_REPO = "/tmp/garage_sign_repo"
 GARAGE_TARGET_VERSION = "${H_BUILD}"
 GARAGE_TARGET_URL = "https://ci.foundries.io/projects/${H_PROJECT}/builds/${H_BUILD}"
+GARAGE_CUSTOMIZE_TARGET = "${HERE}/copy-previous-dockerapps"
 EOFEOF
 
 if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then

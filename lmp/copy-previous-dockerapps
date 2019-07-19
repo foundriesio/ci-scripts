@@ -1,0 +1,56 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2019 Foundries.io
+# SPDX-License-Identifier: Apache-2.0
+#
+import argparse
+import logging
+import json
+
+logging.basicConfig(level='INFO')
+
+
+def merge(args):
+    with open(args.targets_json) as f:
+        data = json.load(f)
+
+    targets = data['targets']
+
+    cur = targets[args.target_name]
+    cur_ver = int(cur['custom']['version'])
+    logging.info('Target is: %r', cur)
+
+    # Now find the previous version
+    prev = None
+    prev_ver = 0
+    for tgt in targets.values():
+        if tgt['custom'].get('name') == cur['custom']['name']:
+            tgt_ver = int(tgt['custom']['version'])
+            if tgt_ver > prev_ver and tgt_ver < cur_ver:
+                prev = tgt
+                prev_ver = tgt_ver
+
+    logging.info('Prev is: %r', prev)
+    if prev:
+        apps = prev['custom'].get('docker_apps')
+        if apps:
+            logging.info('Updating build to have apps: %r', apps)
+            cur['custom']['docker_apps'] = apps
+
+            with open(args.targets_json, 'w') as f:
+                json.dump(data, f, indent=2)
+
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        'Copy the docker apps defined in previous target into the latest one.')
+
+    parser.add_argument('targets_json')
+    parser.add_argument('target_name')
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_args()
+    merge(args)
