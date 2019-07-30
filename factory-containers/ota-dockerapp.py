@@ -115,7 +115,8 @@ def add_build(args):
         target['custom']['docker_apps'] = apps
         for app in args.apps:
             filename = os.path.basename(app) + '-' + args.version
-            apps[app] = {'filename': filename}
+            name = os.path.splitext(filename)[0]
+            apps[name] = {'filename': filename}
     logging.info('Latest targets with apps: %r', latest)
     with open(args.targets_json, 'w') as f:
         json.dump(data, f, indent=2)
