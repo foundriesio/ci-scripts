@@ -19,7 +19,7 @@ if [ -z "$IMAGES" ] ; then
 	fi
 fi
 
-/usr/local/bin/dockerd-entrypoint.sh --raw-logs >$archive/dockerd.log 2>&1 &
+DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --raw-logs >$archive/dockerd.log 2>&1 &
 for i in `seq 10` ; do
 	sleep 1
 	docker info >/dev/null 2>&1 && break
