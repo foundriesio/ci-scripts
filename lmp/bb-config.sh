@@ -5,6 +5,7 @@ source $HERE/../helpers.sh
 require_params MACHINE IMAGE
 
 OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME-lmp-localdev}"
+SOTA_CLIENT="${SOTA_CLIENT-aktualizr}"
 H_BUILD="${H_BUILD-lmp-localdev}"
 
 source setup-environment build
@@ -20,6 +21,9 @@ GARAGE_SIGN_REPO = "/tmp/garage_sign_repo"
 GARAGE_TARGET_VERSION = "${H_BUILD}"
 GARAGE_TARGET_URL = "https://ci.foundries.io/projects/${H_PROJECT}/builds/${H_BUILD}"
 GARAGE_CUSTOMIZE_TARGET = "${HERE}/copy-previous-dockerapps"
+
+# Default SOTA client
+SOTA_CLIENT = "${SOTA_CLIENT}"
 EOFEOF
 
 if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then
