@@ -113,7 +113,7 @@ def add_build(args):
     logging.info('Latest targets: %r', latest)
     for target in latest.values():
         target = deepcopy(target)
-        data['targets'][target['name'] + args.version] = target
+        data['targets'][target['custom']['name'] + '-' + args.version] = target
 
         target['custom']['version'] = args.version
         apps = {}
@@ -122,8 +122,8 @@ def add_build(args):
             filename = os.path.basename(app) + '-' + args.version
             name = os.path.splitext(filename)[0]
             apps[name] = {'filename': filename}
+        logging.info('Targets with apps: %r', target)
 
-    logging.info('Latest targets with apps: %r', latest)
     with open(args.targets_json, 'w') as f:
         json.dump(data, f, indent=2)
 

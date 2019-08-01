@@ -17,6 +17,8 @@ tufrepo=$(mktemp -u -d)
 run garage-sign init --repo ${tufrepo} --credentials ${CREDENTIALS}
 run garage-sign targets pull --repo ${tufrepo}
 
+cp ${tufrepo}/roles/unsigned/targets.json /archive/targets-before.json
+
 sha=$(sha256sum ${tufrepo}/roles/unsigned/targets.json)
 apps=$(ls *.dockerapp)
 for app in $apps ; do
@@ -38,6 +40,8 @@ if [ "$sha" = "$newsha" ] && [ -n "$apps" ] ; then
 fi
 
 run ${HERE}/ota-dockerapp.py add-build ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json `ls *.dockerapp`
+
+cp ${tufrepo}/roles/unsigned/targets.json /archive/targets-after.json
 
 echo "Signing local TUF targets"
 run garage-sign targets sign --repo ${tufrepo} --key-name targets
