@@ -9,6 +9,7 @@ import json
 import os
 import sys
 
+from copy import deepcopy
 from datetime import datetime
 from zipfile import ZipFile
 
@@ -111,12 +112,17 @@ def add_build(args):
                     latest[hwid] = target
     logging.info('Latest targets: %r', latest)
     for target in latest.values():
+        target = deepcopy(target)
+        data['targets'][target['name'] + args.version] = target
+
+        target['custom']['version'] = args.version
         apps = {}
         target['custom']['docker_apps'] = apps
         for app in args.apps:
             filename = os.path.basename(app) + '-' + args.version
             name = os.path.splitext(filename)[0]
             apps[name] = {'filename': filename}
+
     logging.info('Latest targets with apps: %r', latest)
     with open(args.targets_json, 'w') as f:
         json.dump(data, f, indent=2)
