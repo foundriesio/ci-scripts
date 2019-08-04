@@ -28,12 +28,13 @@ if [ -z "$IMAGES" ] ; then
 	fi
 fi
 
+status Launching dockerd
 DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12` ; do
 	sleep 1
 	docker info >/dev/null 2>&1 && break
-	if [ $i = 10 ] ; then
-		echo 'Timed out trying to connect to internal docker host.' >&2
+	if [ $i = 12 ] ; then
+		status Timed out trying to connect to internal docker host
 		exit 1
 	fi
 done
