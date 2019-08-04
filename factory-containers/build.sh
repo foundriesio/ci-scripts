@@ -29,6 +29,7 @@ if [ -z "$IMAGES" ] ; then
 fi
 
 status Launching dockerd
+unset DOCKER_HOST
 DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12` ; do
 	sleep 1
