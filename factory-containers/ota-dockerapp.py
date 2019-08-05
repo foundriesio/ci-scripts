@@ -90,8 +90,9 @@ def publish(args):
                      files={'file': ('filename', args.dockerapp)},
                      headers={'Authorization': 'Bearer ' + token},
                      auth=NullAuth())
-    if r.status_code == 412:
-        print('OTA reposerver has offline keys, using: ' + args.targets_json)
+    if r.status_code in (200, 412):
+        # Use our copy of targets.json that includes custom.docker_apps data
+        # and not the one the server may have generated
         os.lseek(args.dockerapp.fileno(), 0, 0)
         add_target(args.targets_json, app, args.version, args.dockerapp.read())
     elif r.status_code != 200:
@@ -124,6 +125,7 @@ def add_build(args):
             apps[name] = {'filename': filename}
         logging.info('Targets with apps: %r', target)
 
+    data['version'] = args.targets_version
     with open(args.targets_json, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -146,6 +148,7 @@ def get_args():
     p.add_argument('credentials', type=argparse.FileType('rb'))
     p.add_argument('version')
     p.add_argument('targets_json')
+    p.add_argument('targets_version')
     p.add_argument('apps', nargs='+')
 
     return parser.parse_args()

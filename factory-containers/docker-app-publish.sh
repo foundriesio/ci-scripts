@@ -7,7 +7,7 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
-run apk --no-cache add git
+run apk --no-cache add git jq
 
 CREDENTIALS=/var/cache/bitbake/credentials.zip
 TAG=$(git log -1 --format=%h)
@@ -19,27 +19,27 @@ run garage-sign targets pull --repo ${tufrepo}
 
 cp ${tufrepo}/roles/unsigned/targets.json /archive/targets-before.json
 
-sha=$(sha256sum ${tufrepo}/roles/unsigned/targets.json)
 apps=$(ls *.dockerapp)
 for app in $apps ; do
 	sed -i ${app} -e "s/image: hub.foundries.io\/${FACTORY}\/\(.*\):latest/image: hub.foundries.io\/${FACTORY}\/\1:$TAG/g"
 	run ${HERE}/ota-dockerapp.py publish ${app} ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json
 done
 
-newsha=$(sha256sum ${tufrepo}/roles/unsigned/targets.json)
-if [ "$sha" = "$newsha" ] && [ -n "$apps" ] ; then
 	# there are two outcomes when pushing apps:
 	# 1) the repo has online keys and the targets.json on the server was
 	#    updated
 	# 2) we have offline keys, and the script updated the local copy
 	#    of targets.json
-	# If we are here, #1 happened and we need to pull in the new version
-	# of targets.json
+	# we can't really distinguish which case we are in. Pulling isn't too
+	# terrible to make things work for now. However:
+	# TODO once everyone has offline keys, we can remove this junk:
 	echo "Pulling updated TUF targets from the remote TUF repository"
+	cp ${tufrepo}/roles/unsigned/targets.json /tmp/targets.json
 	run garage-sign targets pull --repo ${tufrepo}
-fi
+	targets_version=$(jq .version ${tufrepo}/roles/unsigned/targets.json)
+	mv /tmp/targets.json ${tufrepo}/roles/unsigned/targets.json
 
-run ${HERE}/ota-dockerapp.py add-build ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json `ls *.dockerapp`
+run ${HERE}/ota-dockerapp.py add-build ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json ${targets_version} `ls *.dockerapp`
 
 cp ${tufrepo}/roles/unsigned/targets.json /archive/targets-after.json
 
