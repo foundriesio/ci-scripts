@@ -60,17 +60,10 @@ def flash_main():
         log('Last seen: %s' % device['last-seen'])
         log('Update stream: %s' % device['update-stream'])
 
-    with test_case_ctx('find-test-hash') as log:
-        url = os.environ['H_TRIGGER_URL'] + 'other/ostree.sha.txt'
-        target_hash = secret_get(url, 'osftok', 'OSF-TOKEN').text.strip()
+    build = os.environ['H_BUILD']
 
-    with test_case_ctx('download-update') as log:
-        if ostree_hash() == target_hash:
-            # the "wait_for_update" logic only works if an update can
-            # be applied
-            log('Already running hash(%s), skipping update' % target_hash)
-        else:
-            update_device(log, device, target_hash)
+    with test_case_ctx('do-update') as log:
+        update_device(log, device, build)
 
     test_start('reboot')
     _create_reboot_script(True)
