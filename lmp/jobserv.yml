@@ -61,25 +61,6 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-      # aktualizr-lite images
-      - name: lite-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
-              - raspberrypi3-64
-        params:
-          IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp
-          SOTA_CLIENT: aktualizr-lite
-          SOTA_PACKED_CREDENTIALS: /var/cache/bitbake/credentials-lite.zip
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
       # mini images
       - name: other-{loop}
         container: hub.foundries.io/lmp-sdk
@@ -150,8 +131,6 @@ triggers:
             values:
               - cl-som-imx7
               - beaglebone-yocto
-        #triggers:
-        #  - name: lava-{loop}
         params:
           IMAGE: lmp-gateway-image
           OSTREE_BRANCHNAME: lmp-premerge
@@ -218,26 +197,6 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-  - name: lava-cl-som-imx7
-    type: lava_pr
-    runs:
-      - name: lmp-premerge-test-cl-som-imx7
-        container: hub.foundries.io/zmp-sdk
-        host-tag: amd64
-        script-repo:
-          name: fio
-          path: lmp/lava.sh
-
-  - name: lava-beaglebone-yocto
-    type: lava_pr
-    runs:
-      - name: lmp-premerge-test-beaglebone-yocto
-        container: hub.foundries.io/zmp-sdk
-        host-tag: amd64
-        script-repo:
-          name: fio
-          path: lmp/lava.sh
-
   - name: ota-raspberrypi3-64
     type: simple
     runs:
@@ -270,6 +229,7 @@ params:
   archive: /archive
   DISTRO: lmp
   SOTA_PACKED_CREDENTIALS: /var/cache/bitbake/premerge-credentials.zip
+  SOTA_CLIENT: aktualizr-lite
 
 script-repos:
   fio:
