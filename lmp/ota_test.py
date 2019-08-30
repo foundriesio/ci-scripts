@@ -45,25 +45,11 @@ def _create_reboot_script(cold):
 
 
 def flash_main():
-    from ota_api import device_get, update_device
-    from host_tests import DEVICES
-
-    test_start('ota-update')
-    with test_case_ctx('ota-api') as log:
-        name = os.environ['H_WORKER']
-        owner = DEVICES[name][0]
-        log('Looking up device: %s' % name)
-        device = device_get(name, owner)
-        log('Device image is: %s - %s' % (
-            device['image']['name'], device['image']['hash']))
-        log('Device status: %s' % device['status'])
-        log('Last seen: %s' % device['last-seen'])
-        log('Update stream: %s' % device['update-stream'])
+    from ota_api import update_device
 
     build = os.environ['H_BUILD']
-
     with test_case_ctx('do-update') as log:
-        update_device(log, device, build)
+        update_device(log, build)
 
     test_start('reboot')
     _create_reboot_script(True)

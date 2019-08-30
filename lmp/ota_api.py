@@ -2,17 +2,6 @@ import asyncio
 import sys
 
 import asyncssh
-import requests
-
-from helpers import secret
-
-
-class UpdateError(Exception):
-    show_stack = False
-
-
-def lmp_headers():
-    return {'OSF-TOKEN': secret('osftok')}
 
 
 def _host_connect():
@@ -33,8 +22,8 @@ class MySSHClientSession(asyncssh.SSHClientSession):
             raise
 
 
-def update_device(log, device, update_name):
-    cmd = 'sudo -S aktualizr-lite update ' + update_name
+def update_device(log, update_name):
+    cmd = 'sudo -S aktualizr-lite update --update-name ' + update_name
 
     async def ssh():
         async with _host_connect() as conn:
@@ -43,6 +32,8 @@ def update_device(log, device, update_name):
             chan.write('osf\n')
             chan.write_eof()
             await chan.wait_closed()
+            if chan.get_exit_status() != 0:
+                sys.exit('== ERROR: Unable to update device')
 
     log('SSHing into host to perform update')
     try:
@@ -52,20 +43,3 @@ def update_device(log, device, update_name):
     except KeyboardInterrupt:
         pass
     log('device updated')
-
-
-def device_get(name, owner):
-    # devices live in different "update-streams". the "list" api returns them
-    # all, so use that to find the device and drive the CI logic
-    url = 'https://api.foundries.io/lmp/devices/'
-    r = requests.get(url, headers=lmp_headers(), params={'user': owner})
-    if r.status_code == 200:
-        try:
-            for d in r.json():
-                if d['name'] == name:
-                    d['url'] += '&owner=' + owner
-                    return d
-        except IndexError:
-            pass  # will throw an exception below
-    raise UpdateError('Unable to find device(%s): %d\n%s' % (
-        url, r.status_code, r.text))

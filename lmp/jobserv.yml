@@ -209,7 +209,7 @@ triggers:
 params:
   archive: /archive
   DISTRO: lmp
-  SOTA_PACKED_CREDENTIALS: /var/cache/bitbake/premerge-credentials.zip
+  SOTA_PACKED_CREDENTIALS: /var/cache/bitbake/credentials.zip
   SOTA_CLIENT: aktualizr-lite
 
 script-repos:
