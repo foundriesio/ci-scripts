@@ -140,25 +140,6 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-      # aktualizr-lite images
-      - name: lite-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
-              - raspberrypi3-64
-        params:
-          IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp-premerge
-          SOTA_CLIENT: aktualizr-lite
-          SOTA_PACKED_CREDENTIALS: /var/cache/bitbake/credentials-lite.zip
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
       - name: build-{loop}
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-osf
