@@ -20,11 +20,17 @@ OSTREE_BRANCHNAME = "${MACHINE}-${OSTREE_BRANCHNAME}"
 GARAGE_SIGN_REPO = "/tmp/garage_sign_repo"
 GARAGE_TARGET_VERSION = "${H_BUILD}"
 GARAGE_TARGET_URL = "https://ci.foundries.io/projects/${H_PROJECT}/builds/${H_BUILD}"
-GARAGE_CUSTOMIZE_TARGET = "${HERE}/copy-previous-dockerapps"
+GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"
 EOFEOF
+
+if [ -n "$OTA_LITE_TAG" ] ; then
+	cat << EOFEOF >> conf/local.conf
+export OTA_LITE_TAG = "${OTA_LITE_TAG}"
+EOFEOF
+fi
 
 if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then
 	status "SOTA_PACKED_CREDENTIALS not found, disabling OSTree publishing logic"

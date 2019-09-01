@@ -6,6 +6,9 @@
 import argparse
 import logging
 import json
+import os
+
+from shutil import copyfile
 
 logging.basicConfig(level='INFO')
 
@@ -15,10 +18,16 @@ def merge(args):
         data = json.load(f)
 
     targets = data['targets']
+    changed = False
 
     cur = targets[args.target_name]
     cur_ver = int(cur['custom']['version'])
     logging.info('Target is: %r', cur)
+    tag = os.environ.get('OTA_LITE_TAG')
+    if tag:
+        logging.info('Settings target tags to: [%s]', tag)
+        cur['custom']['tags'] = [tag]
+        changed = True
 
     # Now find the previous version
     prev = None
@@ -36,14 +45,20 @@ def merge(args):
         if apps:
             logging.info('Updating build to have apps: %r', apps)
             cur['custom']['docker_apps'] = apps
+            changed = True
 
-            with open(args.targets_json, 'w') as f:
-                json.dump(data, f, indent=2)
+    if changed:
+        logging.info('Target has changed, saving changes')
+        copyfile(args.targets_json, '/archive/targets-before.json')
+        with open(args.targets_json, 'w') as f:
+            json.dump(data, f, indent=2)
+        copyfile(args.targets_json, '/archive/targets-after.json')
 
 
 def get_args():
     parser = argparse.ArgumentParser(
-        'Copy the docker apps defined in previous target into the latest one.')
+        '''Do LMP customiziations of the current build target. Including
+           copying docker apps defined in the previous build target.''')
 
     parser.add_argument('targets_json')
     parser.add_argument('target_name')

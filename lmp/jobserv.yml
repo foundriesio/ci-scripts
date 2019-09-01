@@ -9,6 +9,7 @@ triggers:
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
         refs/heads/master
+      OTA_LITE_TAG: postmerge
     runs:
       # supported images that have OTA
       - name: supported-{loop}
@@ -103,6 +104,8 @@ triggers:
 
   - name: Code Review
     type: github_pr
+    params:
+      OTA_LITE_TAG: premerge
     runs:
       - name: build-{loop}
         container: hub.foundries.io/lmp-sdk
