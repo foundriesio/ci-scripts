@@ -50,6 +50,10 @@ DISTRO_VERSION_append = "-${H_BUILD}"
 
 # get build stats to make sure that we use sstate properly
 INHERIT += "buildstats buildstats-summary"
+
+# archive sources for target recipes (for license compliance)
+INHERIT += "archiver"
+COPYLEFT_RECIPE_TYPES = "target"
 EOFEOF
 
 if [ $(ls ../sstate-cache | wc -l) -ne 0 ] ; then
