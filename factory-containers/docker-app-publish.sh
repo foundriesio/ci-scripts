@@ -25,20 +25,6 @@ for app in $apps ; do
 	run ${HERE}/ota-dockerapp.py publish ${app} ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json
 done
 
-	# there are two outcomes when pushing apps:
-	# 1) the repo has online keys and the targets.json on the server was
-	#    updated
-	# 2) we have offline keys, and the script updated the local copy
-	#    of targets.json
-	# we can't really distinguish which case we are in. Pulling isn't too
-	# terrible to make things work for now. However:
-	# TODO once everyone has offline keys, we can remove this junk:
-	echo "Pulling updated TUF targets from the remote TUF repository"
-	cp ${tufrepo}/roles/unsigned/targets.json /tmp/targets.json
-	run garage-sign targets pull --repo ${tufrepo}
-	targets_version=$(jq .version ${tufrepo}/roles/unsigned/targets.json)
-	mv /tmp/targets.json ${tufrepo}/roles/unsigned/targets.json
-
 run ${HERE}/ota-dockerapp.py add-build ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json ${targets_version} `ls *.dockerapp`
 
 cp ${tufrepo}/roles/unsigned/targets.json /archive/targets-after.json
