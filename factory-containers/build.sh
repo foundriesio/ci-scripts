@@ -50,6 +50,8 @@ echo '<testsuite name="unit-tests">' > /archive/junit.xml
 trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 
 for x in $IMAGES ; do
+	# Skip building things that end with .disabled
+	echo $x | grep -q -E \\.disabled$ && continue
 	unset SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
 	conf=$x/docker-build.conf
 	if [ -f $conf ] ; then
