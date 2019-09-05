@@ -7,6 +7,8 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
+apps=$(ls *.dockerapp 2>/dev/null) || exit 0
+
 run apk --no-cache add git jq
 
 CREDENTIALS=/var/cache/bitbake/credentials.zip
@@ -19,7 +21,6 @@ run garage-sign targets pull --repo ${tufrepo}
 
 cp ${tufrepo}/roles/unsigned/targets.json /archive/targets-before.json
 
-apps=$(ls *.dockerapp)
 for app in $apps ; do
 	sed -i ${app} -e "s/image: hub.foundries.io\/${FACTORY}\/\(.*\):latest/image: hub.foundries.io\/${FACTORY}\/\1:$TAG/g"
 	run ${HERE}/ota-dockerapp.py publish ${app} ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json
