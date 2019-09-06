@@ -109,7 +109,7 @@ if [ -d "${archive}" ] ; then
 
 	# Compress and publish source tarball (for *GPL* packages)
 	if [ -d ${DEPLOY_DIR_IMAGE}/source-release ]; then
-		tar -C ${DEPLOY_DIR_IMAGE} -cf ${MACHINE}-source-release.tar source-release
+		tar --remove-files -C ${DEPLOY_DIR_IMAGE} -cf ${MACHINE}-source-release.tar source-release
 		mv ${MACHINE}-source-release.tar ${archive}/other/
 	fi
 
