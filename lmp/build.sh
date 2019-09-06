@@ -42,7 +42,8 @@ chown -R builder .
 su builder -c $HERE/bb-config.sh
 su builder -c $HERE/bb-build.sh
 
-DEPLOY_DIR_IMAGE=$(cat build/image_dir)
+DEPLOY_DIR="$(cat build/deploy_dir)"
+DEPLOY_DIR_IMAGE="${DEPLOY_DIR}/images/${MACHINE}"
 
 # Prepare files to publish
 rm -f ${DEPLOY_DIR_IMAGE}/*.txt
@@ -64,8 +65,51 @@ for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.wic.gz; do
 	ln -s $(basename ${img}) ${img%.wic.gz}.img.gz
 done
 
+# Link the license manifest for all the images produced by the build
+for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest; do
+	image_name=`basename ${img} | sed -e "s/.manifest//"`
+	image_name_id=`readlink ${img} | sed -e "s/.rootfs.manifest//"`
+	cp ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
+	ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
+	# Also take care of the image_license, which contains the binaries used by wic outside the rootfs
+	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ]; then
+		cp ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.image_license.manifest
+		ln -sf ${image_name_id}.image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.image_license.manifest
+	fi
+done
+
+# Generate a tarball containing the source code of *GPL* packages (based on yocto dev-manual)
+DEPLOY_SOURCES="${DEPLOY_DIR_IMAGE}/source-release"
+mkdir -p ${DEPLOY_SOURCES}
+for sarch in ${DEPLOY_DIR}/sources/*; do
+	for pkg in ${sarch}/*; do
+		# Get package name from path
+		p=`basename $pkg`
+		p=${p%-*}
+		p=${p%-*}
+
+		# Check if package is part of any of the produced images
+		grep -q "NAME: ${p}$" ${DEPLOY_DIR_IMAGE}/*.manifest || continue
+
+		# Only archive GPL packages (update *GPL* regex for additional licenses)
+		numfiles=`ls ${DEPLOY_DIR}/licenses/${p}/*GPL* 2> /dev/null | wc -l`
+		if [ ${numfiles} -gt 0 ]; then
+			mkdir -p ${DEPLOY_SOURCES}/${p}/source
+			cp -f ${pkg}/* ${DEPLOY_SOURCES}/${p}/source 2> /dev/null
+			mkdir -p ${DEPLOY_SOURCES}/${p}/license
+			cp -f ${DEPLOY_DIR}/licenses/${p}/* ${DEPLOY_SOURCES}/${p}/license 2> /dev/null
+		fi
+	done
+done
+
 if [ -d "${archive}" ] ; then
 	mkdir ${archive}/other
+
+	# Compress and publish source tarball (for *GPL* packages)
+	if [ -d ${DEPLOY_DIR_IMAGE}/source-release ]; then
+		tar -C ${DEPLOY_DIR_IMAGE} -cf ${MACHINE}-source-release.tar source-release
+		mv ${MACHINE}-source-release.tar ${archive}/other/
+	fi
 
 	# Compress and publish the ostree repository
 	if [ -d ${DEPLOY_DIR_IMAGE}/ostree_repo ]; then
