@@ -8,8 +8,6 @@ import logging
 import json
 import os
 
-from shutil import copyfile
-
 logging.basicConfig(level='INFO')
 
 
@@ -49,10 +47,8 @@ def merge(args):
 
     if changed:
         logging.info('Target has changed, saving changes')
-        copyfile(args.targets_json, '/archive/targets-before.json')
         with open(args.targets_json, 'w') as f:
             json.dump(data, f, indent=2)
-        copyfile(args.targets_json, '/archive/targets-after.json')
 
 
 def get_args():
