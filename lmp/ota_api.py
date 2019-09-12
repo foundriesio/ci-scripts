@@ -9,7 +9,7 @@ def _host_connect():
     # 3.8 version of alpine's openssl. Once we are one 3.9, we can remove
     kex_algs = ('diffie-hellman-group-exchange-sha256',)
     return asyncssh.connect('172.17.0.1', known_hosts=None,
-                            username='osf', password='osf', kex_algs=kex_algs)
+                            username='fio', password='fio', kex_algs=kex_algs)
 
 
 class MySSHClientSession(asyncssh.SSHClientSession):
@@ -29,7 +29,7 @@ def update_device(log, update_name):
         async with _host_connect() as conn:
             chan, session = await conn.create_session(MySSHClientSession, cmd)
             session.log = log
-            chan.write('osf\n')
+            chan.write('fio\n')
             chan.write_eof()
             await chan.wait_closed()
             if chan.get_exit_status() != 0:
