@@ -24,6 +24,9 @@ GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"
+
+# Additional packages based on the CI job used
+IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
 EOFEOF
 
 if [ -n "$OTA_LITE_TAG" ] ; then
