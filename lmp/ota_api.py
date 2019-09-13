@@ -23,7 +23,7 @@ class MySSHClientSession(asyncssh.SSHClientSession):
 
 
 def update_device(log, update_name):
-    cmd = 'sudo -S aktualizr-lite update --update-name ' + update_name
+    cmd = 'sudo -S /bin/sh -c "aktualizr-lite list; aktualizr-lite update --update-name ' + update_name + '"'
 
     async def ssh():
         async with _host_connect() as conn:
