@@ -60,7 +60,7 @@ def _host_connect():
     # 3.8 version of alpine's openssl. Once we are one 3.9, we can remove
     kex_algs = ('diffie-hellman-group-exchange-sha256',)
     return asyncssh.connect('172.17.0.1', known_hosts=None,
-                            username='osf', password='osf', kex_algs=kex_algs)
+                            username='fio', password='fio', kex_algs=kex_algs)
 
 
 def ostree_hash():
