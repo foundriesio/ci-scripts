@@ -11,7 +11,8 @@ require_params PRODUCT
 
 run apk --no-cache add file git perl-xml-xpath
 
-/usr/local/bin/dockerd-entrypoint.sh --raw-logs >$archive/dockerd.log 2>&1 &
+DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --raw-logs >/archive/dockerd.log 2>&1 &
+unset DOCKER_HOST
 for i in `seq 10` ; do
 	sleep 1
 	docker info >/dev/null 2>&1 && break
