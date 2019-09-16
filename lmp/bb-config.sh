@@ -6,6 +6,7 @@ require_params MACHINE IMAGE
 
 OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME-lmp-localdev}"
 SOTA_CLIENT="${SOTA_CLIENT-aktualizr}"
+AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
 
 source setup-environment build
@@ -24,6 +25,9 @@ GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"
+
+# Default AKLITE tag
+AKLITE_TAG = "${AKLITE_TAG}"
 
 # Additional packages based on the CI job used
 IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
