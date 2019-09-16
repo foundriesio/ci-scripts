@@ -106,6 +106,7 @@ triggers:
     type: github_pr
     params:
       OTA_LITE_TAG: premerge
+      AKLITE_TAG: premerge
     runs:
       - name: build-{loop}
         container: hub.foundries.io/lmp-sdk
