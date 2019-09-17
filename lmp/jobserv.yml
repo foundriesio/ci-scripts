@@ -88,7 +88,6 @@ triggers:
             values:
               - apalis-imx6
               - beaglebone-yocto
-              - colibri-imx7
               - cubox-i
               - qemuarm64
               - raspberrypi3
@@ -167,7 +166,6 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
-              - colibri-imx7
               - cubox-i
               - qemuarm64
               - raspberrypi3
