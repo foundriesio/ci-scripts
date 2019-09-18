@@ -92,6 +92,7 @@ triggers:
               - qemuarm64
               - raspberrypi3
               - raspberrypi4
+              - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
           OSTREE_BRANCHNAME: lmp
