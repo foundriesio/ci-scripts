@@ -1,6 +1,6 @@
 timeout: 60   # the qemu testing can take some time
 email:
-  users: 'ci-notifications@foundries.io'
+  users: 'mike@foundries.io'
 triggers:
   - name: fio-pull-request
     type: github_pr
