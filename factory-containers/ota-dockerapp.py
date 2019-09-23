@@ -125,7 +125,6 @@ def add_build(args):
             apps[name] = {'filename': filename}
         logging.info('Targets with apps: %r', target)
 
-    data['version'] = args.targets_version
     with open(args.targets_json, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -148,7 +147,6 @@ def get_args():
     p.add_argument('credentials', type=argparse.FileType('rb'))
     p.add_argument('version')
     p.add_argument('targets_json')
-    p.add_argument('targets_version')
     p.add_argument('apps', nargs='+')
 
     return parser.parse_args()

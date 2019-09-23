@@ -26,7 +26,7 @@ for app in $apps ; do
 	run ${HERE}/ota-dockerapp.py publish ${app} ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json
 done
 
-run ${HERE}/ota-dockerapp.py add-build ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json ${targets_version} `ls *.dockerapp`
+run ${HERE}/ota-dockerapp.py add-build ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json `ls *.dockerapp`
 
 cp ${tufrepo}/roles/unsigned/targets.json /archive/targets-after.json
 
