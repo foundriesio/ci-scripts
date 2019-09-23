@@ -97,8 +97,7 @@ def _test_doanac_rpi3():
     _check_core_systemd_jobs()
     _check_network('wlan0', 'wifi', '192.168.0.1')
     _check_network('eth0', 'ethernet')
-    if _check_bt_device('D4:E7:43:91:CC:43'):
-        _check_leshan_ep('4391cc43')
+    _check_bt_device('D4:E7:43:91:CC:43')
 
 
 def _test_doanac_intel():
@@ -111,7 +110,6 @@ DEVICES = {
     # ota+/jobserv name:  (POLIS_ID, test_function)
     'doanac-minnowboard': (DOANAC, _test_doanac_intel),
     'doanac-rpi3-64-2': (DOANAC, _test_doanac_rpi3),
-    'doanac-x86-qemu-1': (DOANAC, _test_doanac_intel),
 }
 
 if __name__ == '__main__':
