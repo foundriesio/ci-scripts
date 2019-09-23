@@ -87,13 +87,21 @@ params:
     samples/drivers/led_lp5562
     samples/subsys/usb/cdc_acm
     samples/subsys/usb/cdc_acm_composite
+    samples/subsys/usb/console
     samples/subsys/usb/dfu
     samples/subsys/usb/testusb
     tests/benchmarks/sched
+    tests/drivers/counter/counter_basic_api
+    tests/drivers/pwm/pwm_api
     tests/kernel/interrupt
     tests/kernel/sched/schedule_api
     tests/kernel/mem_slab/mslab_threadsafe
+    tests/net/ieee802154/fragment
+    tests/subsys/fs/littlefs
+    tests/subsys/fs/nffs_fs_api/cache
     tests/subsys/fs/nffs_fs_api/large
+    tests/subsys/usb/desc_sections
+    tests/subsys/usb/device
 
 script-repos:
   fio:
