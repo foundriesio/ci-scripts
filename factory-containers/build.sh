@@ -20,12 +20,7 @@ wget -O /bin/manifest-tool https://github.com/estesp/manifest-tool/releases/down
 chmod +x /bin/manifest-tool
 
 if [ -z "$IMAGES" ] ; then
-	if [ -z "$CLEAN_BUILD" ] ; then
-		IMAGES=$(find * -prune -type d)
-	else
-		# Only build images when their files change
-		IMAGES=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA | cut -d "/" -f1 | sort -u)
-	fi
+	IMAGES=$(find * -prune -type d)
 fi
 
 status Launching dockerd
@@ -52,7 +47,17 @@ trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 for x in $IMAGES ; do
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
-	unset SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
+	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
+
+	no_op_tag=0
+	CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/)
+	if [[ ! -z "$CHANGED" ]]; then
+		status "Detected changes to $x"
+	else
+		status "No changes to $x, tagging only"
+		no_op_tag=1
+	fi
+
 	conf=$x/docker-build.conf
 	if [ -f $conf ] ; then
 		echo "Sourcing docker-build.conf for build rules in $x"
@@ -84,9 +89,19 @@ for x in $IMAGES ; do
 		auth=1
 	fi
 
-	status Building docker image $x for $ARCH
 	cd $x
+<<<<<<< HEAD
 	run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+=======
+	if [ $no_op_tag -eq 1 ] ; then
+		status Tagging docker image $x for $ARCH
+		docker tag ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH ${ct_base}:$TAG-$ARCH
+	else
+		status Building docker image $x for $ARCH
+		run docker build --cache-from ${ct_base}::${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+	fi
+
+>>>>>>> factory-containers/build.sh: fix modification detection
 	if [ $auth -eq 1 ] ; then
 		run docker push ${ct_base}:$TAG-$ARCH
 
