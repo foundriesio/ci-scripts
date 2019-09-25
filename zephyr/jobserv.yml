@@ -84,7 +84,9 @@ triggers:
 params:
   archive: /archive
   FLAKY_TESTS: |
+    samples/display/ili9340
     samples/drivers/led_lp5562
+    samples/gui/lvgl
     samples/subsys/usb/cdc_acm
     samples/subsys/usb/cdc_acm_composite
     samples/subsys/usb/console
@@ -102,6 +104,7 @@ params:
     tests/subsys/fs/nffs_fs_api/large
     tests/subsys/usb/desc_sections
     tests/subsys/usb/device
+
 
 script-repos:
   fio:
