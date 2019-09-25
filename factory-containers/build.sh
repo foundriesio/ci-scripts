@@ -40,7 +40,7 @@ for i in `seq 12` ; do
 	fi
 done
 
-TAG=$(git log -1 --format=%h)
+TAG=${GIT_SHA:0:7}
 
 if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
@@ -73,16 +73,21 @@ for x in $IMAGES ; do
 	# allow the docker-build.conf to override our manifest platforms
 	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-linux/amd64,linux/arm,linux/arm64}"
 
-	status Building docker image $x for $ARCH
-	cd $x
 	ct_base="hub.foundries.io/${FACTORY}/$x"
-	run docker build -t ${ct_base}:$TAG-$ARCH --force-rm .
+
+	auth=0
 	if [ -f /secrets/osftok ] ; then
 		status "Doing docker-login to hub.foundries.io with secret"
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
-		# do a quick sanity check to make sure we are logged in
-		run docker pull ${ct_base} || echo "WARNING - docker pull failed, is this a new container image?"
+		# sanity check and pull in a cached image if it exists
+		run docker pull ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH || echo "WARNING - no cached image"
+		auth=1
+	fi
 
+	status Building docker image $x for $ARCH
+	cd $x
+	run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+	if [ $auth -eq 1 ] ; then
 		run docker push ${ct_base}:$TAG-$ARCH
 
 		run manifest-tool push from-args \
