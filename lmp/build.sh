@@ -130,6 +130,13 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/bbl* ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/fw_* ${archive}/other/ || true
 
+	# Handle user provided extra artifacts
+	if [ ! -z "${EXTRA_ARTIFACTS}" ]; then
+		for extra_file in ${EXTRA_ARTIFACTS}; do
+			cp ${DEPLOY_DIR_IMAGE}/${extra_file} ${archive}/
+		done
+	fi
+
 	# Make the main img.gz be in the root of the archive
 	mv ${archive}/other/lmp-*.img.gz ${archive}/ || true
 	mv ${archive}/other/boot*.img ${archive}/ || true
