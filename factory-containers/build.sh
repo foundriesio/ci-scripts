@@ -84,24 +84,23 @@ for x in $IMAGES ; do
 	if [ -f /secrets/osftok ] ; then
 		status "Doing docker-login to hub.foundries.io with secret"
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
-		# sanity check and pull in a cached image if it exists
-		run docker pull ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH || echo "WARNING - no cached image"
+		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
+		run docker pull ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH || no_op_tag=0
+		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ]; then
+			echo "WARNING - no cached image found, forcing a rebuild"
+		fi
 		auth=1
 	fi
 
 	cd $x
-<<<<<<< HEAD
-	run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
-=======
 	if [ $no_op_tag -eq 1 ] ; then
 		status Tagging docker image $x for $ARCH
-		docker tag ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH ${ct_base}:$TAG-$ARCH
+		run docker tag ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH ${ct_base}:$TAG-$ARCH
 	else
 		status Building docker image $x for $ARCH
-		run docker build --cache-from ${ct_base}::${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+		run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
 	fi
 
->>>>>>> factory-containers/build.sh: fix modification detection
 	if [ $auth -eq 1 ] ; then
 		run docker push ${ct_base}:$TAG-$ARCH
 
