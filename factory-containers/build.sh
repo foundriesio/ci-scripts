@@ -1,5 +1,14 @@
 #!/bin/sh -e
 # Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: Apache-2.0
+#
+# This script will handle the follow scenarios for building containers
+#   * If NOCACHE flag is set, it will rebuild all container images without cache.
+#   * If NOCACHE flag is _NOT_ set, it will only rebuild containers in which 
+#     files have changed. This is the default behavior.
+#   * If the image cache cannot be pulled, a fresh rebuild will be forced.
+#   * If the image cache _CAN_ be pulled, this cached image is tagged with 
+#     the current SHA. This allows the subsequent docker-app publish to provide
+#     an update which has a valid container image in the registry.
 set -o pipefail
 
 HERE=$(dirname $(readlink -f $0))
@@ -20,12 +29,7 @@ wget -O /bin/manifest-tool https://github.com/estesp/manifest-tool/releases/down
 chmod +x /bin/manifest-tool
 
 if [ -z "$IMAGES" ] ; then
-	if [ -z "$CLEAN_BUILD" ] ; then
-		IMAGES=$(find * -prune -type d)
-	else
-		# Only build images when their files change
-		IMAGES=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA | cut -d "/" -f1 | sort -u)
-	fi
+	IMAGES=$(find * -prune -type d)
 fi
 
 status Launching dockerd
@@ -40,7 +44,7 @@ for i in `seq 12` ; do
 	fi
 done
 
-TAG=$(git log -1 --format=%h)
+TAG=${GIT_SHA:0:7}
 
 if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
@@ -52,7 +56,20 @@ trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 for x in $IMAGES ; do
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
-	unset SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
+	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
+
+	# If NOCACHE is not set, only build images that have changed.
+	if [ -z "$NOCACHE" ] ; then
+		no_op_tag=0
+		CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/)
+		if [[ ! -z "$CHANGED" ]]; then
+			status "Detected changes to $x"
+		else
+			status "No changes to $x, tagging only"
+			no_op_tag=1
+		fi
+	fi
+
 	conf=$x/docker-build.conf
 	if [ -f $conf ] ; then
 		echo "Sourcing docker-build.conf for build rules in $x"
@@ -73,16 +90,35 @@ for x in $IMAGES ; do
 	# allow the docker-build.conf to override our manifest platforms
 	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-linux/amd64,linux/arm,linux/arm64}"
 
-	status Building docker image $x for $ARCH
-	cd $x
 	ct_base="hub.foundries.io/${FACTORY}/$x"
-	run docker build -t ${ct_base}:$TAG-$ARCH --force-rm .
+
+	auth=0
 	if [ -f /secrets/osftok ] ; then
 		status "Doing docker-login to hub.foundries.io with secret"
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
-		# do a quick sanity check to make sure we are logged in
-		run docker pull ${ct_base} || echo "WARNING - docker pull failed, is this a new container image?"
+		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
+		run docker pull ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH || no_op_tag=0
+		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ]; then
+			echo "WARNING - no cached image found, forcing a rebuild"
+		fi
+		auth=1
+	fi
 
+	cd $x
+	if [ $no_op_tag -eq 1 ] ; then
+		status Tagging docker image $x for $ARCH
+		run docker tag ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH ${ct_base}:$TAG-$ARCH
+	else
+		if [ -z "$NOCACHE" ] ; then
+			status Building docker image $x for $ARCH with cache
+			run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+		else
+			status Building docker image $x for $ARCH with no cache
+			run docker build --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm .
+		fi
+	fi
+
+	if [ $auth -eq 1 ] ; then
 		run docker push ${ct_base}:$TAG-$ARCH
 
 		run manifest-tool push from-args \
