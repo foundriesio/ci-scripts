@@ -49,13 +49,16 @@ for x in $IMAGES ; do
 	echo $x | grep -q -E \\.disabled$ && continue
 	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
 
-	no_op_tag=0
-	CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/)
-	if [[ ! -z "$CHANGED" ]]; then
-		status "Detected changes to $x"
-	else
-		status "No changes to $x, tagging only"
-		no_op_tag=1
+	# If NOCACHE is not set, only build images that have changed.
+	if [ -z "$NOCACHE" ] ; then
+		no_op_tag=0
+		CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/)
+		if [[ ! -z "$CHANGED" ]]; then
+			status "Detected changes to $x"
+		else
+			status "No changes to $x, tagging only"
+			no_op_tag=1
+		fi
 	fi
 
 	conf=$x/docker-build.conf
@@ -97,8 +100,13 @@ for x in $IMAGES ; do
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH ${ct_base}:$TAG-$ARCH
 	else
-		status Building docker image $x for $ARCH
-		run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+		if [ -z "$NOCACHE" ] ; then
+			status Building docker image $x for $ARCH with cache
+			run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+		else
+			status Building docker image $x for $ARCH with no cache
+			run docker build --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm .
+		fi
 	fi
 
 	if [ $auth -eq 1 ] ; then
