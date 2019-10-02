@@ -1,5 +1,14 @@
 #!/bin/sh -e
 # Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: Apache-2.0
+#
+# This script will handle the follow scenarios for building containers
+#   * If NOCACHE flag is set, it will rebuild all container images without cache.
+#   * If NOCACHE flag is _NOT_ set, it will only rebuild containers in which 
+#     files have changed. This is the default behavior.
+#   * If the image cache cannot be pulled, a fresh rebuild will be forced.
+#   * If the image cache _CAN_ be pulled, this cached image is tagged with 
+#     the current SHA. This allows the subsequent docker-app publish to provide
+#     an update which has a valid container image in the registry.
 set -o pipefail
 
 HERE=$(dirname $(readlink -f $0))
