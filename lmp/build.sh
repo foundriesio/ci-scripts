@@ -50,16 +50,6 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.txt
 ## Only publish wic.gz
 rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 
-# FIXME: Sparse images here, until it gets done by OE
-case "${MACHINE}" in
-	hikey|hikey960|dragonboard-410c|dragonboard-820c)
-		otaimg=${DEPLOY_DIR_IMAGE}/$(readlink ${DEPLOY_DIR_IMAGE}/${IMAGE}-${MACHINE}.ota-ext4)
-		ext2simg -v ${otaimg} ${otaimg}.img
-		gzip -9 ${otaimg}.img
-		ln -s $(basename ${otaimg}.img.gz) ${DEPLOY_DIR_IMAGE}/${IMAGE}-${MACHINE}.ota-ext4.img.gz
-	;;
-esac
-
 # Also create "img" images as they are compatible with standard flashing tools
 for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.wic.gz; do
 	ln -s $(basename ${img}) ${img%.wic.gz}.img.gz
