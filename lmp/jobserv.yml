@@ -30,19 +30,6 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-      - name: supported-cl-som-imx7
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        params:
-          MACHINE: cl-som-imx7
-          IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
       # other images that have OTA
       - name: other-{loop}
         container: hub.foundries.io/lmp-sdk
@@ -88,10 +75,8 @@ triggers:
             values:
               - apalis-imx6
               - beaglebone-yocto
-              - cubox-i
               - qemuarm64
               - raspberrypi3
-              - raspberrypi4
               - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
@@ -133,7 +118,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - cl-som-imx7
               - beaglebone-yocto
         params:
           IMAGE: lmp-gateway-image
@@ -167,10 +151,8 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
-              - cubox-i
               - qemuarm64
               - raspberrypi3
-              - raspberrypi4
               - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
