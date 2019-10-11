@@ -1,0 +1,45 @@
+timeout: 300
+
+email:
+  users: 'ci-notifications@foundries.io'
+
+params:
+  FACTORY: lmp
+
+triggers:
+  - name: containers
+    type: git_poller
+    params:
+      GIT_URL: |
+        https://github.com/foundriesio/containers.git
+      GIT_POLL_REFS: "refs/heads/master"
+      OTA_LITE_TAG: postmerge
+    runs:
+      - name: build-{loop}
+        container: docker:dind
+        privileged: true
+        loop-on:
+          - param: host-tag
+            values: [aarch64, armhf, amd64]
+        script-repo:
+          name: fio
+          path: factory-containers/build.sh
+
+    triggers:
+      - name: promote
+
+  - name: promote
+    type: simple
+    runs:
+      - name: publish-docker-app
+        container: hub.foundries.io/aktualizr
+        host-tag: amd64-osf
+        script-repo:
+          name: fio
+          path: factory-containers/docker-app-publish.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+script-repos:
+  fio:
+    clone-url: https://github.com/foundriesio/ci-scripts
