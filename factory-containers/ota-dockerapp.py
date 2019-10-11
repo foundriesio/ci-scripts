@@ -102,6 +102,11 @@ def publish(args):
 
 def add_build(args):
     latest = {}
+
+    tags = os.environ.get('OTA_LITE_TAG')
+    if tags:
+        tags = [x.strip() for x in tags.split(',')]
+
     with open(args.targets_json) as f:
         data = json.load(f)
         for name, target in data['targets'].items():
@@ -117,6 +122,8 @@ def add_build(args):
         data['targets'][target['custom']['name'] + '-' + args.version] = target
 
         target['custom']['version'] = args.version
+        if tags:
+            target['custom']['tags'] = tags
         apps = {}
         target['custom']['docker_apps'] = apps
         for app in args.apps:
