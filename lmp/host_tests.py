@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import subprocess
 
+import requests
+
 
 def test_start(name):
     print('Starting Test Suite: %s' % name)
@@ -31,10 +33,22 @@ def _check_core_systemd_jobs():
     _check_systemd_job("systemd-timesyncd.service")
 
 
+def _check_shellhttpd():
+    try:
+        r = requests.get('http://localhost:8080')
+        if r.status_code == 200:
+            test_case('shellhttpd', 'PASSED')
+        else:
+            test_case('shellhttpd', 'FAILED')
+    except Exception:
+        test_case('shellhttpd', 'FAILED')
+
+
 def _test_doanac_rpi3():
     _check_core_systemd_jobs()
     _check_network('wlan0', 'wifi', '192.168.0.1')
     _check_network('eth0', 'ethernet')
+    _check_shellhttpd()
 
 
 def _test_doanac_intel():
