@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import subprocess
-import time
 
 import requests
 
@@ -11,65 +10,6 @@ def test_start(name):
 
 def test_case(name, result):
     print('Test Result: %s = %s\n' % (name, result))
-
-
-def _check_bt_device(bt_mac):
-    out = subprocess.check_output(['/usr/bin/hcitool', 'con'])
-    if 'LE ' + bt_mac in out.decode():
-        test_case('bt-joiner', 'PASSED')
-        return True
-    else:
-        test_case('bt-joiner', 'FAILED')
-
-
-def _check_leshan_ep(ep):
-    for x in range(4):
-        r = requests.get('https://mgmt.foundries.io/leshan/api/clients/' + ep)
-        if r.status_code == 200:
-            test_case('bluetooth', 'PASSED')
-            test_case('nginx-lwm2m-proxy', 'PASSED')
-            return True
-        print('Unable to find device %s. Sleeping and trying again.' % ep)
-        print(' HTTP(%d) - %s' % (r.status_code, r.text))
-        time.sleep(2)
-    test_case('bluetooth', 'FAILED')
-    test_case('nginx-lwm2m-proxy', 'FAILED')
-
-
-def _check_hawkbit_ep(ep):
-    url = 'https://admin:admin@mgmt.foundries.io/hawkbit/rest/v1/targets/'
-    url += ep
-    for x in range(4):
-        msg = 'Unable to find device ' + ep
-        r = requests.get(url)
-        if r.status_code == 200:
-            if not r.json()['pollStatus']['overdue']:
-                test_case('bluetooth', 'PASSED')
-                test_case('nginx-http-proxy', 'PASSED')
-                return True
-            msg = 'Device pollStatus is "overdue" for ' + ep
-        print(msg + '. Sleeping and trying again.')
-        print(' HTTP(%d) - %s' % (r.status_code, r.text))
-        time.sleep(2)
-    test_case('bluetooth', 'FAILED')
-    test_case('nginx-http-proxy', 'FAILED')
-
-
-def _check_mqtt(device):
-    url = 'https://mgmt.foundries.io/mqtt/%s.log' % device
-    val = None
-    for x in range(4):
-        r = requests.get(url)
-        if r.status_code == 200:
-            if val is None:
-                val = r.text
-            elif val != r.text:
-                # the log has changed so we've reported something
-                test_case('mosqitto', 'PASSED')
-                return True
-        print('No change in data detected, sleeping and trying again.')
-        time.sleep(2)
-    test_case('mosqitto', 'FAILED')
 
 
 def _check_network(interface, test_label, dst='8.8.8.8'):
@@ -93,11 +33,22 @@ def _check_core_systemd_jobs():
     _check_systemd_job("systemd-timesyncd.service")
 
 
+def _check_shellhttpd():
+    try:
+        r = requests.get('http://localhost:8080')
+        if r.status_code == 200:
+            test_case('shellhttpd', 'PASSED')
+        else:
+            test_case('shellhttpd', 'FAILED')
+    except Exception:
+        test_case('shellhttpd', 'FAILED')
+
+
 def _test_doanac_rpi3():
     _check_core_systemd_jobs()
     _check_network('wlan0', 'wifi', '192.168.0.1')
     _check_network('eth0', 'ethernet')
-    _check_bt_device('D4:E7:43:91:CC:43')
+    _check_shellhttpd()
 
 
 def _test_doanac_intel():
