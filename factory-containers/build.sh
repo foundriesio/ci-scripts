@@ -3,10 +3,10 @@
 #
 # This script will handle the follow scenarios for building containers
 #   * If NOCACHE flag is set, it will rebuild all container images without cache.
-#   * If NOCACHE flag is _NOT_ set, it will only rebuild containers in which 
+#   * If NOCACHE flag is _NOT_ set, it will only rebuild containers in which
 #     files have changed. This is the default behavior.
 #   * If the image cache cannot be pulled, a fresh rebuild will be forced.
-#   * If the image cache _CAN_ be pulled, this cached image is tagged with 
+#   * If the image cache _CAN_ be pulled, this cached image is tagged with
 #     the current SHA. This allows the subsequent docker-app publish to provide
 #     an update which has a valid container image in the registry.
 set -o pipefail
@@ -45,6 +45,7 @@ for i in `seq 12` ; do
 done
 
 TAG=${GIT_SHA:0:7}
+LATEST=${OTA_LITE_TAG-"latest"}
 
 if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
@@ -128,7 +129,7 @@ for x in $IMAGES ; do
 		run manifest-tool push from-args \
 			--platforms $MANIFEST_PLATFORMS \
 			--template ${ct_base}:$TAG-ARCH \
-			--target ${ct_base}:latest || true
+			--target ${ct_base}:$LATEST || true
 	else
 		echo "osftoken not provided, skipping publishing step"
 	fi
