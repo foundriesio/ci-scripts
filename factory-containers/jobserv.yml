@@ -40,6 +40,38 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+  - name: pull-request-containers
+    type: github_pr
+    params:
+      OTA_LITE_TAG: premerge
+    runs:
+      - name: build-{loop}
+        container: docker:dind
+        privileged: true
+        loop-on:
+          - param: host-tag
+            values: [aarch64, armhf, amd64]
+        script-repo:
+          name: fio
+          path: factory-containers/build.sh
+
+    triggers:
+      - name: promote
+
+  - name: pull-request-publish
+    type: simple
+    params:
+      OTA_LITE_TAG: premerge
+    runs:
+      - name: publish-docker-app
+        container: hub.foundries.io/aktualizr
+        host-tag: amd64-osf
+        script-repo:
+          name: fio
+          path: factory-containers/docker-app-publish.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
 script-repos:
   fio:
     clone-url: https://github.com/foundriesio/ci-scripts
