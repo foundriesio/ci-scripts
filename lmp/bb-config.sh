@@ -9,6 +9,7 @@ SOTA_CLIENT="${SOTA_CLIENT-aktualizr}"
 AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
 LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags)
+FACTORY="${FACTORY-lmp}"
 
 source setup-environment build
 
@@ -32,6 +33,9 @@ LMP_VERSION = "${LMP_VERSION}"
 
 # Default AKLITE tag
 AKLITE_TAG = "${AKLITE_TAG}"
+
+# Who's factory is this?
+FOUNDRIES_FACTORY = "${FACTORY}"
 
 # Additional packages based on the CI job used
 IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
