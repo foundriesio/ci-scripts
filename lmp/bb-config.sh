@@ -8,6 +8,7 @@ OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME-lmp-localdev}"
 SOTA_CLIENT="${SOTA_CLIENT-aktualizr}"
 AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
+LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags)
 
 source setup-environment build
 
@@ -25,6 +26,9 @@ GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"
+
+# git-describe version of LMP
+LMP_VERSION = "${LMP_VERSION}"
 
 # Default AKLITE tag
 AKLITE_TAG = "${AKLITE_TAG}"
