@@ -42,12 +42,12 @@ triggers:
 
   - name: pull-request-containers
     type: github_pr
-    params:
-      OTA_LITE_TAG: premerge
     runs:
       - name: build-{loop}
         container: docker:dind
         privileged: true
+        params:
+          OTA_LITE_TAG: premerge
         loop-on:
           - param: host-tag
             values: [aarch64, armhf, amd64]
@@ -60,12 +60,12 @@ triggers:
 
   - name: pull-request-publish
     type: simple
-    params:
-      OTA_LITE_TAG: premerge
     runs:
       - name: publish-docker-app
         container: hub.foundries.io/aktualizr
         host-tag: amd64-osf
+        params:
+          OTA_LITE_TAG: premerge
         script-repo:
           name: fio
           path: factory-containers/docker-app-publish.sh
