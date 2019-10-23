@@ -44,7 +44,8 @@ for i in `seq 12` ; do
 	fi
 done
 
-TAG=${GIT_SHA:0:7}
+TAG=$(git log -1 --format=%h)
+OLD_TAG=$(git log -1 --format=%h $GIT_OLD_SHA)
 LATEST=${OTA_LITE_TAG-"latest"}
 
 if [ -f /secrets/osftok ] ; then
@@ -98,7 +99,7 @@ for x in $IMAGES ; do
 		status "Doing docker-login to hub.foundries.io with secret"
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
 		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
-		run docker pull ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH || no_op_tag=0
+		run docker pull ${ct_base}:${OLD_TAG}-$ARCH || no_op_tag=0
 		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ]; then
 			echo "WARNING - no cached image found, forcing a rebuild"
 		fi
@@ -108,11 +109,11 @@ for x in $IMAGES ; do
 	cd $x
 	if [ $no_op_tag -eq 1 ] ; then
 		status Tagging docker image $x for $ARCH
-		run docker tag ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH ${ct_base}:$TAG-$ARCH
+		run docker tag ${ct_base}:${OLD_TAG}-$ARCH ${ct_base}:$TAG-$ARCH
 	else
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
-			run docker build --cache-from ${ct_base}:${GIT_OLD_SHA:0:7}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+			run docker build --cache-from ${ct_base}:${OLD_TAG}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
 		else
 			status Building docker image $x for $ARCH with no cache
 			run docker build --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm .
