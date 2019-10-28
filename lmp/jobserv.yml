@@ -77,6 +77,7 @@ triggers:
               - beaglebone-yocto
               - qemuarm64
               - raspberrypi3
+              - raspberrypi4
               - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
@@ -153,6 +154,7 @@ triggers:
               - apalis-imx6
               - qemuarm64
               - raspberrypi3
+              - raspberrypi4
               - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
