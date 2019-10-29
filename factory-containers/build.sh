@@ -113,10 +113,10 @@ for x in $IMAGES ; do
 	else
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
-			run docker build --cache-from ${ct_base}:${OLD_TAG}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
+			run docker build --label "jobserv_build=$H_BUILD" --cache-from ${ct_base}:${OLD_TAG}-$ARCH -t ${ct_base}:$TAG-$ARCH --force-rm .
 		else
 			status Building docker image $x for $ARCH with no cache
-			run docker build --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm .
+			run docker build --label "jobserv_build=$H_BUILD" --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm .
 		fi
 	fi
 
