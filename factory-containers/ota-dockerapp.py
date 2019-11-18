@@ -15,6 +15,7 @@ from zipfile import ZipFile
 
 import logging
 
+import docker
 import requests
 
 logging.basicConfig(level='INFO')
@@ -141,7 +142,28 @@ class TagMgr:
         return [x[0] for x in self._tags]
 
 
+def get_app_bundles(tag):
+    # We can look at repositories.json to see everything that we just
+    # pushed as docker apps via the "docker-app" script. However, it doesn't
+    # know the sha of the item, so we then have to look it up
+    bundles = {}
+    bundles_dir = os.path.expanduser('~/.docker/app/bundles')
+    client = docker.from_env()
+    with open(os.path.join(bundles_dir, 'repositories.json')) as f:
+        repos = json.load(f)['Repositories']
+        for app, versions in repos.items():
+            # there should just be one version pushed, but be careful:
+            tagged = app + ':app-' + tag
+            sha = client.images.get_registry_data(tagged).id
+            bundles[os.path.basename(app)] = app + '@' + sha
+    return bundles
+
+
 def create_target(args):
+    app_bundles = {}
+    if 'DOCKER_APP_BUNDLE' in os.environ:
+        app_bundles = get_app_bundles(os.environ['TAG'])
+
     tagmgr = TagMgr()
     logging.info('Doing Target tagging for: %s', tagmgr)
 
@@ -174,7 +196,13 @@ def create_target(args):
             for app in args.apps:
                 filename = os.path.basename(app) + '-' + args.version
                 name = os.path.splitext(filename)[0]
-                apps[name] = {'filename': filename}
+                apps[name] = {}
+                logging.info('Add docker app from tufrepo for: %s', name)
+                apps[name]['filename'] = filename
+                uri = app_bundles.get(name)
+                if uri:
+                    logging.info('Add docker app from registry')
+                    apps[name]['uri'] = uri
             logging.info('Targets with apps: %r', target)
 
     with open(args.targets_json, 'w') as f:
