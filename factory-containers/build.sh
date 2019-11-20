@@ -123,6 +123,13 @@ for x in $IMAGES ; do
 	if [ $auth -eq 1 ] ; then
 		run docker push ${ct_base}:$TAG-$ARCH
 
+		var="EXTRA_TAGS_$ARCH"
+		for t in $(eval echo "\$$var") ; do
+			status "Tagging and pushing extra tag defined in docker-build.conf: $t"
+			run docker tag ${ct_base}:$TAG-$ARCH ${ct_base}:$t
+			run docker push ${ct_base}:$t
+		done
+
 		run manifest-tool push from-args \
 			--platforms $MANIFEST_PLATFORMS \
 			--template ${ct_base}:$TAG-ARCH \
