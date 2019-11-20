@@ -126,8 +126,8 @@ for x in $IMAGES ; do
 		var="EXTRA_TAGS_$ARCH"
 		for t in $(eval echo "\$$var") ; do
 			status "Tagging and pushing extra tag defined in docker-build.conf: $t"
-			run docker tag ${ct_base}:$TAG-$ARCH ${ct_base}:$t
-			run docker push ${ct_base}:$t
+			run docker tag ${ct_base}:$TAG-$ARCH ${ct_base}:$TAG-$t
+			run docker push ${ct_base}:$TAG-$t
 		done
 
 		run manifest-tool push from-args \
