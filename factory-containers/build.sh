@@ -111,13 +111,15 @@ for x in $IMAGES ; do
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:latest ${ct_base}:$TAG-$ARCH
 	else
+		docker_cmd="docker build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
-			run docker build --label "jobserv_build=$H_BUILD" --cache-from ${ct_base}:latest -t ${ct_base}:$TAG-$ARCH --force-rm $REPO_ROOT/$x
+			docker_cmd="$docker_cmd  --cache-from ${ct_base}:latest"
 		else
 			status Building docker image $x for $ARCH with no cache
-			run docker build --label "jobserv_build=$H_BUILD" --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm $REPO_ROOT/$x
+			docker_cmd="$docker_cmd  --no-cache"
 		fi
+		run $docker_cmd $REPO_ROOT/$x
 	fi
 
 	if [ $auth -eq 1 ] ; then
