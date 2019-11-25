@@ -51,8 +51,7 @@ if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
 fi
 
-# TODO -- pull submodules here?! 
-# or add to build configuration?
+# TODO -- pull submodules here?! (Or sort out npm/pipy creds?)
 # git submodule update --init --recursive
 echo '<testsuite name="unit-tests">' > /archive/junit.xml
 trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
@@ -60,7 +59,7 @@ trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 for x in $IMAGES ; do
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
-	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
+	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
 
 	# If NOCACHE is not set, only build images that have changed.
 	if [ -z "$NOCACHE" ] ; then
