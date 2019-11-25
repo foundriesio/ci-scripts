@@ -54,6 +54,7 @@ fi
 echo '<testsuite name="unit-tests">' > /archive/junit.xml
 trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 
+REPO_ROOT=$(pwd)
 for x in $IMAGES ; do
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
@@ -112,10 +113,10 @@ for x in $IMAGES ; do
 	else
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
-			run docker build --label "jobserv_build=$H_BUILD" --cache-from ${ct_base}:latest -t ${ct_base}:$TAG-$ARCH --force-rm .
+			run docker build --label "jobserv_build=$H_BUILD" --cache-from ${ct_base}:latest -t ${ct_base}:$TAG-$ARCH --force-rm $REPO_ROOT/$x
 		else
 			status Building docker image $x for $ARCH with no cache
-			run docker build --label "jobserv_build=$H_BUILD" --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm .
+			run docker build --label "jobserv_build=$H_BUILD" --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm $REPO_ROOT/$x
 		fi
 	fi
 
@@ -153,5 +154,4 @@ for x in $IMAGES ; do
 		fi
 		echo "</testcase>" >> /archive/junit.xml
 	fi
-	cd ..
 done
