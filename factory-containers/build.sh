@@ -142,11 +142,11 @@ for x in $IMAGES ; do
 
 		run manifest-tool push from-args \
 			--platforms $MANIFEST_PLATFORMS \
-			--template ${ct_base}:$TAG-ARCH \
+			--template ${ct_base}:$TAG-$ARCH \
 			--target ${ct_base}:$TAG || true
 		run manifest-tool push from-args \
 			--platforms $MANIFEST_PLATFORMS \
-			--template ${ct_base}:$TAG-ARCH \
+			--template ${ct_base}:$TAG-$ARCH \
 			--target ${ct_base}:$LATEST || true
 	else
 		echo "osftoken not provided, skipping publishing step"
