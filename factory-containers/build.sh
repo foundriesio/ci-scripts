@@ -58,7 +58,7 @@ REPO_ROOT=$(pwd)
 for x in $IMAGES ; do
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
-	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD
+	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
 
 	# If NOCACHE is not set, only build images that have changed.
 	if [ -z "$NOCACHE" ] ; then
@@ -101,12 +101,11 @@ for x in $IMAGES ; do
 		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
 		run docker pull ${ct_base}:latest || no_op_tag=0
 		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ]; then
-			echo "WARNING - no cached image found, forcing a rebuild"
+			status "WARNING - no cached image found, forcing a rebuild"
 		fi
 		auth=1
 	fi
 
-	cd $x
 	if [ $no_op_tag -eq 1 ] ; then
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:latest ${ct_base}:$TAG-$ARCH
@@ -119,7 +118,15 @@ for x in $IMAGES ; do
 			status Building docker image $x for $ARCH with no cache
 			docker_cmd="$docker_cmd  --no-cache"
 		fi
-		run $docker_cmd $REPO_ROOT/$x
+
+		DOCKERFILE="$REPO_ROOT/$x/${DOCKERFILE-Dockerfile}"
+		if [ -n "$BUILD_CONTEXT" ] ; then
+			status "Using custom build context $BUILD_CONTEXT"
+			BUILD_CONTEXT="$REPO_ROOT/$x/${BUILD_CONTEXT}"
+		else
+			BUILD_CONTEXT="$REPO_ROOT/$x/"
+		fi
+		run $docker_cmd -f $DOCKERFILE $BUILD_CONTEXT
 	fi
 
 	if [ $auth -eq 1 ] ; then
