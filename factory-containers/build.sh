@@ -74,8 +74,6 @@ for x in $IMAGES ; do
 		fi
 	fi
 
-  echo 'Howdy! Did this work?'
-  unset USE_CUSTOM_CONTEXT
 	conf=$x/docker-build.conf
 	if [ -f $conf ] ; then
 		echo "Sourcing docker-build.conf for build rules in $x"
@@ -110,14 +108,14 @@ for x in $IMAGES ; do
 		auth=1
 	fi
 
-  
-  BUILD_CONTEXT="."
-  DOCKERFILE="Dockerfile" 
-  if [ -z $USE_CUSTOM_CONTEXT ] ; then
+  # ..more robust logic here...?
+  if [ -z "$DOCKERFILE" ] ; then
+    echo 'NOT using custom context.'
+    DOCKERFILE="Dockerfile"
+    BUILD_CONTEXT="."
 	  cd $x
   else
-    BUILD_CONTEXT="$x_CONTEXT"
-    DOCKERFILE="$x_DOCKERFILE" 
+    echo "Using custom build context $BUILD_CONTEXT with dockerfile $DOCKERFILE"
   fi
   
 	if [ $no_op_tag -eq 1 ] ; then
