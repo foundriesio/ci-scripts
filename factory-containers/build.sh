@@ -51,6 +51,9 @@ if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
 fi
 
+# TODO -- pull submodules here?! 
+# or add to build configuration?
+# git submodule update --init --recursive
 echo '<testsuite name="unit-tests">' > /archive/junit.xml
 trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 
@@ -71,6 +74,8 @@ for x in $IMAGES ; do
 		fi
 	fi
 
+  echo 'Howdy! Did this work?'
+  unset USE_CUSTOM_CONTEXT
 	conf=$x/docker-build.conf
 	if [ -f $conf ] ; then
 		echo "Sourcing docker-build.conf for build rules in $x"
@@ -105,17 +110,26 @@ for x in $IMAGES ; do
 		auth=1
 	fi
 
-	cd $x
+  
+  BUILD_CONTEXT="."
+  DOCKERFILE="Dockerfile" 
+  if [ -z $USE_CUSTOM_CONTEXT ] ; then
+	  cd $x
+  else
+    BUILD_CONTEXT="$x_CONTEXT"
+    DOCKERFILE="$x_DOCKERFILE" 
+  fi
+  
 	if [ $no_op_tag -eq 1 ] ; then
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:latest ${ct_base}:$TAG-$ARCH
 	else
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
-			run docker build --label "jobserv_build=$H_BUILD" --cache-from ${ct_base}:latest -t ${ct_base}:$TAG-$ARCH --force-rm .
+			run docker build --label "jobserv_build=$H_BUILD" --cache-from ${ct_base}:latest -f $DOCKERFILE -t ${ct_base}:$TAG-$ARCH --force-rm $BUILD_CONTEXT
 		else
 			status Building docker image $x for $ARCH with no cache
-			run docker build --label "jobserv_build=$H_BUILD" --no-cache -t ${ct_base}:$TAG-$ARCH --force-rm .
+			run docker build --label "jobserv_build=$H_BUILD" --no-cache -f $DOCKERFILE -t ${ct_base}:$TAG-$ARCH --force-rm $BUILD_CONTEXT
 		fi
 	fi
 
