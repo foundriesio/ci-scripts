@@ -102,19 +102,19 @@ for x in $IMAGES ; do
 		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
 		run docker pull ${ct_base}:latest || no_op_tag=0
 		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ]; then
-			echo "WARNING - no cached image found, forcing a rebuild"
+			status "WARNING - no cached image found, forcing a rebuild"
 		fi
 		auth=1
 	fi
 
   # ..more robust logic here...?
   if [ -z "$DOCKERFILE" ] ; then
-    echo 'NOT using custom context.'
+    status 'NOT using custom context.'
     DOCKERFILE="Dockerfile"
     BUILD_CONTEXT="."
 	  cd $x
   else
-    echo "Using custom build context $BUILD_CONTEXT with dockerfile $DOCKERFILE"
+    status "Using custom build context $BUILD_CONTEXT with dockerfile $DOCKERFILE"
   fi
   
 	if [ $no_op_tag -eq 1 ] ; then
@@ -142,11 +142,11 @@ for x in $IMAGES ; do
 
 		run manifest-tool push from-args \
 			--platforms $MANIFEST_PLATFORMS \
-			--template ${ct_base}:$TAG-$ARCH \
+			--template ${ct_base}:$TAG-ARCH \
 			--target ${ct_base}:$TAG || true
 		run manifest-tool push from-args \
 			--platforms $MANIFEST_PLATFORMS \
-			--template ${ct_base}:$TAG-$ARCH \
+			--template ${ct_base}:$TAG-ARCH \
 			--target ${ct_base}:$LATEST || true
 	else
 		echo "osftoken not provided, skipping publishing step"
