@@ -11,6 +11,9 @@ if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
 	manifest="file://$(pwd)/.git -b $GIT_SHA"
 	# repo init won't work off detached heads, so do this to work around:
 	git branch pr-branch $GIT_SHA
+	# Check to make sure REPO_INIT_OVERRIDES isn't setting a "-b <ref>".
+	# That will break our logic for checking out the exact GIT_SHA above
+	export REPO_INIT_OVERRIDES=$(echo $REPO_INIT_OVERRIDES | sed -e 's/-b\s*\w*//')
 	mkdir /srv/oe && cd /srv/oe
 	repo_sync $manifest
 else
