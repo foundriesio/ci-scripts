@@ -63,7 +63,8 @@ for x in $IMAGES ; do
 	# If NOCACHE is not set, only build images that have changed.
 	if [ -z "$NOCACHE" ] ; then
 		no_op_tag=0
-		CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/)
+		# If we cannot obtain the diff, force the build
+		CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/ || echo FORCE_BUILD)
 		if [[ ! -z "$CHANGED" ]]; then
 			status "Detected changes to $x"
 		else
