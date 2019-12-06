@@ -100,7 +100,7 @@ for x in $IMAGES ; do
 		status "Doing docker-login to hub.foundries.io with secret"
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
 		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
-		run docker pull ${ct_base}:latest || no_op_tag=0
+		run docker pull ${ct_base}:${LATEST} || no_op_tag=0
 		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ]; then
 			status "WARNING - no cached image found, forcing a rebuild"
 		fi
@@ -109,12 +109,12 @@ for x in $IMAGES ; do
 
 	if [ $no_op_tag -eq 1 ] ; then
 		status Tagging docker image $x for $ARCH
-		run docker tag ${ct_base}:latest ${ct_base}:$TAG-$ARCH
+		run docker tag ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
 	else
 		docker_cmd="docker build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
-			docker_cmd="$docker_cmd  --cache-from ${ct_base}:latest"
+			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
 		else
 			status Building docker image $x for $ARCH with no cache
 			docker_cmd="$docker_cmd  --no-cache"
