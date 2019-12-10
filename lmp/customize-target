@@ -32,8 +32,9 @@ def merge(args):
     prev_ver = 0
     for tgt in targets.values():
         if tgt['custom'].get('name') == cur['custom']['name']:
+            match_tag = tag and tag in tgt['custom'].get('tags', [])
             tgt_ver = int(tgt['custom']['version'])
-            if tgt_ver > prev_ver and tgt_ver < cur_ver:
+            if match_tag and tgt_ver > prev_ver and tgt_ver < cur_ver:
                 prev = tgt
                 prev_ver = tgt_ver
 
