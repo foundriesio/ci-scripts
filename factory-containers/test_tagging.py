@@ -41,6 +41,8 @@ ONE_TO_ONE_JSON = {
     }
 }
 
+ONE_TO_MANY_JSON = ONE_TO_ONE_JSON  # That has what we need for a test
+
 
 @contextmanager
 def temp_json_file(data):
@@ -90,6 +92,34 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual('G00DBEEF', target['hashes']['sha256'])
                 self.assertEqual(
                     ['app1'], list(target['custom']['docker_apps'].keys()))
+
+    def test_one_to_many(self):
+        """Check that a single container build can create multiple Targets."""
+
+        with temp_json_file(ONE_TO_MANY_JSON) as filename:
+            create_target('devel,postmerge', '13', filename, ['A.dockerapp'])
+            with open(filename) as f:
+                data = json.load(f)
+
+                # This should produce two new targets for "devel":
+                target = data['targets']['raspberrypi-cm3-lmp-13-devel']
+                self.assertEqual('DEADBEEF', target['hashes']['sha256'])
+                self.assertEqual(
+                    ['A'], list(target['custom']['docker_apps'].keys()))
+
+                target = data['targets']['minnow-lmp-13-devel']
+                self.assertEqual('ABCD', target['hashes']['sha256'])
+                self.assertEqual(
+                    ['A'], list(target['custom']['docker_apps'].keys()))
+                self.assertEqual(['devel'], target['custom']['tags'])
+
+                # And one new target for "postmerge"
+                target = data['targets']['raspberrypi-cm3-lmp-13-postmerge']
+                # we should get the hash of the previous "postmerge" build
+                self.assertEqual(['postmerge'], target['custom']['tags'])
+                self.assertEqual('G00DBEEF', target['hashes']['sha256'])
+                self.assertEqual(
+                    ['A'], list(target['custom']['docker_apps'].keys()))
 
 
 if __name__ == '__main__':

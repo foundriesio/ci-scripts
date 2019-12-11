@@ -100,41 +100,65 @@ def publish(args):
             url, r.status_code, r.text))
 
 
-def create_target(args):
-    latest = {}
+class TagMgr:
+    def __init__(self):
+        tags = (os.environ.get('OTA_LITE_TAG') or '').split(',')
+        self.tags = [x.strip() for x in tags]
 
-    tags = os.environ.get('OTA_LITE_TAG')
-    if tags:
-        tags = [x.strip() for x in tags.split(',')]
+    def __repr__(self):
+        return ', '.join(self.tags)
+
+    def intersection(self, tags):
+        return set(self.tags) & set(tags)
+
+    def create_target_name(self, target, version, tag):
+        name = target['custom']['name'] + '-' + version
+        if len(self.tags) == 1:
+            return name
+        # we have more than one tag - so we need something else to make
+        # this dictionary key name unique:
+        return name + '-' + tag
+
+    @property
+    def target_tags(self):
+        """Return the list of tags we should produce Targets for."""
+        return self.tags
+
+
+def create_target(args):
+    tagmgr = TagMgr()
+    logging.info('Doing Target tagging for: %s', tagmgr)
+
+    latest_tags = {x: {} for x in tagmgr.target_tags}
 
     with open(args.targets_json) as f:
         data = json.load(f)
         for name, target in data['targets'].items():
             if target['custom']['targetFormat'] == 'OSTREE':
-                if tags:
-                    tgt_tags = set(target['custom'].get('tags') or [])
-                    if not set(tags) & tgt_tags:
-                        continue
-                hwid = target['custom']['hardwareIds'][0]
-                cur = latest.get(hwid)
-                ver = int(target['custom']['version'])
-                if not cur or int(cur['custom']['version']) < ver:
-                    latest[hwid] = target
-    logging.info('Latest targets: %r', latest)
-    for target in latest.values():
-        target = deepcopy(target)
-        data['targets'][target['custom']['name'] + '-' + args.version] = target
+                tgt_tags = target['custom'].get('tags') or []
+                for tag in tagmgr.intersection(tgt_tags):
+                    hwid = target['custom']['hardwareIds'][0]
+                    cur = latest_tags[tag].get(hwid)
+                    ver = int(target['custom']['version'])
+                    if not cur or int(cur['custom']['version']) < ver:
+                        latest_tags[tag][hwid] = target
 
-        target['custom']['version'] = args.version
-        if tags:
-            target['custom']['tags'] = tags
-        apps = {}
-        target['custom']['docker_apps'] = apps
-        for app in args.apps:
-            filename = os.path.basename(app) + '-' + args.version
-            name = os.path.splitext(filename)[0]
-            apps[name] = {'filename': filename}
-        logging.info('Targets with apps: %r', target)
+    logging.info('Latest targets: %r', latest_tags)
+    for tag, latest in latest_tags.items():
+        for target in latest.values():
+            target = deepcopy(target)
+            tgt_name = tagmgr.create_target_name(target, args.version, tag)
+            data['targets'][tgt_name] = target
+
+            target['custom']['version'] = args.version
+            target['custom']['tags'] = [tag]
+            apps = {}
+            target['custom']['docker_apps'] = apps
+            for app in args.apps:
+                filename = os.path.basename(app) + '-' + args.version
+                name = os.path.splitext(filename)[0]
+                apps[name] = {'filename': filename}
+            logging.info('Targets with apps: %r', target)
 
     with open(args.targets_json, 'w') as f:
         json.dump(data, f, indent=2)
