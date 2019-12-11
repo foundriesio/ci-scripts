@@ -102,22 +102,34 @@ def publish(args):
 
 class TagMgr:
     def __init__(self):
-        tags = (os.environ.get('OTA_LITE_TAG') or '').split(',')
-        self.tags = [x.strip() for x in tags]
+        # Convert thinkgs like:
+        #    tag1,tag2 -> [(tag1, tag1), (tag2, tag2)]
+        #    tag1:blah,tag2 -> [(tag1, blah), (tag2, tag2)]
+        self._tags = []
+        for x in (os.environ.get('OTA_LITE_TAG') or '').split(','):
+            parts = x.strip().split(':', 1)
+            if len(parts) == 1 or parts[1] == '':
+                self._tags.append((parts[0], parts[0]))
+            else:
+                self._tags.append((parts[0], parts[1]))
 
     def __repr__(self):
-        return ', '.join(self.tags)
+        return str(self._tags)
 
     def intersection(self, tags):
-        if self.tags == ['']:
+        if self._tags == [('', '')]:
             # Factory doesn't use tags, so its good.
             # This empty value is special and understood by the caller
-            return self.tags
-        return set(self.tags) & set(tags)
+            yield ''
+        else:
+            for t in tags:
+                for target, parent in self._tags:
+                    if t == parent:
+                        yield target
 
     def create_target_name(self, target, version, tag):
         name = target['custom']['name'] + '-' + version
-        if len(self.tags) == 1:
+        if len(self._tags) == 1:
             return name
         # we have more than one tag - so we need something else to make
         # this dictionary key name unique:
@@ -126,7 +138,7 @@ class TagMgr:
     @property
     def target_tags(self):
         """Return the list of tags we should produce Targets for."""
-        return self.tags
+        return [x[0] for x in self._tags]
 
 
 def create_target(args):

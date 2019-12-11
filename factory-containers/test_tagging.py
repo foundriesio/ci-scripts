@@ -149,6 +149,24 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual(
                     ['app1'], list(target['custom']['docker_apps'].keys()))
 
+    def test_derive_from_platform(self):
+        """Assert that a tag like: postmerge-foo:postmerge works.
+           In this scenario a container picks its Platform target based on
+           a different target than its named.
+        """
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target(
+                'postmerge-foo:postmerge', '13', filename, ['app1.dockerapp'])
+            with open(filename) as f:
+                data = json.load(f)
+                target = data['targets']['raspberrypi-cm3-lmp-13']
+                # we should get the hash of the previous "postmerge" build
+                self.assertEqual('G00DBEEF', target['hashes']['sha256'])
+                self.assertEqual(
+                    ['app1'], list(target['custom']['docker_apps'].keys()))
+                self.assertEqual(['postmerge-foo'], target['custom']['tags'])
+
 
 if __name__ == '__main__':
     unittest.main()
