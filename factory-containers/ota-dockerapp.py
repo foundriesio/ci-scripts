@@ -111,8 +111,10 @@ def create_target(args):
         data = json.load(f)
         for name, target in data['targets'].items():
             if target['custom']['targetFormat'] == 'OSTREE':
-                if target['custom'].get('tags') == ['premerge']:
-                    continue
+                if tags:
+                    tgt_tags = set(target['custom'].get('tags') or [])
+                    if not set(tags) & tgt_tags:
+                        continue
                 hwid = target['custom']['hardwareIds'][0]
                 cur = latest.get(hwid)
                 ver = int(target['custom']['version'])
