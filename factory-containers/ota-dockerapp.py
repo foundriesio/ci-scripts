@@ -109,6 +109,10 @@ class TagMgr:
         return ', '.join(self.tags)
 
     def intersection(self, tags):
+        if self.tags == ['']:
+            # Factory doesn't use tags, so its good.
+            # This empty value is special and understood by the caller
+            return self.tags
         return set(self.tags) & set(tags)
 
     def create_target_name(self, target, version, tag):
@@ -151,7 +155,8 @@ def create_target(args):
             data['targets'][tgt_name] = target
 
             target['custom']['version'] = args.version
-            target['custom']['tags'] = [tag]
+            if tag:
+                target['custom']['tags'] = [tag]
             apps = {}
             target['custom']['docker_apps'] = apps
             for app in args.apps:

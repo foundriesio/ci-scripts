@@ -43,6 +43,21 @@ ONE_TO_ONE_JSON = {
 
 ONE_TO_MANY_JSON = ONE_TO_ONE_JSON  # That has what we need for a test
 
+# Default factories have no tags configured
+NO_TAGS_JSON = {
+    'targets': {
+        'rpi3-cm-12': {
+            'hashes': {'sha256': 'DEADBEEF'},
+            'custom': {
+                'name': 'raspberrypi-cm3-lmp',
+                'targetFormat': 'OSTREE',
+                'version': '12',
+                'hardwareIds': ['rpi3-cm'],
+            },
+        },
+    }
+}
+
 
 @contextmanager
 def temp_json_file(data):
@@ -120,6 +135,19 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual('G00DBEEF', target['hashes']['sha256'])
                 self.assertEqual(
                     ['A'], list(target['custom']['docker_apps'].keys()))
+
+    def test_no_tags(self):
+        """Make sure a factory with no tags defined works."""
+
+        with temp_json_file(NO_TAGS_JSON) as filename:
+            create_target('', '13', filename, ['app1.dockerapp'])
+            with open(filename) as f:
+                data = json.load(f)
+                target = data['targets']['raspberrypi-cm3-lmp-13']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('DEADBEEF', target['hashes']['sha256'])
+                self.assertEqual(
+                    ['app1'], list(target['custom']['docker_apps'].keys()))
 
 
 if __name__ == '__main__':
