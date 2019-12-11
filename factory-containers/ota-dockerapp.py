@@ -153,7 +153,6 @@ def get_args():
 
     p = cmds.add_parser('create-target')
     p.set_defaults(func=create_target)
-    p.add_argument('credentials', type=argparse.FileType('rb'))
     p.add_argument('version')
     p.add_argument('targets_json')
     p.add_argument('apps', nargs='+')
