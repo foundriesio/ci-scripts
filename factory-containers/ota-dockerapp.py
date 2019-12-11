@@ -100,7 +100,7 @@ def publish(args):
             url, r.status_code, r.text))
 
 
-def add_build(args):
+def create_target(args):
     latest = {}
 
     tags = os.environ.get('OTA_LITE_TAG')
@@ -151,8 +151,8 @@ def get_args():
     p.add_argument('version')
     p.add_argument('targets_json')
 
-    p = cmds.add_parser('add-build')
-    p.set_defaults(func=add_build)
+    p = cmds.add_parser('create-target')
+    p.set_defaults(func=create_target)
     p.add_argument('credentials', type=argparse.FileType('rb'))
     p.add_argument('version')
     p.add_argument('targets_json')
