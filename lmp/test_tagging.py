@@ -97,3 +97,55 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual(['postmerge'], target['custom']['tags'])
                 self.assertEqual(
                     {'foo': 'postmerge-r'}, target['custom']['docker_apps'])
+
+    def test_alternate_containers(self):
+        """Grab containers from a different tag"""
+
+        with temp_json_file(TARGETS_JSON) as filename:
+            customize_target('devel:postmerge', filename, 'rpi3-cm-13')
+            with open(filename) as f:
+                data = json.load(f)
+                target = data['targets']['rpi3-cm-13']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('BADBEEF', target['hashes']['sha256'])
+                self.assertEqual(['devel'], target['custom']['tags'])
+                self.assertEqual(
+                    {'foo': 'postmerge-r'}, target['custom']['docker_apps'])
+
+    def test_no_tags(self):
+        """Grab the latest containers if no tags are used."""
+
+        with temp_json_file(TARGETS_JSON) as filename:
+            customize_target('', filename, 'rpi3-cm-13')
+            with open(filename) as f:
+                data = json.load(f)
+                target = data['targets']['rpi3-cm-13']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('BADBEEF', target['hashes']['sha256'])
+                self.assertIsNone(target['custom'].get('tags'))
+                self.assertEqual(
+                    {'foo': 'devel-r'}, target['custom']['docker_apps'])
+
+    def test_multiple_targets(self):
+        """A single platform build can produce more than one target."""
+        with temp_json_file(TARGETS_JSON) as filename:
+            # Dumb - but have one target be "devel" but with containers
+            # from "postmerge". Tag another target "postmerge" but with
+            # containers from "devel"
+            customize_target(
+                'devel:postmerge,postmerge:devel', filename, 'rpi3-cm-13')
+            with open(filename) as f:
+                data = json.load(f)
+                target = data['targets']['rpi3-cm-13']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('BADBEEF', target['hashes']['sha256'])
+                self.assertEqual(['devel'], target['custom']['tags'])
+                self.assertEqual(
+                    {'foo': 'postmerge-r'}, target['custom']['docker_apps'])
+
+                target = data['targets']['rpi3-cm-13-1']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('BADBEEF', target['hashes']['sha256'])
+                self.assertEqual(['postmerge'], target['custom']['tags'])
+                self.assertEqual(
+                    {'foo': 'devel-r'}, target['custom']['docker_apps'])
