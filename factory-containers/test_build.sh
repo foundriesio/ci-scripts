@@ -2,7 +2,7 @@
 # Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: Apache-2.0
 
 HERE=$(dirname $(readlink -f $0))
-TMPDIR=${TMPDIR-/tmp}
+TMPDIR=${TMPDIR-/var/tmp}
 
 tmpdir=$(mktemp -p $TMPDIR -d test_build.XXXX)
 trap "echo removing tempdir; rm -rf $tmpdir" TERM INT EXIT

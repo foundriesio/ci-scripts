@@ -8,7 +8,30 @@ import logging
 import json
 import os
 
+from copy import deepcopy
+
 logging.basicConfig(level='INFO')
+
+
+class TagMgr:
+    def __init__(self):
+        # Convert thinkgs like:
+        #    tag1,tag2 -> [(tag1, tag1), (tag2, tag2)]
+        #    tag1:blah,tag2 -> [(tag1, blah), (tag2, tag2)]
+        self._tags = []
+        for x in (os.environ.get('OTA_LITE_TAG') or '').split(','):
+            parts = x.strip().split(':', 1)
+            if len(parts) == 1 or parts[1] == '':
+                self._tags.append((parts[0], parts[0]))
+            else:
+                self._tags.append((parts[0], parts[1]))
+
+    def __repr__(self):
+        return str(self._tags)
+
+    @property
+    def tags(self):
+        return self._tags
 
 
 def merge(args):
@@ -18,33 +41,48 @@ def merge(args):
     targets = data['targets']
     changed = False
 
-    cur = targets[args.target_name]
-    cur_ver = int(cur['custom']['version'])
-    logging.info('Target is: %r', cur)
-    tag = os.environ.get('OTA_LITE_TAG')
-    if tag:
-        logging.info('Settings target tags to: [%s]', tag)
-        cur['custom']['tags'] = [tag]
-        changed = True
+    tagmgr = TagMgr()
+    logging.info('Target is: %r', targets[args.target_name])
+    logging.info('Doing Target tagging for: %s', tagmgr)
 
-    # Now find the previous version
-    prev = None
-    prev_ver = 0
-    for tgt in targets.values():
-        if tgt['custom'].get('name') == cur['custom']['name']:
-            match_tag = tag and tag in tgt['custom'].get('tags', [])
-            tgt_ver = int(tgt['custom']['version'])
-            if match_tag and tgt_ver > prev_ver and tgt_ver < cur_ver:
-                prev = tgt
-                prev_ver = tgt_ver
-
-    logging.info('Prev is: %r', prev)
-    if prev:
-        apps = prev['custom'].get('docker_apps')
-        if apps:
-            logging.info('Updating build to have apps: %r', apps)
-            cur['custom']['docker_apps'] = apps
+    updates = []
+    for idx, (tgt_tag, apps_tag) in enumerate(tagmgr.tags):
+        tgt = targets[args.target_name]
+        if idx:
+            tgt = deepcopy(tgt)
+            targets[args.target_name + '-%d' % idx] = tgt
             changed = True
+        if tgt_tag:
+            tgt['custom']['tags'] = [tgt_tag]
+            changed = True
+        updates.append({
+            'ver': int(tgt['custom']['version']),
+            'tag': apps_tag,
+            'tgt': tgt,
+            'prev': None,
+        })
+
+    # Now find the previous version of each target
+    for tgt in targets.values():
+        for cur in updates:
+            if tgt['custom'].get('name') == cur['tgt']['custom']['name']:
+                tag = cur['tag']
+                match_tag = not tag or tag in tgt['custom'].get('tags', [])
+                tgt_ver = int(tgt['custom']['version'])
+                prev_ver = 0
+                if cur['prev']:
+                    prev_ver = int(cur['prev']['custom']['version'])
+                if match_tag and tgt_ver > prev_ver and tgt_ver < cur['ver']:
+                    cur['prev'] = tgt
+
+    for u in updates:
+        if u['prev']:
+            logging.info('Prev is: %r', u['prev'])
+            apps = u['prev']['custom'].get('docker_apps')
+            if apps:
+                logging.info('Updating build to have apps: %r', apps)
+                u['tgt']['custom']['docker_apps'] = apps
+                changed = True
 
     if changed:
         logging.info('Target has changed, saving changes')
