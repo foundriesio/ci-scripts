@@ -75,6 +75,7 @@ triggers:
             values:
               - apalis-imx6
               - beaglebone-yocto
+              - imx8mmevk
               - qemuarm64
               - raspberrypi3
               - raspberrypi4
@@ -126,6 +127,7 @@ triggers:
             values:
               - apalis-imx6
               - beaglebone-yocto
+              - imx8mmevk
               - intel-corei7-64
               - qemuarm64
               - raspberrypi3
@@ -221,6 +223,7 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
+              - imx8mmevk
               - qemuarm64
               - raspberrypi3
               - raspberrypi4
