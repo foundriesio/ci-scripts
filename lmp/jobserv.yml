@@ -97,7 +97,7 @@ triggers:
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
         refs/heads/zeus
-      OTA_LITE_TAG: postmerge-stable
+      OTA_LITE_TAG: 'postmerge-stable:postmerge'
       AKLITE_TAG: promoted-stable
     runs:
       # supported images
