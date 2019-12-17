@@ -46,6 +46,7 @@ done
 
 TAG=$(git log -1 --format=%h)
 LATEST=${OTA_LITE_TAG-"latest"}
+LATEST=$(echo $LATEST | cut -d: -f1 | cut -d, -f1)  # Take into account advanced tagging
 
 if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
