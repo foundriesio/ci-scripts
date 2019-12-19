@@ -275,6 +275,25 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+      # mfgtool / uuu related build files
+      - name: build-mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - imx8mmevk
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: mfgtool-files
+          OSTREE_BRANCHNAME: lmp-premerge
+          EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
   - name: ota-raspberrypi3-64
     type: simple
     runs:
