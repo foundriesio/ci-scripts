@@ -89,6 +89,25 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+      # mfgtool / uuu related build files
+      - name: mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - imx8mmevk
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: mfgtool-files
+          OSTREE_BRANCHNAME: lmp
+          EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
   - name: build-release-stable
     type: git_poller
     email:
@@ -153,6 +172,25 @@ triggers:
         params:
           IMAGE: lmp-mini-image
           OSTREE_BRANCHNAME: lmp
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # mfgtool / uuu related build files
+      - name: mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - imx8mmevk
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: mfgtool-files
+          OSTREE_BRANCHNAME: lmp
+          EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
