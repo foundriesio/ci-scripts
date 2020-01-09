@@ -14,6 +14,8 @@ FACTORY="${FACTORY-lmp}"
 source setup-environment build
 
 cat << EOFEOF >> conf/local.conf
+CONNECTIVITY_CHECK_URIS = "https://www.google.com/"
+
 ACCEPT_FSL_EULA = "1"
 BB_GENERATE_MIRROR_TARBALLS = "1"
 
