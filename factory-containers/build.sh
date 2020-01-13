@@ -18,6 +18,9 @@ require_params FACTORY
 
 run apk --no-cache add file git
 
+MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
+status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
+
 ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
@@ -92,7 +95,7 @@ for x in $IMAGES ; do
 	[ $found -eq 1 ] && continue
 
 	# allow the docker-build.conf to override our manifest platforms
-	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-linux/amd64,linux/arm,linux/arm64}"
+	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-${MANIFEST_PLATFORMS_DEFAULT}}"
 
 	ct_base="hub.foundries.io/${FACTORY}/$x"
 
