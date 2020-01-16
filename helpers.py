@@ -33,7 +33,11 @@ def require_secrets(*secret_names):
 
 def status(msg, prefix='== '):
     '''Print a commonly formatted status message to the build output'''
-    print('%s %s' % (prefix, msg))
+    sys.stdout.buffer.write(prefix.encode())
+    sys.stdout.buffer.write(b' ')
+    sys.stdout.buffer.write(msg.encode())
+    sys.stdout.buffer.write(b'\n')
+    sys.stdout.buffer.flush()
 
 
 def test_start(name):
@@ -66,10 +70,16 @@ def cmd(*args, cwd=None):
     '''Run a command and die if it fails. Output goes to stdoud/stderr'''
     # run a command and terminate on failure
     status(' '.join(args), prefix='=$ ')
-    try:
-        subprocess.check_call(args, cwd=cwd)
-    except subprocess.CalledProcessError as e:
-        sys.exit(e.returncode)
+    p = subprocess.Popen(args, cwd=cwd,
+                         stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    for line in p.stdout:
+        sys.stdout.buffer.write(b'| ')
+        sys.stdout.buffer.write(line)
+        sys.stdout.buffer.flush()
+    sys.stdout.buffer.write(b'|--\n')
+    p.wait()
+    if p.returncode != 0:
+        raise subprocess.CalledProcessError(p.returncode, args)
 
 
 def secret(name):
