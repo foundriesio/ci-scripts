@@ -126,6 +126,7 @@ if [ -d "${archive}" ] ; then
 	# Make the main img.gz be in the root of the archive
 	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
 	mv ${archive}/other/boot*.img ${archive}/ || true
+	mv ${archive}/other/imx-boot ${archive}/ || true
 
 	# Create MD5SUMS file
 	find ${archive} -type f | sort | xargs md5sum > MD5SUMS.txt
