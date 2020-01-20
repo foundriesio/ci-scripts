@@ -51,11 +51,6 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.txt
 ## Only publish wic.gz
 rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 
-# Also create "img" images as they are compatible with standard flashing tools
-for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.wic.gz; do
-	ln -s $(basename ${img}) ${img%.wic.gz}.img.gz
-done
-
 # Link the license manifest for all the images produced by the build
 for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest; do
 	image_name=`basename ${img} | sed -e "s/.manifest//"`
@@ -129,7 +124,7 @@ if [ -d "${archive}" ] ; then
 	fi
 
 	# Make the main img.gz be in the root of the archive
-	mv ${archive}/other/lmp-*.img.gz ${archive}/ || true
+	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
 	mv ${archive}/other/boot*.img ${archive}/ || true
 
 	# Create MD5SUMS file
