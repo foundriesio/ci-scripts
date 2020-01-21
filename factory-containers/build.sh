@@ -121,6 +121,14 @@ for x in $IMAGES ; do
 			docker_cmd="$docker_cmd  --no-cache"
 		fi
 
+		if [ -n "$DOCKER_SECRETS" ] ; then
+			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
+			export DOCKER_BUILDKIT=1
+			for secret in `ls /secrets` ; do
+				docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
+			done
+		fi
+
 		DOCKERFILE="$REPO_ROOT/$x/${DOCKERFILE-Dockerfile}"
 		if [ -n "$BUILD_CONTEXT" ] ; then
 			status "Using custom build context $BUILD_CONTEXT"
