@@ -18,18 +18,15 @@ require_params FACTORY
 
 run apk --no-cache add file git
 
+# required for "docker manifest"
+export  DOCKER_CLI_EXPERIMENTAL=enabled
+
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
 ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
-
-manifest_arch=$ARCH
-[ $manifest_arch = "arm" ] && manifest_arch=armv6
-status Grabbing manifest-tool for $manifest_arch
-wget -O /bin/manifest-tool https://github.com/estesp/manifest-tool/releases/download/v0.8.0/manifest-tool-linux-$manifest_arch
-chmod +x /bin/manifest-tool
 
 if [ -z "$IMAGES" ] ; then
 	IMAGES=$(find * -prune -type d)
@@ -144,14 +141,17 @@ for x in $IMAGES ; do
 			run docker push ${ct_base}:$TAG-$t
 		done
 
-		run manifest-tool push from-args \
-			--platforms $MANIFEST_PLATFORMS \
-			--template ${ct_base}:$TAG-ARCH \
-			--target ${ct_base}:$TAG || true
-		run manifest-tool push from-args \
-			--platforms $MANIFEST_PLATFORMS \
-			--template ${ct_base}:$TAG-ARCH \
-			--target ${ct_base}:$LATEST || true
+		# Convert the old manifest-tool formatted arguments of:
+		#  linux/amd64,linux/arm,linux/arm64
+		# into amd64 arm arm64
+		manifest_args=""
+		for arch in `echo $MANIFEST_PLATFORMS | sed -e 's/linux\///g' -e 's/,/ /g'` ; do
+			manifest_args="${manifest_args} ${ct_base}:$TAG-$arch"
+		done
+		run docker manifest create ${ct_base}:$TAG $manifest_args && \
+			run docker manifest create ${ct_base}:$LATEST $manifest_args && \
+			run docker manifest push ${ct_base}:$TAG && \
+			run docker manifest push ${ct_base}:$LATEST || true
 	else
 		echo "osftoken not provided, skipping publishing step"
 	fi
