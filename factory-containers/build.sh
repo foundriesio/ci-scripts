@@ -24,6 +24,11 @@ export  DOCKER_CLI_EXPERIMENTAL=enabled
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
+if git log -1 | grep -q "\[ci nocache\]" ; then
+	status "[ci nocache] found in HEAD commit, forcing non-cached build"
+	NOCACHE="1"
+fi
+
 ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
