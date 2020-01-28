@@ -124,6 +124,18 @@ for x in $IMAGES ; do
 		if [ -n "$DOCKER_SECRETS" ] ; then
 			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
 			export DOCKER_BUILDKIT=1
+
+			# TODO - this is a hack to deal with:
+			#   https://github.com/moby/buildkit/blob/48f4a9b00ea7b1c7cac22cee76156cb13790406b/vendor/github.com/containerd/containerd/platforms/cpuinfo.go#L93
+			# The code relies on GOARCH properly, but it need /proc/cpuinfo
+			# to know the variant. Our builders are armv8 hosts running
+			# armhf runtimes (so /proc/cpuinfo is wrong)
+			if [ "$ARCH" = "arm" ] ; then
+				echo "processor	: 0" > /fake-cpuinfo
+				echo "CPU architecture: 7" >> /fake-cpuinfo
+				docker_cmd="$docker_cmd -v /fake-cpuinfo:/proc/cpuinfo"
+			fi
+
 			for secret in `ls /secrets` ; do
 				docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
 			done
