@@ -49,6 +49,30 @@ def iterate_factory_svcs(compose_file: str, factory: str) -> Iterable[dict]:
         yaml.dump(data, f)
 
 
+def skip_arch(container_uri: str) -> bool:
+    """Check if container isn't built for this arch.
+
+       Each factory container may have docker-build.conf which can have a line
+       like:
+         SKIP_ARCHS="arm64 arm"
+
+       If this arch is being skipped, then there's no way to build a docker-app
+       for it.
+    """
+    container, _ = os.path.basename(container_uri).split(':')
+    try:
+        with open(os.path.join(container, 'docker-build.conf')) as f:
+            for line in f:
+                k, v = line.split('=', 1)
+                if k == 'SKIP_ARCHS':
+                    # strip quotes and split by spaces
+                    archs = v.replace('"', '').split()
+                    if os.environ['ARCH'] in archs:
+                        return True
+    except FileNotFoundError:
+        pass  # no docker-build.conf, container is built for this arch
+
+
 def iterate_apps(factory: str, container_tag: str) -> Iterable[str]:
     """Loop through all the docker apps in a factory and pin the relevent
        container images. If the its a <0.9 single file dockerapp, convert
@@ -61,15 +85,24 @@ def iterate_apps(factory: str, container_tag: str) -> Iterable[str]:
             status('Converting .dockerapp file for: ' + p)
             convert_file(p)
 
+        skip = False
         compose_file = os.path.join(p, 'docker-compose.yml')
         for svc in iterate_factory_svcs(compose_file, factory):
+            # Ensure the container isn't being skipped for this architecture:
+            if skip_arch(svc['image']):
+                status('Skipping docker-app for this ARCH. '
+                       '%s is skipped by its docker-build.conf' % svc['image'])
+                skip = True
+                continue
+
             # NOTE: docker-app tries to pin things properly. However, this
             # script is called before we've push the multi-arch image our
             # registry. So we need to pin to something we know right now:
             svc['image'] = svc['image'].replace(':latest', ':' + container_tag)
             status('Pinning %s service image: %s' % (p, svc['image']))
 
-        yield p
+        if not skip:
+            yield p
 
 
 def build_app(dockerapp_path: str, factory: str, tag: str) -> str:
