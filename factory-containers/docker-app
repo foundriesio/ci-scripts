@@ -1,0 +1,231 @@
+#!/usr/bin/python3
+import json
+import os
+import subprocess
+import sys
+
+import docker
+import yaml
+
+from typing import Iterable
+
+from helpers import cmd, require_env, status
+
+
+def convert_file(path: str):
+    """Take a .dockerapp file to directory format.
+
+       The file format isn't supported by docker-app 0.8 and beyond. Just
+       split a 3 sectioned yaml file into its pieces
+    """
+    with open(path) as f:
+        meta, compose, params = yaml.safe_load_all(f)
+
+    os.unlink(path)
+    os.mkdir(path)
+
+    with open(os.path.join(path, 'metadata.yml'), 'w') as f:
+        yaml.dump(meta, f)
+    with open(os.path.join(path, 'docker-compose.yml'), 'w') as f:
+        yaml.dump(compose, f)
+    with open(os.path.join(path, 'parameters.yml'), 'w') as f:
+        yaml.dump(params, f)
+
+
+def iterate_factory_svcs(compose_file: str, factory: str) -> Iterable[dict]:
+    """Open the compose file and yield all the services that are based on
+       containers defined in this factory. The docker-compose file will be
+       updated with any changes to the service at the end."""
+    with open(compose_file) as f:
+        data = yaml.safe_load(f)
+
+    factory_container_base = 'hub.foundries.io/' + factory + '/'
+    for name, svc in data['services'].items():
+        img = svc['image']
+        if img.startswith(factory_container_base) and img.endswith(':latest'):
+            yield svc
+
+    with open(compose_file, 'w') as f:
+        yaml.dump(data, f)
+
+
+def skip_arch(container_uri: str) -> bool:
+    """Check if container isn't built for this arch.
+
+       Each factory container may have docker-build.conf which can have a line
+       like:
+         SKIP_ARCHS="arm64 arm"
+
+       If this arch is being skipped, then there's no way to build a docker-app
+       for it.
+    """
+    container, _ = os.path.basename(container_uri).split(':')
+    try:
+        with open(os.path.join(container, 'docker-build.conf')) as f:
+            for line in f:
+                k, v = line.split('=', 1)
+                if k == 'SKIP_ARCHS':
+                    # strip quotes and split by spaces
+                    archs = v.replace('"', '').split()
+                    if os.environ['ARCH'] in archs:
+                        return True
+    except FileNotFoundError:
+        pass  # no docker-build.conf, container is built for this arch
+
+
+def iterate_apps(factory: str, container_tag: str) -> Iterable[str]:
+    """Loop through all the docker apps in a factory and pin the relevent
+       container images. If the its a <0.9 single file dockerapp, convert
+       in place to the new directory based format.
+    """
+    for p in os.listdir():
+        if not p.endswith('.dockerapp'):
+            continue
+        if os.path.isfile(p):
+            status('Converting .dockerapp file for: ' + p)
+            convert_file(p)
+
+        skip = False
+        compose_file = os.path.join(p, 'docker-compose.yml')
+        for svc in iterate_factory_svcs(compose_file, factory):
+            # Ensure the container isn't being skipped for this architecture:
+            if skip_arch(svc['image']):
+                status('Skipping docker-app for this ARCH. '
+                       '%s is skipped by its docker-build.conf' % svc['image'])
+                skip = True
+                continue
+
+            # NOTE: docker-app tries to pin things properly. However, this
+            # script is called before we've push the multi-arch image our
+            # registry. So we need to pin to something we know right now:
+            svc['image'] = svc['image'].replace(':latest', ':' + container_tag)
+            status('Pinning %s service image: %s' % (p, svc['image']))
+
+        if not skip:
+            yield p
+
+
+def build_app(dockerapp_path: str, factory: str, tag: str) -> str:
+    uri = 'hub.foundries.io/' + factory + '/'
+    uri += dockerapp_path.replace('.dockerapp', '')
+    uri += ':app-' + tag
+    cmd('docker', 'app', 'build', '.', '-f', dockerapp_path, '-t', uri)
+    return uri
+
+
+def get_local_bundle_path(app_uri: str) -> str:
+    unpinned, _ = app_uri.split(':')
+    bundles_dir = os.path.expanduser('~/.docker/app/bundles')
+    with open(os.path.join(bundles_dir, 'repositories.json')) as f:
+        repos = json.load(f)['Repositories']
+        method, val = repos[unpinned][app_uri].split(':')
+
+    return os.path.join(bundles_dir, 'contents', method, val, 'bundle.json')
+
+
+def get_local_bundle(app_uri: str) -> dict:
+    """Return the contents of a docker apps bundle.json stored on disk"""
+    with open(get_local_bundle_path(app_uri)) as f:
+        return json.load(f)
+
+
+def push_invoc_img(dockerapp_path: str, factory: str, tag: str, arch: str):
+    """Find the invocation image of the docker app and push it to our
+       registry with an arch specific tag. We'll use this later on to
+       produce a multi-arch bundle that can be safely referenced in our
+       docker app bundle.
+    """
+    uri = 'hub.foundries.io/' + factory + '/'
+    uri += dockerapp_path.replace('.dockerapp', '')
+    pinned = uri + ':app-' + tag
+
+    base = 'hub.foundries.io/' + factory + '/'
+    for img in get_local_bundle(pinned)['invocationImages']:
+        tagged = base + img['image'] + '-' + tag + '-' + arch
+        cmd('docker', 'tag', img['image'], tagged)
+        cmd('docker', 'push', tagged)
+
+
+def publish_invoc_arch(factory: str, arch: str, tag: str):
+    """Publish the architecture specific invocation image for each docker
+       app found."""
+    for app in iterate_apps(factory, tag + '-' + arch):
+        status('Building docker app bundle for: ' + app)
+        build_app(app, factory, tag)
+
+        status('Pushing invocation image for: ' + app)
+        push_invoc_img(app, factory, tag, arch)
+
+
+def publish_multiarch(tag: str):
+    """Find all arch specific images matching this tag and produce a single
+       multi-arch manifest image."""
+    status('Publishing multi-arch: ' + tag)
+
+    args = ['docker', 'manifest', 'create', '--amend', tag]
+
+    # poke around and figure out what platforms have been pushed:
+    client = docker.from_env()
+    for arch in ('arm', 'arm64', 'amd64'):
+        try:
+            client.images.get_registry_data(tag + '-' + arch)
+            args.append(tag + '-' + arch)
+        except docker.errors.NotFound:
+            pass
+    cmd(*args)
+
+    # The output of manifest push is the sha:
+    args = ['docker', 'manifest', 'push', tag]
+    stdout = subprocess.check_output(args)
+    return stdout.decode().strip()
+
+
+def manifest_sha(uri: str) -> str:
+    client = docker.from_env()
+    return client.images.get_registry_data(uri).id
+
+
+def publish_app(factory: str, tag: str):
+    for app in iterate_apps(factory, tag):
+        status('Building docker app bundle for: ' + app)
+        uri = build_app(app, factory, tag)
+
+        status('Updating invocation image for: ' + app)
+        bundle = get_local_bundle(uri)
+        base = 'hub.foundries.io/' + factory + '/'
+        for img in bundle['invocationImages']:
+            tagged = base + img['image'] + '-' + tag
+            img['image'] = tagged
+
+            sha = publish_multiarch(tagged)
+            img['contentDigest'] = sha
+
+        for img, entry in bundle['images'].items():
+            if not entry['image'].startswith(base):
+                continue
+            # Convert something like:
+            #   hub.foundries.io/andy-corp/shellhttpd:acab822@sha256:b11
+            # Into hub.foundries.io/andy-corp/shellhttpd:acab822
+            # And then find the Digest to produce a pinned multi-arch manifest
+            tagged, _ = entry['image'].split('@')
+            pinned = tagged + '@' + manifest_sha(tagged)
+
+            status('Pinning service %s to: %s' % (img, pinned))
+            entry['image'] = pinned
+
+        with open(get_local_bundle_path(uri), 'w') as f:
+            json.dump(bundle, f, indent=2)
+
+        cmd('docker', 'app', 'push', uri)
+
+
+if __name__ == '__main__':
+    action = sys.argv[1]
+    assert action in ('build-invoc', 'publish'), 'Invalid action: ' + action
+
+    if action == 'build-invoc':
+        factory, arch, tag = require_env('FACTORY', 'ARCH', 'TAG')
+        publish_invoc_arch(factory, arch, tag)
+    else:
+        factory, tag = require_env('FACTORY', 'TAG')
+        publish_app(factory, tag)
