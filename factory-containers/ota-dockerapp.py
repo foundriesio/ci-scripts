@@ -15,7 +15,6 @@ from zipfile import ZipFile
 
 import logging
 
-import docker
 import requests
 
 logging.basicConfig(level='INFO')
@@ -146,6 +145,12 @@ def get_app_bundles(tag):
     # We can look at repositories.json to see everything that we just
     # pushed as docker apps via the "docker-app" script. However, it doesn't
     # know the sha of the item, so we then have to look it up
+
+    # TODO - once this is enabled for all factories, we can move it to the
+    # top of the file where it belongs. However, docker-app-publish.sh will
+    # need to install it by default before we can make that change.
+    import docker
+
     bundles = {}
     bundles_dir = os.path.expanduser('~/.docker/app/bundles')
     client = docker.from_env()
