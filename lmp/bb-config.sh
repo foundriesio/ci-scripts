@@ -10,6 +10,7 @@ AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
 LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags)
 FACTORY="${FACTORY-lmp}"
+UBOOT_SIGN_ENABLE="${UBOOT_SIGN_ENABLE-0}"
 
 source setup-environment build
 
@@ -18,6 +19,8 @@ CONNECTIVITY_CHECK_URIS = "https://www.google.com/"
 
 ACCEPT_FSL_EULA = "1"
 BB_GENERATE_MIRROR_TARBALLS = "1"
+
+UBOOT_SIGN_ENABLE = "${UBOOT_SIGN_ENABLE}"
 
 # SOTA params
 SOTA_PACKED_CREDENTIALS = "${SOTA_PACKED_CREDENTIALS}"
