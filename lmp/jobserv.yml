@@ -23,7 +23,6 @@ triggers:
           - name: ota-{loop}
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -42,7 +41,6 @@ triggers:
           - name: ota-{loop}
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -59,7 +57,6 @@ triggers:
               - qemuriscv64
         params:
           IMAGE: lmp-mini-image
-          OSTREE_BRANCHNAME: lmp
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -82,7 +79,6 @@ triggers:
               - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -100,7 +96,6 @@ triggers:
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
-          OSTREE_BRANCHNAME: lmp
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
         script-repo:
           name: fio
@@ -130,7 +125,6 @@ triggers:
               - raspberrypi3-64
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -154,7 +148,6 @@ triggers:
               - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -171,7 +164,6 @@ triggers:
               - qemuriscv64
         params:
           IMAGE: lmp-mini-image
-          OSTREE_BRANCHNAME: lmp
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -189,7 +181,6 @@ triggers:
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
-          OSTREE_BRANCHNAME: lmp
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
         script-repo:
           name: fio
@@ -200,7 +191,7 @@ triggers:
   - name: Code Review
     type: github_pr
     params:
-      OTA_LITE_TAG: premerge
+      OTA_LITE_TAG: 'premerge:postmerge'
       AKLITE_TAG: premerge
     runs:
       - name: build-{loop}
@@ -215,7 +206,6 @@ triggers:
           - name: ota-{loop}
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp-premerge
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -231,7 +221,6 @@ triggers:
               - beaglebone-yocto
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp-premerge
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -247,7 +236,6 @@ triggers:
               - qemuriscv64
         params:
           IMAGE: lmp-mini-image
-          OSTREE_BRANCHNAME: lmp-premerge
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -268,7 +256,6 @@ triggers:
               - raspberrypi4-64
         params:
           IMAGE: lmp-gateway-image
-          OSTREE_BRANCHNAME: lmp-premerge
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -286,7 +273,6 @@ triggers:
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
-          OSTREE_BRANCHNAME: lmp-premerge
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
         script-repo:
           name: fio
@@ -328,6 +314,7 @@ params:
   SOTA_PACKED_CREDENTIALS: /var/cache/bitbake/credentials.zip
   SOTA_CLIENT: aktualizr-lite
   EXTRA_IMAGE_INSTALL: aktualizr-lite-public-stream
+  OSTREE_BRANCHNAME: lmp
 
 script-repos:
   fio:
