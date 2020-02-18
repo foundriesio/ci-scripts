@@ -8,7 +8,7 @@ OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME-lmp-localdev}"
 SOTA_CLIENT="${SOTA_CLIENT-aktualizr}"
 AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
-LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags)
+LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags 2>/dev/null || echo unknown)
 FACTORY="${FACTORY-lmp}"
 UBOOT_SIGN_ENABLE="${UBOOT_SIGN_ENABLE-0}"
 
