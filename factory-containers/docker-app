@@ -63,6 +63,8 @@ def skip_arch(container_uri: str) -> bool:
     try:
         with open(os.path.join(container, 'docker-build.conf')) as f:
             for line in f:
+                if line[0] == '#':
+                    continue
                 k, v = line.split('=', 1)
                 if k == 'SKIP_ARCHS':
                     # strip quotes and split by spaces
