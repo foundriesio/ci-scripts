@@ -124,6 +124,7 @@ for x in $IMAGES ; do
 		if [ -n "$DOCKER_SECRETS" ] ; then
 			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
 			export DOCKER_BUILDKIT=1
+			docker_cmd="$docker_cmd --build-arg BUILDKIT_INLINE_CACHE=1"
 			for secret in `ls /secrets` ; do
 				docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
 			done
