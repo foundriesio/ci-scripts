@@ -16,7 +16,7 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
-run apk --no-cache add file git
+run apk --no-cache add file git python3 py3-requests
 
 # required for "docker manifest"
 export  DOCKER_CLI_EXPERIMENTAL=enabled
@@ -115,7 +115,8 @@ for x in $IMAGES ; do
 		docker_cmd="docker build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
-			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
+			prev=$(PYTHONPATH=${HERE}../ ${HERE}/last-tag.py /repo ${FACTORY}/$x $ARCH)
+			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${prev}"
 		else
 			status Building docker image $x for $ARCH with no cache
 			docker_cmd="$docker_cmd  --no-cache"
