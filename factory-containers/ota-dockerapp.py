@@ -198,6 +198,7 @@ def create_target(args):
                 target['custom']['tags'] = [tag]
             apps = {}
             target['custom']['docker_apps'] = apps
+            target['custom']['containers-sha'] = os.environ['GIT_SHA']
             for app in args.apps:
                 filename = os.path.basename(app) + '-' + args.version
                 name = os.path.splitext(filename)[0]
