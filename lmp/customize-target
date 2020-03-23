@@ -8,6 +8,7 @@ import logging
 import json
 import os
 import subprocess
+import urllib.request
 
 from copy import deepcopy
 
@@ -41,12 +42,54 @@ def git_hash(gitdir):
     ).strip().decode()
 
 
+def targets_from_api():
+    """ When we are called to create the installed_targets file, we'll
+    We need to get the targets from the API so that we can help find the
+       current docker-apps.
+    """
+    url = 'https://api.foundries.io/ota/repo/'
+    url += os.environ['FOUNDRIES_FACTORY']
+    url += '/api/v1/user_repo/targets.json'
+    try:
+        with open('/secrets/osftok') as f:
+            token = f.read().strip()
+    except FileNotFoundError:
+        logging.warning('osftok not found, assuming a simulator build')
+        return {}
+
+    req = urllib.request.Request(url, headers={'OSF-TOKEN': token})
+    with urllib.request.urlopen(req) as response:
+        data = json.load(response)
+        return data['signed']['targets']
+
+
 def merge(args):
     with open(args.targets_json) as f:
         data = json.load(f)
 
-    targets = data['targets']
     changed = False
+
+    try:
+        targets = data['targets']
+    except KeyError:
+        logging.info('Assuming installed_versions file')
+        # have a dict: ostree-hash: target-name, convert to a target
+        name, version = args.target_name.rsplit('-', 1)
+        machine, _ = name.split('-lmp', 1)
+        data = {
+            v: {
+                'hashes': {'sha256': k},
+                'is_current': True,
+                'custom': {
+                    'name': name,
+                    'version': version,
+                    'hardwareIds': [machine],
+                }
+            } for k, v in data.items()
+        }
+        targets = targets_from_api()
+        targets.update(data)
+        changed = True
 
     tagmgr = TagMgr()
     logging.info('Target is: %r', targets[args.target_name])
