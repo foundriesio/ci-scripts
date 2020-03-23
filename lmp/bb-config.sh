@@ -40,7 +40,7 @@ LMP_VERSION = "${LMP_VERSION}"
 AKLITE_TAG = "${AKLITE_TAG}"
 
 # Who's factory is this?
-FOUNDRIES_FACTORY = "${FACTORY}"
+export FOUNDRIES_FACTORY = "${FACTORY}"
 
 # Additional packages based on the CI job used
 IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
