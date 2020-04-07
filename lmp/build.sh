@@ -115,6 +115,9 @@ if [ -d "${archive}" ] ; then
 	# Copy the bootloader used by RISC-V targets
 	cp ${DEPLOY_DIR_IMAGE}/bbl* ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/fw_* ${archive}/other/ || true
+	# Copy the ARM firmware binaries
+	cp ${DEPLOY_DIR_IMAGE}/se_*.bin ${archive}/other/ || true
+	cp ${DEPLOY_DIR_IMAGE}/es_*.bin ${archive}/other/ || true
 
 	# Handle user provided extra artifacts
 	if [ ! -z "${EXTRA_ARTIFACTS}" ]; then
