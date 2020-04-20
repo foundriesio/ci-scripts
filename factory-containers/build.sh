@@ -29,7 +29,8 @@ file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
 
 if [ -z "$IMAGES" ] ; then
-	IMAGES=$(find * -prune -type d | grep -v .dockerapp)
+	# Look through the first level of subdirectories for Dockerfile
+	IMAGES=$(find ./ -mindepth 2 -maxdepth 2 -name Dockerfile | cut -d / -f2)
 fi
 
 status Launching dockerd

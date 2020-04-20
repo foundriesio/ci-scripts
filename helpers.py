@@ -66,20 +66,24 @@ def test_case_ctx(name):
         sys.exit(1)
 
 
-def cmd(*args, cwd=None):
+def cmd(*args, cwd=None, capture=False):
     '''Run a command and die if it fails. Output goes to stdoud/stderr'''
     # run a command and terminate on failure
     status(' '.join(args), prefix='=$ ')
     p = subprocess.Popen(args, cwd=cwd,
                          stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    out = b''
     for line in p.stdout:
         sys.stdout.buffer.write(b'| ')
         sys.stdout.buffer.write(line)
         sys.stdout.buffer.flush()
+        if capture:
+            out += line
     sys.stdout.buffer.write(b'|--\n')
     p.wait()
     if p.returncode != 0:
         raise subprocess.CalledProcessError(p.returncode, args)
+    return out
 
 
 def secret(name):

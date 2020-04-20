@@ -142,6 +142,14 @@ def merge(args):
                 if sha:
                     u['tgt']['custom']['containers-sha'] = sha
                 changed = True
+            apps = u['prev']['custom'].get('docker_compose_apps')
+            if apps:
+                logging.info('Updating build to have compose apps: %r', apps)
+                u['tgt']['custom']['docker_compose_apps'] = apps
+                sha = u['prev']['custom'].get('containers-sha')
+                if sha:
+                    u['tgt']['custom']['containers-sha'] = sha
+                changed = True
 
     if changed:
         logging.info('Target has changed, saving changes')

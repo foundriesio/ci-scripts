@@ -11,6 +11,30 @@ apps=$(ls -d *.dockerapp 2>/dev/null) || exit 0
 
 run apk --no-cache add git
 
+if [ -n "$DOCKER_COMPOSE_APP" ] ; then
+	status "Launching dockerd"
+	unset DOCKER_HOST
+	DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --raw-logs >/archive/dockerd.log 2>&1 &
+	for i in `seq 12` ; do
+		sleep 1
+		docker info >/dev/null 2>&1 && break
+		if [ $i = 12 ] ; then
+			status Timed out trying to connect to internal docker host
+			exit 1
+		fi
+	done
+
+	status Doing docker-login to hub.foundries.io with secret
+	docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
+
+	run apk --no-cache add python3 py3-yaml
+	export PYTHONPATH=${HERE}/../
+
+	status Dowloading "compose-ref" for publishing apps
+	run wget -O /usr/local/bin/compose-ref https://storage.googleapis.com/subscriber_registry/compose-ref
+	chmod +x /usr/local/bin/compose-ref
+fi
+
 CREDENTIALS=/var/cache/bitbake/credentials.zip
 export TAG=$(git log -1 --format=%h)
 
@@ -27,6 +51,10 @@ for app in $apps ; do
 		run ${HERE}/ota-dockerapp.py publish ${app} ${CREDENTIALS} ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json
 	fi
 done
+
+if [ -n "$DOCKER_COMPOSE_APP" ] ; then
+	run ${HERE}/publish-compose-apps
+fi
 
 run ${HERE}/ota-dockerapp.py create-target ${H_BUILD} ${tufrepo}/roles/unsigned/targets.json $apps
 

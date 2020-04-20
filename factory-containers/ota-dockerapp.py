@@ -147,6 +147,14 @@ def create_target(args):
 
     latest_tags = {x: {} for x in tagmgr.target_tags}
 
+    compose_apps = {}
+    try:
+        # This is created by publish-compose-apps if enabled.
+        with open('/tmp/comopse-apps.json') as f:
+            compose_apps = json.load(f)
+    except FileNotFoundError:
+        pass  # Should be okay, the factory isn't configured for them
+
     with open(args.targets_json) as f:
         data = json.load(f)
         for name, target in data['targets'].items():
@@ -170,7 +178,6 @@ def create_target(args):
             if tag:
                 target['custom']['tags'] = [tag]
             apps = {}
-            target['custom']['docker_apps'] = apps
             target['custom']['containers-sha'] = os.environ['GIT_SHA']
             for app in args.apps:
                 filename = os.path.basename(app) + '-' + args.version
@@ -178,6 +185,10 @@ def create_target(args):
                 apps[name] = {}
                 logging.info('Add docker app from tufrepo for: %s', name)
                 apps[name]['filename'] = filename
+            if apps:
+                target['custom']['docker_apps'] = apps
+            if compose_apps:
+                target['custom']['docker_compose_apps'] = compose_apps
             logging.info('Targets with apps: %r', target)
 
     with open(args.targets_json, 'w') as f:
