@@ -178,13 +178,3 @@ for x in $IMAGES ; do
 		echo "</testcase>" >> /archive/junit.xml
 	fi
 done
-
-if [ -n "$DOCKER_APP_BUNDLE" ] ; then
-	status Building docker-app bundles for $ARCH
-	run apk --no-cache add python3 py3-requests py3-yaml docker-py
-	mkdir -p /usr/lib/docker/cli-plugins
-	run wget -O /usr/lib/docker/cli-plugins/docker-app https://storage.googleapis.com/subscriber_registry/docker-app-linux-${ARCH}-47a20115
-	chmod +x /usr/lib/docker/cli-plugins/docker-app
-	echo PYTHONPATH=${HERE}/../ DOCKER_CLI_EXPERIMENTAL=enabled ARCH=$ARCH TAG=$TAG $HERE/build-dockerapps
-	PYTHONPATH=${HERE}/../ DOCKER_CLI_EXPERIMENTAL=enabled ARCH=$ARCH TAG=$TAG $HERE/docker-app build-invoc
-fi
