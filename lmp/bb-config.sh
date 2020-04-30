@@ -49,6 +49,10 @@ EOFEOF
 if [ -n "$OTA_LITE_TAG" ] ; then
 	cat << EOFEOF >> conf/local.conf
 export OTA_LITE_TAG = "${OTA_LITE_TAG}"
+# Take a tag from a spec like:
+#  https://docs.foundries.io/latest/reference/advanced-tagging.html
+# and find the first tag name to produce a senible default
+LMP_DEVICE_REGISTER_TAG = "$(echo ${OTA_LITE_TAG} | cut -d: -f1 | cut -d, -f1}"
 EOFEOF
 fi
 
