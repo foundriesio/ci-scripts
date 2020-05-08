@@ -29,8 +29,8 @@ def _check_systemd_job(job_name):
 
 
 def _check_core_systemd_jobs():
-    _check_systemd_job("systemd-networkd-wait-online.service")
     _check_systemd_job("systemd-timesyncd.service")
+    _check_systemd_job("NetworkManager-wait-online.service")
 
 
 def _check_shellhttpd():
