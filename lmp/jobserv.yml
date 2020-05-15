@@ -112,7 +112,7 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
-        refs/heads/zeus
+        refs/heads/dunfell
       OTA_LITE_TAG: 'postmerge-stable:postmerge'
       AKLITE_TAG: promoted-stable
     runs:
