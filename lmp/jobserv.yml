@@ -21,6 +21,7 @@ triggers:
               - raspberrypi3-64
         triggers:
           - name: ota-{loop}
+          - name: ptest-{loop}
         params:
           IMAGE: lmp-gateway-image
         script-repo:
@@ -39,6 +40,7 @@ triggers:
               - intel-corei7-64
         triggers:
           - name: ota-{loop}
+          - name: ptest-{loop}
         params:
           IMAGE: lmp-gateway-image
         script-repo:
@@ -205,6 +207,7 @@ triggers:
               - intel-corei7-64
         triggers:
           - name: ota-{loop}
+          - name: ptest-{loop}
         params:
           IMAGE: lmp-gateway-image
         script-repo:
@@ -276,6 +279,38 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+  - name: ptest-raspberrypi3-64
+    type: simple
+    runs:
+      - name: lmp-ptest-raspberrypi3-64
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        params:
+          IMAGE: lmp-gateway-image
+          MACHINE: raspberrypi3-64
+          ENABLE_PTEST: "1"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+  - name: ptest-intel-corei7-64
+    type: simple
+    runs:
+      - name: lmp-ptest-intel-corei7-64
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        params:
+          IMAGE: lmp-gateway-image
+          MACHINE: intel-corei7-64
+          ENABLE_PTEST: "1"
         script-repo:
           name: fio
           path: lmp/build.sh
