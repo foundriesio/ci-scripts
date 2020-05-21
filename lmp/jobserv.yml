@@ -21,7 +21,7 @@ triggers:
               - raspberrypi3-64
         triggers:
           - name: ota-{loop}
-          - name: ptest-{loop}
+          - name: ptest-build-{loop}
         params:
           IMAGE: lmp-gateway-image
         script-repo:
@@ -40,7 +40,7 @@ triggers:
               - intel-corei7-64
         triggers:
           - name: ota-{loop}
-          - name: ptest-{loop}
+          - name: ptest-build-{loop}
         params:
           IMAGE: lmp-gateway-image
         script-repo:
@@ -207,7 +207,7 @@ triggers:
               - intel-corei7-64
         triggers:
           - name: ota-{loop}
-          - name: ptest-{loop}
+          - name: ptest-build-{loop}
         params:
           IMAGE: lmp-gateway-image
         script-repo:
@@ -285,10 +285,10 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-  - name: ptest-raspberrypi3-64
+  - name: ptest-build-raspberrypi3-64
     type: simple
     runs:
-      - name: lmp-ptest-raspberrypi3-64
+      - name: build-raspberrypi3-64-ptest
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-osf
         params:
@@ -301,10 +301,10 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-  - name: ptest-intel-corei7-64
+  - name: ptest-build-intel-corei7-64
     type: simple
     runs:
-      - name: lmp-ptest-intel-corei7-64
+      - name: build-intel-corei7-64-ptest
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-osf
         params:
