@@ -57,8 +57,13 @@ trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 
 REPO_ROOT=$(pwd)
 for x in $IMAGES ; do
-	# Skip building things that end with .disabled
-	echo $x | grep -q -E \\.disabled$ && continue
+  # Skip building directories that end with .disabled
+  echo $x | grep -q -E \\.disabled$ && continue
+  # Skip building directories with a .disabled file in the root directory
+  if ls -a $x/ | grep -q .disabled; then
+    continue
+  fi
+
 	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
 
 	# If NOCACHE is not set, only build images that have changed.
