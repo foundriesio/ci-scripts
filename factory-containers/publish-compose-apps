@@ -112,9 +112,9 @@ def publish(factory: str, tag: str, app_name: str) -> str:
                     svc['image'] = img + ':' + tag
                     changed = True
                 elif len(parts) == 1:
-                    if parts[1] not in ('${TAG}', 'latest'):
-                        sys.exit('Image pinned to %s should be ${TAG}' % (
-                                 parts[1]))
+                    if parts[1] not in ('${TAG}', 'latest', tag):
+                        sys.exit('Image pinned to %s should be ${TAG} or %s' % (
+                                 parts[1], tag))
                     svc['image'] = img + ':' + tag
                     changed = True
     if changed:
