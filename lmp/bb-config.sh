@@ -30,6 +30,7 @@ GARAGE_SIGN_REPO = "/tmp/garage_sign_repo"
 GARAGE_TARGET_VERSION = "${H_BUILD}"
 GARAGE_TARGET_URL = "https://ci.foundries.io/projects/${H_PROJECT}/builds/${H_BUILD}"
 GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target"
+DOCKER_COMPOSE_APP = "${DOCKER_COMPOSE_APP}"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"
