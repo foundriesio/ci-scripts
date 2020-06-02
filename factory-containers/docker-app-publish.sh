@@ -7,7 +7,7 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY H_BUILD
 
-apps=$(ls -d *.dockerapp 2>/dev/null) || exit 0
+apps=$(ls -d *.dockerapp 2>/dev/null || true)
 
 run apk --no-cache add git
 
