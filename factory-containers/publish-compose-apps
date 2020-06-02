@@ -72,7 +72,7 @@ def convert_docker_app(path: str):
             safek = k.replace('.', '_')
             status('Replacing parameter "%s" with "%s" for compatibility' % (
                    k, safek))
-            compose_str = compose_str.replace('${%s' % k, '${%s' % (k, safek))
+            compose_str = compose_str.replace('${' + k, '${' + safek)
 
     with open(os.path.join(path, 'docker-compose.yml'), 'w') as f:
         f.write(compose_str)
@@ -115,10 +115,12 @@ def publish(factory: str, tag: str, app_name: str) -> str:
                     if parts[1] not in ('${TAG}', 'latest', tag):
                         sys.exit('Image pinned to %s should be ${TAG} or %s' % (
                                  parts[1], tag))
-                    svc['image'] = img + ':' + tag
+                    svc['image'] = parts[0] + ':' + tag
                     changed = True
+                else:
+                    sys.exit('Unexpected image value: ' + img)
     if changed:
-        with open(os.path.join(factory, 'docker-compose.yml'), 'w') as f:
+        with open(os.path.join(app_name, 'docker-compose.yml'), 'w') as f:
             yaml.dump(compose, f)
 
     out = cmd('compose-ref', '-f', 'docker-compose.yml', 'publish', tagged,
