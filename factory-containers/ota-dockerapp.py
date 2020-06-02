@@ -150,7 +150,7 @@ def create_target(args):
     compose_apps = {}
     try:
         # This is created by publish-compose-apps if enabled.
-        with open('/tmp/comopse-apps.json') as f:
+        with open('/archive/compose-apps.json') as f:
             compose_apps = json.load(f)
     except FileNotFoundError:
         pass  # Should be okay, the factory isn't configured for them

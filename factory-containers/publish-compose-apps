@@ -124,8 +124,8 @@ def publish(factory: str, tag: str, app_name: str) -> str:
     out = cmd('compose-ref', '-f', 'docker-compose.yml', 'publish', tagged,
               cwd=app_name, capture=True)
     # The publish command produces output like:
-    # = Publishing bundle...
-    # |-> bundle:  sha256:fc73321368c7a805b0f697a0a845470bc022b6bdd45a8b34
+    # = Publishing app...
+    # |-> app:  sha256:fc73321368c7a805b0f697a0a845470bc022b6bdd45a8b34
     # |-> manifest:  sha256:e15e3824fc21ce13815aecb0490d60b3a32
     # We need the manifest sha so we can pin it properly in targets.json
     needle = b'|-> manifest:  sha256:'
@@ -143,7 +143,7 @@ def main(factory: str, tag: str):
             apps[p] = {'uri': uri}
 
     # this is a bit of a hack. ota-dockerapp.py needs this to create a target:
-    with open('/tmp/compose-apps.json', mode='w') as f:
+    with open('/archive/compose-apps.json', mode='w') as f:
         json.dump(apps, f, indent=2)
 
 
