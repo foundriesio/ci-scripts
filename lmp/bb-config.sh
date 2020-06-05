@@ -13,6 +13,10 @@ FACTORY="${FACTORY-lmp}"
 UBOOT_SIGN_ENABLE="${UBOOT_SIGN_ENABLE-0}"
 ENABLE_PTEST="${ENABLE_PTEST-0}"
 
+if [ "$ENABLE_PTEST" = "1" ] ; then
+    OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME}-ptest"
+fi
+
 source setup-environment build
 
 cat << EOFEOF >> conf/local.conf
