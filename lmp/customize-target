@@ -13,6 +13,9 @@ import urllib.request
 from copy import deepcopy
 
 logging.basicConfig(level='INFO')
+fh = logging.FileHandler('/archive/custom-target.log')
+fh.setFormatter(logging.getLogger().handlers[0].formatter)
+logging.getLogger().addHandler(fh)
 
 
 class TagMgr:
