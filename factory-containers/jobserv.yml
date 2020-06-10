@@ -13,7 +13,7 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/containers.git
       GIT_POLL_REFS: "refs/heads/master"
-      OTA_LITE_TAG: postmerge
+      OTA_LITE_TAG: postmerge,postmerge-ptest
     runs:
       - name: build-{loop}
         container: docker:dind
@@ -47,7 +47,7 @@ triggers:
         container: docker:dind
         privileged: true
         params:
-          OTA_LITE_TAG: premerge
+          OTA_LITE_TAG: premerge:postmerge,premerge-ptest:postmerge-ptest
         loop-on:
           - param: host-tag
             values: [aarch64, armhf, amd64]
@@ -57,20 +57,6 @@ triggers:
 
     triggers:
       - name: promote
-
-  - name: pull-request-publish
-    type: simple
-    runs:
-      - name: publish-docker-app
-        container: hub.foundries.io/aktualizr
-        host-tag: amd64-osf
-        params:
-          OTA_LITE_TAG: premerge
-        script-repo:
-          name: fio
-          path: factory-containers/docker-app-publish.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
 
 script-repos:
   fio:
