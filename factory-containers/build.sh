@@ -62,23 +62,23 @@ for x in $IMAGES ; do
 	echo $x | grep -q -E \\.disabled$ && continue
 	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
 
+	conf=$x/docker-build.conf
+	if [ -f $conf ] ; then
+		echo "Sourcing docker-build.conf for build rules in $x"
+		. $conf
+	fi
+
 	# If NOCACHE is not set, only build images that have changed.
 	if [ -z "$NOCACHE" ] ; then
 		no_op_tag=0
 		# If we cannot obtain the diff, force the build
-		CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/ || echo FORCE_BUILD)
+		CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/${BUILD_CONTEXT} || echo FORCE_BUILD)
 		if [[ ! -z "$CHANGED" ]]; then
 			status "Detected changes to $x"
 		else
 			status "No changes to $x, tagging only"
 			no_op_tag=1
 		fi
-	fi
-
-	conf=$x/docker-build.conf
-	if [ -f $conf ] ; then
-		echo "Sourcing docker-build.conf for build rules in $x"
-		. $conf
 	fi
 
 	# check to see if we should skip building this image`
