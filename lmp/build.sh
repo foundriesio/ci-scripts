@@ -13,7 +13,7 @@ if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
 	git branch pr-branch $GIT_SHA
 	# Check to make sure REPO_INIT_OVERRIDES isn't setting a "-b <ref>".
 	# That will break our logic for checking out the exact GIT_SHA above
-	export REPO_INIT_OVERRIDES=$(echo $REPO_INIT_OVERRIDES | sed -e 's/-b\s*\w*//')
+	export REPO_INIT_OVERRIDES=$(echo $REPO_INIT_OVERRIDES | sed -e 's/-b\s*\S*//')
 	mkdir /srv/oe && cd /srv/oe
 	repo_sync $manifest
 else
