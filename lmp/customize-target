@@ -84,6 +84,7 @@ def merge(args):
                 'hashes': {'sha256': k},
                 'is_current': True,
                 'custom': {
+                    'targetFormat': 'OSTREE',
                     'name': name,
                     'version': version,
                     'hardwareIds': [machine],
