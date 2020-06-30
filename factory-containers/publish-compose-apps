@@ -139,6 +139,8 @@ def main(factory: str, tag: str):
     convert_docker_apps()
     apps = {}
     for p in os.listdir():
+        if p.endswith('.disabled'):
+            continue
         if os.path.exists(os.path.join(p, 'docker-compose.yml')):
             status('Publishing compose app for: ' + p)
             uri = publish(factory, tag, p)
