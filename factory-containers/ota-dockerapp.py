@@ -187,8 +187,12 @@ def create_target(args):
                 apps[name]['filename'] = filename
             if apps:
                 target['custom']['docker_apps'] = apps
+            elif 'docker_apps' in target['custom']:
+                del target['custom']['docker_apps']
             if compose_apps:
                 target['custom']['docker_compose_apps'] = compose_apps
+            elif 'docker_compose_apps' in target['custom']:
+                del target['custom']['docker_compose_apps']
             logging.info('Targets with apps: %r', target)
 
     with open(args.targets_json, 'w') as f:
