@@ -56,8 +56,13 @@ fi
 echo '<testsuite name="unit-tests">' > /archive/junit.xml
 trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 
+total=$(echo $IMAGES | wc -w)
+total=$((total*3)) # 3 steps per container: build, push, test*manifest
+completed=-3  # we increment on the first step of the first loop.
+
 REPO_ROOT=$(pwd)
 for x in $IMAGES ; do
+	completed=$((completed+3))
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
 	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
@@ -87,6 +92,7 @@ for x in $IMAGES ; do
 		if [ "$a" = "$ARCH" ] ; then
 			status "Skipping build of $x on $ARCH"
 			found=1
+			echo "Build step $((completed+3)) of $total is complete"
 			break
 		fi
 	done
@@ -140,6 +146,7 @@ for x in $IMAGES ; do
 		fi
 		run $docker_cmd -f $DOCKERFILE $BUILD_CONTEXT
 	fi
+	echo "Build step $((completed+1)) of $total is complete"
 
 	if [ $auth -eq 1 ] ; then
 		run docker push ${ct_base}:$TAG-$ARCH
@@ -150,6 +157,8 @@ for x in $IMAGES ; do
 			run docker tag ${ct_base}:$TAG-$ARCH ${ct_base}:$TAG-$t
 			run docker push ${ct_base}:$TAG-$t
 		done
+
+		echo "Build step $((completed+2)) of $total is complete"
 
 		# Convert the old manifest-tool formatted arguments of:
 		#  linux/amd64,linux/arm,linux/arm64
@@ -178,4 +187,5 @@ for x in $IMAGES ; do
 		fi
 		echo "</testcase>" >> /archive/junit.xml
 	fi
+	echo "Build step $((completed+3)) of $total is complete"
 done
