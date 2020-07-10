@@ -2,10 +2,14 @@
 import json
 import os
 import sys
+import tempfile
+import shutil
+import subprocess
 
 import yaml
 
 from helpers import cmd, require_env, status
+from compose_app_downloader import main as dump_app_images
 
 
 def normalize_keyvals(params: dict, prefix=''):
@@ -135,22 +139,55 @@ def publish(factory: str, tag: str, app_name: str) -> str:
     return app + '@sha256:' + sha.decode()
 
 
-def main(factory: str, tag: str):
+def main(factory: str, tag: str, platforms: str, sha: str, app_preload_flag: str, app_dir=None):
     convert_docker_apps()
     apps = {}
-    for p in os.listdir():
-        if p.endswith('.disabled'):
+
+    cur_work_dir = os.path.abspath(os.getcwd())
+    if app_dir:
+        os.chdir(app_dir)
+
+    status('Searching for apps in {}'.format(os.path.abspath(os.getcwd())))
+    for app in os.listdir():
+        if app.endswith('.disabled'):
             continue
-        if os.path.exists(os.path.join(p, 'docker-compose.yml')):
-            status('Publishing compose app for: ' + p)
-            uri = publish(factory, tag, p)
-            apps[p] = {'uri': uri}
+        if os.path.exists(os.path.join(app, 'docker-compose.yml')):
+            status('Publishing compose app for: ' + app)
+            uri = publish(factory, tag, app)
+            apps[app] = {'uri': uri}
 
     # this is a bit of a hack. ota-dockerapp.py needs this to create a target:
     with open('/archive/compose-apps.json', mode='w') as f:
         json.dump(apps, f, indent=2)
 
+    if app_preload_flag == '1':
+        # ------ Dumping container images of all apps -----
+        app_images_dir = '/var/cache/bitbake/app-images/' + sha
+        if os.path.exists(app_images_dir):
+            shutil.rmtree(app_images_dir, ignore_errors=True)
+
+        os.makedirs(app_images_dir)
+
+        status('Dumping container images of the published compose apps to ' + app_images_dir)
+
+        prefixed_platforms = platforms.split(',')
+        archs = []
+        for platform in prefixed_platforms:
+            archs.append(platform.split('/')[1])
+
+        with tempfile.TemporaryDirectory() as tmp_dst_dir:
+            dump_app_images(os.path.abspath(os.getcwd()), archs, tmp_dst_dir)
+            for arch in archs:
+                subprocess.check_call(['tar', '-cf', os.path.join(app_images_dir, '{}-{}.tar'.format(sha, arch)),
+                                       '-C', os.path.join(tmp_dst_dir, arch), '.'])
+
+
+        # ------------------------------------------------
+
+    if app_dir:
+        os.chdir(cur_work_dir)
+
 
 if __name__ == '__main__':
-    factory, tag = require_env('FACTORY', 'TAG')
-    main(factory, tag)
+    factory, tag, platforms, sha = require_env('FACTORY', 'TAG', 'MANIFEST_PLATFORMS_DEFAULT', 'GIT_SHA')
+    main(factory, tag, platforms, sha, os.environ.get('DOCKER_COMPOSE_APP_PRELOAD', '0'), os.environ.get('COMPOSE_APP_ROOT_DIR'))
