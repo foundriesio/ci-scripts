@@ -42,6 +42,7 @@ chown -R builder .
 
 su builder -c $HERE/bb-config.sh
 touch ${archive}/customize-target.log && chown builder ${archive}/customize-target.log
+touch ${archive}/preload-app-images.log && chown builder ${archive}/preload-app-images.log
 su builder -c $HERE/bb-build.sh
 
 DEPLOY_DIR="$(cat build/deploy_dir)"
