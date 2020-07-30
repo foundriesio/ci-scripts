@@ -1,0 +1,191 @@
+#!/usr/bin/python3
+#
+# Copyright (c) 2019 Foundries.io
+# SPDX-License-Identifier: Apache-2.0
+#
+import subprocess
+import os
+import requests
+import json
+import argparse
+import logging
+
+logger = logging.getLogger("System Image Assembler")
+wic_tool = None
+
+
+def get_targets_from_api(factory: str, build_num: str, token: str):
+    logger.info('Fetching factory targets; factory: {}, version: {}'.format(factory, build_num))
+
+    api_base_url = 'https://api.foundries.io/ota/repo/'
+    targets_endpoint = 'api/v1/user_repo/targets.json'
+
+    res_targets = {}
+    target_url = os.path.join(api_base_url, factory, targets_endpoint)
+    target_resp = requests.get(target_url, headers={'OSF-TOKEN': token})
+    if not target_resp.ok:
+        raise requests.exceptions.HTTPError('Failed to get {}: HTTP_{}\n{}'.
+                                            format(target_url, target_resp.status_code, target_resp.text))
+
+    for target_name, target in target_resp.json()['signed']['targets'].items():
+        custom = target.get('custom')
+        if not custom:
+            continue
+
+        if custom.get('version', '') == build_num and custom.get('targetFormat', 'NONE') == 'OSTREE':
+            res_targets[target_name] = target
+
+    return res_targets
+
+
+def get_system_image_from_ci(target: dict, token: str):
+    # https://api.foundries.io/projects/<factory>/lmp/builds/<build-numb>/runs/<machine>/<image-name>-<machine>.wic.gz
+
+    image_base_url = target['custom']['uri']
+    image_machine = target['custom']['hardwareIds'][0]
+    image_filename = target['custom']['image-file']
+
+    base_url = image_base_url.replace('ci.foundries.io', 'api.foundries.io')
+    image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
+
+    logger.info('Fetching ' + image_url)
+
+    image_resp = requests.get(image_url, headers={'OSF-TOKEN': token}, stream=True)
+    image_resp.raise_for_status()
+    with open(image_filename, 'wb') as image_file:
+        for data_chunk in image_resp.iter_content(chunk_size=65536):
+            image_file.write(data_chunk)
+
+    subprocess.check_call(['gunzip', '-f', image_filename])
+    return image_filename.rstrip('.gz')
+
+
+def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: str):
+    partition = '2'
+    directory = '/ostree/deploy/lmp/var/sota/import/'
+
+    containers_sha = target['custom']['containers-sha']
+    arch_map = {'aarch64': 'arm64', 'x86_64': 'amd64', 'arm': 'arm'}
+    containers_arch = arch_map[target['custom']['arch']]
+
+    app_image_tar_src = os.path.join(app_image_dir, containers_sha, '{}-{}.tar'.format(containers_sha, containers_arch))
+    app_image_tar_dst = '{}:{}{}'.format(wic_image, partition, directory)
+
+    logger.info('Copying container images of Target apps to its WIC image: {} --> {}'
+                .format(app_image_tar_src, app_image_tar_dst))
+    subprocess.check_call([wic_tool, 'cp', app_image_tar_src, app_image_tar_dst])
+
+
+def update_installed_versions_on_wic_image(target_name: str, target: str, wic_image: str):
+    installed_versions_filename = 'installed_versions'
+    old_installed_versions_filename = 'installed_versions.old'
+    partition = '2'
+    installed_versions_in_wic_image = '/ostree/deploy/lmp/var/sota/import/' + installed_versions_filename
+
+    target['is_current'] = True
+    installed_versions = {target_name: target}
+
+    with open(installed_versions_filename, 'w') as installed_versions_file:
+        json.dump(installed_versions, installed_versions_file, indent=2)
+
+    installed_versions_dst_path = '{}:{}{}'.format(wic_image, partition, installed_versions_in_wic_image)
+    subprocess.check_call([wic_tool, 'cp', installed_versions_dst_path, old_installed_versions_filename])
+
+    with open(old_installed_versions_filename, 'r') as f:
+        old_version = json.load(f)
+
+    logger.info('Updating `installed_versions` for the given system image\n')
+    logger.info('From\n{}'.format(json.dumps(old_version, ensure_ascii=True, indent=2)))
+    logger.info('To\n{}'.format(json.dumps(installed_versions, ensure_ascii=True, indent=2)))
+
+    subprocess.check_call([wic_tool, 'rm', installed_versions_dst_path])
+    subprocess.check_call([wic_tool, 'cp', installed_versions_filename, installed_versions_dst_path])
+
+
+def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
+    logger.info('Gzip and move resultant WIC image to the specified destination folder: {}'.format(out_image_dir))
+
+    subprocess.check_call(['gzip', wic_image])
+    subprocess.check_call(['mv', wic_image + '.gz', out_image_dir])
+
+
+def assemble_image_for_targets(targets: dict, app_image_dir: str, out_image_dir: str, token: str):
+    for target_name, target in targets.items():
+        logger.info('Got Target {}, processing it...'.format(target_name))
+        wic_image = get_system_image_from_ci(target, token)
+        copy_container_images_to_wic(target, app_image_dir, wic_image)
+        update_installed_versions_on_wic_image(target_name, target, wic_image)
+        archive_and_output_assembled_wic(wic_image, out_image_dir)
+
+
+def get_args():
+    parser = argparse.ArgumentParser('''Add container images to a system image''')
+
+    parser.add_argument('-f', '--factory', help='Factory', default=os.environ.get('FACTORY'))
+    parser.add_argument('-b', '--build-num', help='Build number', default=os.environ.get('H_BUILD'))
+    parser.add_argument('-t', '--token-file', help='A file containing OSF token', default='/secrets/osftok')
+    parser.add_argument('-w', '--wic-tool', help='A path to WIC utility', default=os.environ.get('WIC_TOOL'))
+    parser.add_argument('-a', '--app-image-dir', help='A path to directory that contains app container images',
+                        default=os.environ.get('APP_IMAGE_DIR'))
+    parser.add_argument('-o', '--out-image-dir', help='A path to directory to put a resultant image to',
+                        default=os.environ.get('OUT_IMAGE_DIR'))
+
+    args = parser.parse_args()
+
+    if args.factory is None:
+        logger.error('Argument `Factory` is missing, specify it either as a command line argument'
+                     ' or a FACTORY environment variable')
+        parser.print_help()
+        exit(1)
+
+    if args.build_num is None:
+        logger.error('Argument `Build number` is missing, specify it either as a command line argument'
+                     ' or an H_BUILD environment variable')
+        parser.print_help()
+        exit(1)
+
+    if args.token_file is None:
+        logger.error('Argument `Token file` is missing, specify it either as a command line argument'
+                     ' or put it into `/secrets/osftok`')
+        parser.print_help()
+        exit(1)
+
+    else:
+        with open(args.token_file) as token_file:
+            vars(args)['token'] = token_file.read().strip()
+
+    if args.wic_tool is None:
+        logger.error('Argument `WIC tool` is missing, specify it either as a command line argument'
+                     ' or a WIC_TOOL environment variable')
+        parser.print_help()
+        exit(1)
+
+    if args.app_image_dir is None:
+        logger.error('Argument `App Image Dir` is missing, specify it either as a command line argument'
+                     ' or a APP_IMAGE_DIR environment variable')
+        parser.print_help()
+        exit(1)
+
+    if args.out_image_dir is None:
+        logger.error('Argument `Out Image Dir` is missing, specify it either as a command line argument'
+                     ' or a OUT_IMAGE_DIR environment variable')
+        parser.print_help()
+        exit(1)
+
+    return args
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    args = get_args()
+    wic_tool = args.wic_tool
+
+    try:
+        targets = get_targets_from_api(args.factory, args.build_num, args.token)
+        if len(targets) == 0:
+            logger.warning('No Targets found; Factory: {}, Version/Build Number: {}'.format(args.factory, args.build_num))
+            exit(1)
+
+        assemble_image_for_targets(targets, args.app_image_dir, args.out_image_dir, args.token)
+    except Exception as exc:
+        logger.error("Failed to assemble a system image(s): " + str(exc))
