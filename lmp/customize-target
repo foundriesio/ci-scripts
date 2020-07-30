@@ -102,10 +102,11 @@ def merge(args):
     updates = []
     for idx, (tgt_tag, apps_tag) in enumerate(tagmgr.tags):
         tgt = targets[args.target_name]
-        tgt['custom']['lmp-manifest-sha'] = git_hash('/srv/oe/.repo/manifests')
+        tgt['custom']['lmp-manifest-sha'] = git_hash(args.manifest_repo_path)
+        tgt['custom']['arch'] = args.image_arch
+        tgt['custom']['image-file'] = '{}-{}.wic.gz'.format(args.image_name, args.machine)
         try:
-            tgt['custom']['meta-subscriber-overrides-sha'] = git_hash(
-                '/srv/oe/layers/meta-subscriber-overrides')
+            tgt['custom']['meta-subscriber-overrides-sha'] = git_hash(args.meta_subscriber_overrides)
         except Exception:
             pass  # okay - LMP build doesn't have this repo
         if idx:
@@ -166,6 +167,10 @@ def get_args():
         '''Do LMP customiziations of the current build target. Including
            copying docker apps defined in the previous build target.''')
 
+    parser.add_argument('machine')
+    parser.add_argument('image_name')
+    parser.add_argument('image_arch')
+
     parser.add_argument('targets_json')
     parser.add_argument('target_name')
 
@@ -174,4 +179,8 @@ def get_args():
 
 if __name__ == '__main__':
     args = get_args()
+
+    vars(args)['manifest_repo_path'] = os.environ.get('MANIFEST_REPO', '/srv/oe/.repo/manifests')
+    vars(args)['meta_subscriber_overrides'] = os.environ.get('META_SUB_OVERRIDES_REPO', '/srv/oe/layers/meta-subscriber-overrides')
+
     merge(args)
