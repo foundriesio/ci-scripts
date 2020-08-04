@@ -130,6 +130,9 @@ def get_args():
     parser.add_argument('-o', '--out-image-dir', help='A path to directory to put a resultant image to',
                         default=os.environ.get('OUT_IMAGE_DIR'))
 
+    parser.add_argument('-T', '--targets', help='A list of Targets to assemble system image for',
+                        default=os.environ.get('TARGETS'))
+
     args = parser.parse_args()
 
     if args.factory is None:
@@ -181,7 +184,11 @@ if __name__ == '__main__':
     wic_tool = args.wic_tool
 
     try:
-        targets = get_targets_from_api(args.factory, args.build_num, args.token)
+        if args.targets:
+            targets = json.loads(args.targets)
+        else:
+            targets = get_targets_from_api(args.factory, args.build_num, args.token)
+
         if len(targets) == 0:
             logger.warning('No Targets found; Factory: {}, Version/Build Number: {}'.format(args.factory, args.build_num))
             exit(1)
