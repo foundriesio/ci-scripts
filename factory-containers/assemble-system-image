@@ -5,36 +5,51 @@
 #
 import subprocess
 import os
-import requests
 import json
 import argparse
 import logging
+import tempfile
+import base64
+
+from helpers import http_get
+from compose_app_downloader import dump_app_images
+
 
 logger = logging.getLogger("System Image Assembler")
 wic_tool = None
 
 
-def get_targets_from_api(factory: str, build_num: str, token: str):
-    logger.info('Fetching factory targets; factory: {}, version: {}'.format(factory, build_num))
-
+def _get_targets_from_api(factory: str, token: str):
     api_base_url = 'https://api.foundries.io/ota/repo/'
     targets_endpoint = 'api/v1/user_repo/targets.json'
 
-    res_targets = {}
     target_url = os.path.join(api_base_url, factory, targets_endpoint)
-    target_resp = requests.get(target_url, headers={'OSF-TOKEN': token})
-    if not target_resp.ok:
-        raise requests.exceptions.HTTPError('Failed to get {}: HTTP_{}\n{}'.
-                                            format(target_url, target_resp.status_code, target_resp.text))
+    target_resp = http_get(target_url, headers={'OSF-TOKEN': token})
+    return target_resp.json()['signed']['targets']
 
-    for target_name, target in target_resp.json()['signed']['targets'].items():
+
+def get_targets_from_api_by_build_numb(factory: str, build_num: str, token: str):
+    logger.info('Fetching factory targets; Factory: {}, version: {}'.format(factory, build_num))
+    targets = _get_targets_from_api(factory, token)
+    res_targets = {}
+
+    for target_name, target in targets.items():
         custom = target.get('custom')
         if not custom:
             continue
 
         if custom.get('version', '') == build_num and custom.get('targetFormat', 'NONE') == 'OSTREE':
             res_targets[target_name] = target
+    return res_targets
 
+
+def get_targets_from_api_by_targets(factory: str, target_names: list, token: str):
+    logger.info('Fetching factory targets; Factory: {}, Targets: {}'.format(factory, target_names))
+    targets = _get_targets_from_api(factory, token)
+    res_targets = {}
+    for target_name in target_names:
+        if target_name in targets:
+            res_targets[target_name] = targets[target_name]
     return res_targets
 
 
@@ -48,10 +63,9 @@ def get_system_image_from_ci(target: dict, token: str):
     base_url = image_base_url.replace('ci.foundries.io', 'api.foundries.io')
     image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
 
-    logger.info('Fetching ' + image_url)
+    logger.info('Fetching {}...\n'.format(image_url))
 
-    image_resp = requests.get(image_url, headers={'OSF-TOKEN': token}, stream=True)
-    image_resp.raise_for_status()
+    image_resp = http_get(image_url, headers={'OSF-TOKEN': token})
     with open(image_filename, 'wb') as image_file:
         for data_chunk in image_resp.iter_content(chunk_size=65536):
             image_file.write(data_chunk)
@@ -60,7 +74,78 @@ def get_system_image_from_ci(target: dict, token: str):
     return image_filename.rstrip('.gz')
 
 
-def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: str):
+def get_registry_jwt_token(registry_oauth_token, factory, repo, hub_creds):
+    user_pass = '{}:{}'.format(hub_creds['Username'], hub_creds['Secret'])
+
+    headers = {
+        'Authorization': 'Basic ' + base64.b64encode(user_pass.encode()).decode()
+    }
+
+    params = {
+        'service': 'registry',
+        'scope': 'repository:{}/{}:pull'.format(factory, repo)
+    }
+
+    token_req = http_get(registry_oauth_token, headers=headers, params=params)
+    return token_req.json()
+
+
+def download_target_app(target: dict, token: str, app_root_dir: str):
+    for app, app_desc in target['custom']['docker_compose_apps'].items():
+        logger.info('Downloading Compose App {}...'.format(app))
+        uri = app_desc['uri']
+        uri_parts = uri.split('@')
+        registry_host, factory, app = uri_parts[0].split('/')
+        digest = uri_parts[1]
+
+        registry_jwt_token = get_registry_jwt_token('https://hub.foundries.io/token-auth/', factory, app,
+                                                    {'Username': 'ci-job', 'Secret': token})
+
+        manifest_url = 'https://{}/v2/{}/{}/manifests/{}'.format(registry_host, factory, app, digest)
+        logger.info('Pulling App manifest: {}'.format(manifest_url))
+        manifest_resp = http_get(manifest_url,
+                                     headers={'authorization': 'bearer {}'.format(registry_jwt_token['token']),
+                                              'accept': 'application/vnd.oci.image.manifest.v1+json'})
+        manifest = json.loads(manifest_resp.content)
+        logger.info('Got App manifest')
+
+        app_url = 'https://{}/v2/{}/{}/blobs/{}'.format(registry_host, factory, app, manifest['layers'][0]['digest'])
+        logger.info('Pulling App archive: {}'.format(app_url))
+        archive_resp = http_get(app_url, headers={'authorization': 'bearer {}'.format(registry_jwt_token['token'])})
+        app_archive_file = os.path.join(app_root_dir, app + '.tgz')
+        with open(app_archive_file, 'wb') as app_tgz:
+            app_tgz.write(archive_resp.content)
+
+        logger.info('Got {}'.format(app_archive_file))
+        app_dir = os.path.join(app_root_dir, app)
+        os.makedirs(app_dir, exist_ok=True)
+        subprocess.check_call(['tar', '-xzf', app_archive_file, '-C', app_dir])
+        logger.info('Compose App {} has been downloaded and extracted to {}'.format(app, app_dir))
+
+
+def login_at_docker_registry(token, registry_host='hub.foundries.io'):
+    login_process = subprocess.Popen(
+        ['docker', 'login', registry_host, '--username=doesntmatter', '--password-stdin'],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    output = login_process.communicate(input=token.encode())[0]
+    # this is kind of useless verification because login at hub.foundries.io is successful
+    # for any value of username and/or password
+    if -1 == (str(output)).find('Login Succeeded'):
+        raise Exception('Failed to login at {}'.format('hub.foundries.io'))
+
+
+def dump_apps_container_images(target: dict, containers_arch: str, app_image_tar: str, token: str):
+    login_at_docker_registry(token)
+    with tempfile.TemporaryDirectory() as tmp_docker_dir:
+        with tempfile.TemporaryDirectory() as tmp_app_dir:
+            download_target_app(target, token, tmp_app_dir)
+            dump_app_images(tmp_app_dir, [containers_arch], tmp_docker_dir)
+            subprocess.check_call(['tar', '-cf', app_image_tar,
+                                   '-C', os.path.join(tmp_docker_dir, containers_arch), '.'])
+
+
+def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: str, token: str):
     partition = '2'
     directory = '/ostree/deploy/lmp/var/sota/import/'
 
@@ -69,6 +154,21 @@ def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: st
     containers_arch = arch_map[target['custom']['arch']]
 
     app_image_tar_src = os.path.join(app_image_dir, containers_sha, '{}-{}.tar'.format(containers_sha, containers_arch))
+    if not os.path.exists(app_image_tar_src):
+        logger.info('Container images have not been found, trying to obtain them...')
+        os.makedirs(os.path.dirname(app_image_tar_src), exist_ok=True)
+        dump_apps_container_images(target, containers_arch, app_image_tar_src, token)
+
+    # There is no guarantee that in the case of a `dump_apps_container_images` failure
+    # an exception or exit() will be called (some rough edge cases).
+    # Moreover, the following call `subprocess.check_call([wic_tool, 'cp', app_image_tar_src, app_image_tar_dst])`
+    # does not raise any exception if `app_image_tar_src` doesn't exist
+    # Therefore, in order to detect such subtle/silent error the following check is enabled,
+    # it just throws an exception if the tar file does not exist prior to injecting it to the target wic file.
+
+    if not os.path.exists(app_image_tar_src):
+        raise Exception('Container images archive {} has not been obtained'.format(app_image_tar_src))
+
     app_image_tar_dst = '{}:{}{}'.format(wic_image, partition, directory)
 
     logger.info('Copying container images of Target apps to its WIC image: {} --> {}'
@@ -104,7 +204,7 @@ def update_installed_versions_on_wic_image(target_name: str, target: str, wic_im
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
     logger.info('Gzip and move resultant WIC image to the specified destination folder: {}'.format(out_image_dir))
-
+    os.makedirs(out_image_dir, exist_ok=True)
     subprocess.check_call(['gzip', wic_image])
     subprocess.check_call(['mv', wic_image + '.gz', out_image_dir])
 
@@ -113,7 +213,7 @@ def assemble_image_for_targets(targets: dict, app_image_dir: str, out_image_dir:
     for target_name, target in targets.items():
         logger.info('Got Target {}, processing it...'.format(target_name))
         wic_image = get_system_image_from_ci(target, token)
-        copy_container_images_to_wic(target, app_image_dir, wic_image)
+        copy_container_images_to_wic(target, app_image_dir, wic_image, token)
         update_installed_versions_on_wic_image(target_name, target, wic_image)
         archive_and_output_assembled_wic(wic_image, out_image_dir)
 
@@ -123,14 +223,15 @@ def get_args():
 
     parser.add_argument('-f', '--factory', help='Factory', default=os.environ.get('FACTORY'))
     parser.add_argument('-b', '--build-num', help='Build number', default=os.environ.get('H_BUILD'))
-    parser.add_argument('-t', '--token-file', help='A file containing OSF token', default='/secrets/osftok')
+    parser.add_argument('-t', '--token-file', help='A file containing OSF token',
+                        default=os.environ.get('TOKEN_FILE', '/secrets/osftok'))
     parser.add_argument('-w', '--wic-tool', help='A path to WIC utility', default=os.environ.get('WIC_TOOL'))
     parser.add_argument('-a', '--app-image-dir', help='A path to directory that contains app container images',
                         default=os.environ.get('APP_IMAGE_DIR'))
     parser.add_argument('-o', '--out-image-dir', help='A path to directory to put a resultant image to',
                         default=os.environ.get('OUT_IMAGE_DIR'))
 
-    parser.add_argument('-T', '--targets', help='A list of Targets to assemble system image for',
+    parser.add_argument('-T', '--targets', help='A coma separated list of Targets to assemble system image for',
                         default=os.environ.get('TARGETS'))
 
     args = parser.parse_args()
@@ -141,15 +242,18 @@ def get_args():
         parser.print_help()
         exit(1)
 
-    if args.build_num is None:
-        logger.error('Argument `Build number` is missing, specify it either as a command line argument'
-                     ' or an H_BUILD environment variable')
+    if args.build_num is None and args.targets is None:
+        logger.error('Both arguments `Build number` and `TARGETS` are missing, '
+                     'specify one of them either as a command line argument or an H_BUILD environment variable')
         parser.print_help()
         exit(1)
 
+    if args.targets:
+        args.targets = args.targets.split(',')
+
     if args.token_file is None:
         logger.error('Argument `Token file` is missing, specify it either as a command line argument'
-                     ' or put it into `/secrets/osftok`')
+                     ' or a TOKEN_FILE environment variable')
         parser.print_help()
         exit(1)
 
@@ -185,12 +289,14 @@ if __name__ == '__main__':
 
     try:
         if args.targets:
-            targets = json.loads(args.targets)
+            targets = get_targets_from_api_by_targets(args.factory, args.targets, args.token)
+            err_msg = 'No Targets found; Factory: {}, input Target list: {}'.format(args.factory, args.targets)
         else:
-            targets = get_targets_from_api(args.factory, args.build_num, args.token)
+            targets = get_targets_from_api_by_build_numb(args.factory, str(args.build_num), args.token)
+            err_msg = 'No Targets found; Factory: {}, Version/Build Number: {}'.format(args.factory, args.build_num)
 
         if len(targets) == 0:
-            logger.warning('No Targets found; Factory: {}, Version/Build Number: {}'.format(args.factory, args.build_num))
+            logger.warning(err_msg)
             exit(1)
 
         assemble_image_for_targets(targets, args.app_image_dir, args.out_image_dir, args.token)
