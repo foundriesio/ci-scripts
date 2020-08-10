@@ -137,3 +137,11 @@ def jobserv_iterate_items(url, item_name):
         for item in data[item_name]:
             yield item
         url = data.get('next')
+
+
+def http_get(url, params=None, **kwargs):
+    response = requests.get(url, params=params, **kwargs)
+    if not response.ok:
+        raise requests.exceptions.HTTPError('Failed to get {}: HTTP_{}\n{}'.
+                                            format(url, response.status_code, response.text))
+    return response

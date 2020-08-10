@@ -187,29 +187,34 @@ def ComposeAppList(compose_app_dir):
         yield ComposeApp(app, os.path.join(compose_app_dir, app, compose_app_file))
 
 
+def dump_app_images(app_dir: str, archs: list, dst_dir: str):
+    arch_to_dir = {}
+    apps = list(ComposeAppList(app_dir))
+
+    for arch in archs:
+        dst_arch_dir = os.path.join(dst_dir, arch)
+        if not os.path.exists(dst_arch_dir):
+            os.makedirs(dst_arch_dir)
+
+        logger.info("Downloading all images of {} architecture to {}".format(arch, dst_arch_dir))
+
+        with ComposeAppDownloader(arch, dst_arch_dir, DockerDownloader) as download:
+            for app in apps:
+                logger.info('Downloading container images of {} to {}'.format(app.name, dst_arch_dir))
+                download(app)
+
+        arch_to_dir[arch] = dst_arch_dir
+    return arch_to_dir
+
+
 def main(app_dir: str, archs: list, dst_dir: str):
     logging.basicConfig(level=logging.INFO)
 
     arch_to_dir = {}
     try:
-        apps = list(ComposeAppList(app_dir))
-
-        for arch in archs:
-            dst_arch_dir = os.path.join(dst_dir, arch)
-            if not os.path.exists(dst_arch_dir):
-                os.makedirs(dst_arch_dir)
-
-            logger.info("Downloading all images of {} architecture to {}".format(arch, dst_arch_dir))
-
-            with ComposeAppDownloader(arch, dst_arch_dir, DockerDownloader) as download:
-                for app in apps:
-                    logger.info('Downloading container images of {} to {}'.format(app, dst_arch_dir))
-                    download(app)
-
-            arch_to_dir[arch] = dst_arch_dir
+        arch_to_dir = dump_app_images(app_dir, archs, dst_dir)
     except Exception as exp:
         logger.error('Error occurred while trying to download app images: ' + str(exp))
-
     return arch_to_dir
 
 
