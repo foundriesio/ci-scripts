@@ -152,6 +152,8 @@ def main(factory: str, tag: str, platforms: str, sha: str, app_preload_flag: str
         if app.endswith('.disabled'):
             continue
         if os.path.exists(os.path.join(app, 'docker-compose.yml')):
+            status('Validating compose file for: ' + app)
+            cmd('docker-compose', 'config', cwd=app)
             status('Publishing compose app for: ' + app)
             uri = publish(factory, tag, app)
             apps[app] = {'uri': uri}
