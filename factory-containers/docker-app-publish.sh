@@ -34,7 +34,8 @@ if [ -n "$DOCKER_COMPOSE_APP" ] ; then
 	chmod +x /usr/local/bin/compose-ref
 fi
 
-CREDENTIALS=/var/cache/bitbake/credentials.zip
+CREDENTIALS=$(mktemp)
+$HERE/../create-creds /var/cache/bitbake/credentials.zip $CREDENTIALS
 export TAG=$(git log -1 --format=%h)
 
 tufrepo=$(mktemp -u -d)

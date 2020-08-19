@@ -21,6 +21,13 @@ if [ "$ENABLE_PTEST" = "1" ] ; then
     OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME}-ptest"
 fi
 
+if [ -n "$SOTA_PACKED_CREDENTIALS" ] && [ -f $SOTA_PACKED_CREDENTIALS ] ; then
+	status "Generating credentials.zip"
+	dynamic=$(mktemp --suffix=.zip)
+	$HERE/../create-creds $SOTA_PACKED_CREDENTIALS $dynamic
+	SOTA_PACKED_CREDENTIALS=$dynamic
+fi
+
 source setup-environment build
 
 cat << EOFEOF >> conf/local.conf

@@ -1,4 +1,5 @@
 import contextlib
+from zipfile import ZipFile
 import json
 import os
 import subprocess
@@ -145,3 +146,19 @@ def http_get(url, params=None, **kwargs):
         raise requests.exceptions.HTTPError('Failed to get {}: HTTP_{}\n{}'.
                                             format(url, response.status_code, response.text))
     return response
+
+
+def generate_credential_tokens(creds_zip_in: str, creds_zip_out: str):
+    """Creates an updated creds.zip file that has populated osf
+       tokens with the dynamic scoped tokens set in the run's secrets."""
+
+    with ZipFile(creds_zip_out, mode='w') as zout:
+        with ZipFile(creds_zip_in) as zin:
+            for name in zin.namelist():
+                buf = zin.read(name)
+                if name == 'treehub.json':
+                    data = json.loads(buf.decode())
+                    data['oauth2']['client_id'] = secret('triggered-by')
+                    data['oauth2']['client_secret'] = secret('osftok')
+                    buf = json.dumps(data).encode()
+                zout.writestr(name, buf)

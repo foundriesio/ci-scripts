@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+import sys
+
+from helpers import generate_credential_tokens, require_secrets
+
+
+def main(creds_in, creds_out):
+    require_secrets('osftok', 'triggered-by')
+    generate_credential_tokens(creds_in, creds_out)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        sys.exit('Usage: %s <creds.zip-in> <creds.zip-out>' % sys.argv[0])
+    main(sys.argv[1], sys.argv[2])
