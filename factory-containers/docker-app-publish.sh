@@ -27,7 +27,6 @@ if [ -n "$DOCKER_COMPOSE_APP" ] ; then
 	status Doing docker-login to hub.foundries.io with secret
 	docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
 
-	run apk --no-cache add python3 py3-yaml
 	export PYTHONPATH=${HERE}/../
 
 	status Dowloading "compose-ref" for publishing apps
