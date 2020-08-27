@@ -10,8 +10,9 @@ import argparse
 import logging
 import tempfile
 import base64
+from math import ceil
 
-from helpers import http_get
+from helpers import cmd, http_get
 from compose_app_downloader import dump_app_images
 
 
@@ -150,6 +151,40 @@ def dump_apps_container_images(target: dict, containers_arch: str, app_image_tar
                                    '-C', os.path.join(tmp_docker_dir, containers_arch), '.'])
 
 
+def resize_wic(wic_image: str, increase_bytes: int):
+    increase_k = ceil(increase_bytes / 1024) + 1
+    wic_k = ceil(os.stat(wic_image).st_size / 1024)
+    count = increase_k * 2  # we need 2x space (1x for tarball and 1x to extract)
+    cmd('dd', 'if=/dev/zero', 'bs=1024', 'of=' + wic_image,
+        'conv=notrunc', 'oflag=append', 'count=' + str(count),
+        'seek=' + str(wic_k))
+
+    p = subprocess.run(
+        ['parted', '---pretend-input-tty', wic_image, 'resizepart', '2', '100%'],
+        input=b'Yes\n')
+    p.check_returncode()
+
+    cmd('losetup', '-P', '-f', wic_image)
+    out = cmd('losetup', '-a', capture=True).decode()
+    for line in out.splitlines():
+        if wic_image in line:
+            loop = out.split(':', 1)[0]
+            break
+    else:
+        raise RuntimeError('Unable to find loop device for wic image')
+
+    try:
+        # containers don't see changes to /dev, so we have to hack around
+        # this by basically mounting a new /dev. The idea was inspired by
+        # this comment:
+        #  https://github.com/moby/moby/issues/27886#issuecomment-257244027
+        cmd('mount', '-t', 'devtmpfs', 'devtmpfs', '/dev')
+        cmd('e2fsck', '-y', '-f', loop + 'p2')
+        cmd('resize2fs', loop + 'p2')
+    finally:
+        cmd('losetup', '-d', loop)
+
+
 def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: str, token: str):
     partition = '2'
     directory = '/ostree/deploy/lmp/var/sota/import/'
@@ -178,8 +213,14 @@ def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: st
     # Therefore, in order to detect such subtle/silent error the following check is enabled,
     # it just throws an exception if the tar file does not exist prior to injecting it to the target wic file.
 
-    if not os.path.exists(app_image_tar_src):
+    try:
+        st = os.stat(app_image_tar_src)
+    except FileNotFoundError:
         raise Exception('Container images archive {} has not been obtained'.format(app_image_tar_src))
+
+    # find size of the tar and increase the wic image
+    logger.info('Adding %d bytes to wic size', st.st_size)
+    resize_wic(wic_image, st.st_size)
 
     app_image_tar_dst = '{}:{}{}'.format(wic_image, partition, directory)
 
@@ -341,3 +382,4 @@ if __name__ == '__main__':
         assemble_image_for_targets(targets, args.app_image_dir, args.out_image_dir, args.token)
     except Exception as exc:
         logger.error("Failed to assemble a system image(s): " + str(exc))
+        exit(1)
