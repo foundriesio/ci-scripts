@@ -10,6 +10,8 @@ import argparse
 import logging
 import tempfile
 import base64
+import contextlib
+import shutil
 from math import ceil
 
 from helpers import cmd, http_get
@@ -146,48 +148,69 @@ def dump_apps_container_images(target: dict, containers_arch: str, app_image_tar
     with tempfile.TemporaryDirectory() as tmp_docker_dir:
         with tempfile.TemporaryDirectory() as tmp_app_dir:
             download_target_app(target, token, tmp_app_dir)
-            dump_app_images(tmp_app_dir, [containers_arch], tmp_docker_dir)
+            image_data_dir = dump_app_images(tmp_app_dir, [containers_arch], tmp_docker_dir)
             subprocess.check_call(['tar', '-cf', app_image_tar,
-                                   '-C', os.path.join(tmp_docker_dir, containers_arch), '.'])
+                                   '-C', image_data_dir[containers_arch], '.'])
+            return int(subprocess.check_output(['du', '-sk', image_data_dir[containers_arch]]).split()[0].decode('utf-8'))
 
 
-def resize_wic(wic_image: str, increase_bytes: int):
-    increase_k = ceil(increase_bytes / 1024) + 1
-    wic_k = ceil(os.stat(wic_image).st_size / 1024)
-    count = increase_k * 2  # we need 2x space (1x for tarball and 1x to extract)
-    cmd('dd', 'if=/dev/zero', 'bs=1024', 'of=' + wic_image,
-        'conv=notrunc', 'oflag=append', 'count=' + str(count),
-        'seek=' + str(wic_k))
+class WicImage:
+    def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
+        self._path = wic_image_path
+        self._mnt_dir = os.path.join('/mnt', 'wic_image_p2')
+        self._resized_image = False
+        if increase_bytes:
+            self._resize_wic_file(increase_bytes, extra_space)
+            self._resized_image = True
 
-    p = subprocess.run(
-        ['parted', '---pretend-input-tty', wic_image, 'resizepart', '2', '100%'],
-        input=b'Yes\n')
-    p.check_returncode()
+    def __enter__(self):
+        cmd('losetup', '-P', '-f', self._path)
+        out = cmd('losetup', '-a', capture=True).decode()
+        for line in out.splitlines():
+            if self._path in line:
+                self._loop_device = out.split(':', 1)[0]
+                self._wic_device = out.split(':', 1)[0] + 'p2'
+                break
+        else:
+            raise RuntimeError('Unable to find loop device for wic image')
 
-    cmd('losetup', '-P', '-f', wic_image)
-    out = cmd('losetup', '-a', capture=True).decode()
-    for line in out.splitlines():
-        if wic_image in line:
-            loop = out.split(':', 1)[0]
-            break
-    else:
-        raise RuntimeError('Unable to find loop device for wic image')
-
-    try:
         # containers don't see changes to /dev, so we have to hack around
         # this by basically mounting a new /dev. The idea was inspired by
         # this comment:
         #  https://github.com/moby/moby/issues/27886#issuecomment-257244027
         cmd('mount', '-t', 'devtmpfs', 'devtmpfs', '/dev')
-        cmd('e2fsck', '-y', '-f', loop + 'p2')
-        cmd('resize2fs', loop + 'p2')
-    finally:
-        cmd('losetup', '-d', loop)
+        cmd('e2fsck', '-y', '-f', self._wic_device)
+
+        if self._resized_image:
+            cmd('resize2fs', self._wic_device)
+
+        os.mkdir(self._mnt_dir)
+        cmd('mount', self._wic_device, self._mnt_dir)
+        return os.path.join(self._mnt_dir, 'ostree/deploy/lmp')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        cmd('umount', self._mnt_dir)
+        os.rmdir(self._mnt_dir)
+        cmd('losetup', '-d', self._loop_device)
+
+    def _resize_wic_file(self, increase_bytes: int, extra_space=0.2):
+        bs = 1024
+        increase_k = ceil((increase_bytes + increase_bytes * extra_space) / bs) + 1
+        wic_k = ceil(os.stat(self._path).st_size / bs)
+        logger.info('Adding %d bytes to wic size (asked %d)', increase_k * bs, increase_bytes)
+        cmd('dd', 'if=/dev/zero', 'bs=' + str(bs), 'of=' + self._path,
+            'conv=notrunc', 'oflag=append', 'count=' + str(increase_k),
+            'seek=' + str(wic_k))
+
+        fdsik_out = str(subprocess.check_output(['fdisk', '-l', self._path]))
+        if fdsik_out.find('using GPT') != -1:
+            subprocess.check_call(['sgdisk', '-e', self._path])
+        subprocess.check_call(['parted', self._path, 'resizepart', '2', '100%'])
 
 
 def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: str, token: str):
     partition = '2'
-    directory = '/ostree/deploy/lmp/var/sota/import/'
+    directory = '/ostree/deploy/lmp/var/lib/docker/'
 
     containers_sha = target['custom']['containers-sha']
     arch_map = {'aarch64': 'arm64', 'x86_64': 'amd64', 'arm': 'arm'}
@@ -201,32 +224,32 @@ def copy_container_images_to_wic(target: dict, app_image_dir: str, wic_image: st
     else:
         app_image_tar_src = os.path.join(app_image_dir, containers_sha,
                                          '{}-{}.tar'.format(containers_sha, containers_arch))
+
+    # in kilobytes
+    image_data_size = None
     if not os.path.exists(app_image_tar_src):
         logger.info('Container images have not been found, trying to obtain them...')
         os.makedirs(os.path.dirname(app_image_tar_src), exist_ok=True)
-        dump_apps_container_images(target, containers_arch, app_image_tar_src, token)
+        image_data_size = dump_apps_container_images(target, containers_arch, app_image_tar_src, token)
+    else:
+        with tempfile.TemporaryDirectory() as tmp_image_data:
+            # container images data have been already dumped and stored on NFS
+            # TODO: store the image data size on NFS along with the tarball
+            #  to avoid calling tar -xf <> to determine uncompressed image data size
+            subprocess.check_call(['tar', '-xf', app_image_tar_src, '-C', tmp_image_data])
+            image_data_size = int(subprocess.check_output(['du', '-sk', tmp_image_data]).split()[0].decode('utf-8'))
 
-    # There is no guarantee that in the case of a `dump_apps_container_images` failure
-    # an exception or exit() will be called (some rough edge cases).
-    # Moreover, the following call `subprocess.check_call([wic_tool, 'cp', app_image_tar_src, app_image_tar_dst])`
-    # does not raise any exception if `app_image_tar_src` doesn't exist
-    # Therefore, in order to detect such subtle/silent error the following check is enabled,
-    # it just throws an exception if the tar file does not exist prior to injecting it to the target wic file.
+    with WicImage(wic_image, image_data_size * 1024) as ostree_deploy_root:
+        docker_data_root = os.path.join(ostree_deploy_root, 'var/lib/docker')
+        if os.path.exists(docker_data_root):
+            # wic image was populated by container images data during LmP build
+            # let's remove it and populate with the given images data
+            shutil.rmtree(docker_data_root)
 
-    try:
-        st = os.stat(app_image_tar_src)
-    except FileNotFoundError:
-        raise Exception('Container images archive {} has not been obtained'.format(app_image_tar_src))
-
-    # find size of the tar and increase the wic image
-    logger.info('Adding %d bytes to wic size', st.st_size)
-    resize_wic(wic_image, st.st_size)
-
-    app_image_tar_dst = '{}:{}{}'.format(wic_image, partition, directory)
-
-    logger.info('Copying container images of Target apps to its WIC image: {} --> {}'
-                .format(app_image_tar_src, app_image_tar_dst))
-    subprocess.check_call([wic_tool, 'cp', app_image_tar_src, app_image_tar_dst])
+        os.makedirs(docker_data_root)
+        logger.info('Copying container images of Target apps to Target WIC image: {} --> {}'
+                    .format(app_image_tar_src, docker_data_root))
+        subprocess.check_call(['tar', '-xf', app_image_tar_src, '-C', docker_data_root])
 
 
 def update_installed_versions_on_wic_image(target_name: str, target: str, wic_image: str):
