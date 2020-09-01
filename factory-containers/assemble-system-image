@@ -404,5 +404,5 @@ if __name__ == '__main__':
 
         assemble_image_for_targets(targets, args.app_image_dir, args.out_image_dir, args.token)
     except Exception as exc:
-        logger.error("Failed to assemble a system image(s): " + str(exc))
+        logger.exception(exc)
         exit(1)
