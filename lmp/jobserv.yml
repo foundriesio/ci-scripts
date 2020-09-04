@@ -96,6 +96,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - apalis-imx6
               - imx6ullevk
               - imx8mmevk
         params:
@@ -279,6 +280,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - apalis-imx6
               - imx6ullevk
               - imx8mmevk
         params:
