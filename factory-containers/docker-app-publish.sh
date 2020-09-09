@@ -30,8 +30,8 @@ if [ -n "$DOCKER_COMPOSE_APP" ] ; then
 	export PYTHONPATH=${HERE}/../
 
 	status Dowloading "compose-ref" for publishing apps
-	run wget -O /usr/local/bin/compose-ref https://storage.googleapis.com/subscriber_registry/compose-ref
-	chmod +x /usr/local/bin/compose-ref
+	run wget -O /usr/local/bin/compose-publish https://storage.googleapis.com/subscriber_registry/compose-publish
+	chmod +x /usr/local/bin/compose-publish
 fi
 
 CREDENTIALS=$(mktemp)

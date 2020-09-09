@@ -127,8 +127,7 @@ def publish(factory: str, tag: str, app_name: str) -> str:
         with open(os.path.join(app_name, 'docker-compose.yml'), 'w') as f:
             yaml.dump(compose, f)
 
-    out = cmd('compose-ref', '-f', 'docker-compose.yml', 'publish', tagged,
-              cwd=app_name, capture=True)
+    out = cmd('compose-publish', tagged, cwd=app_name, capture=True)
     # The publish command produces output like:
     # = Publishing app...
     # |-> app:  sha256:fc73321368c7a805b0f697a0a845470bc022b6bdd45a8b34
