@@ -28,6 +28,12 @@ ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
 
+pbc=pre-build.conf
+if [ -f $pbc ] ; then
+  echo "Sourcing pre-build.conf."
+  . $pbc
+fi
+
 if [ -z "$IMAGES" ] ; then
 	# Look through the first level of subdirectories for Dockerfile
 	IMAGES=$(find ./ -mindepth 2 -maxdepth 2 -name Dockerfile | cut -d / -f2)
