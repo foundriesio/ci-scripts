@@ -1,0 +1,52 @@
+#!/bin/bash -e
+
+## This script is called during the first build of a factory
+## to rotate the root keys and set up the initial offline credentials
+
+HERE=$(dirname $(readlink -f $0))
+source $HERE/../helpers.sh
+
+apk add curl
+
+cat /secrets/credentials_zip_b64 \
+	| base64 -d > /var/cache/bitbake/credentials.zip
+sha=$(sha256sum /var/cache/bitbake/credentials.zip | cut -f1 -d\  )
+
+CREDENTIALS=$(mktemp)
+$HERE/../create-creds /var/cache/bitbake/credentials.zip $CREDENTIALS
+
+status "Extracting credentials"
+garage-sign init --repo ./tufrepo --credentials $CREDENTIALS
+
+status "Pulling TUF targets"
+garage-sign targets pull --repo ./tufrepo
+
+status "Generating root key"
+garage-sign key generate --repo ./tufrepo --name offline-root --type rsa
+
+status "Generating targets key"
+garage-sign key generate --repo ./tufrepo --name offline-targets --type rsa
+
+status "Generating rotating keys"
+garage-sign move-offline \
+	--repo ./tufrepo --old-root-alias root \
+	--new-root offline-root --new-targets offline-targets
+
+status "Signing targets with new key"
+garage-sign targets sign --repo ./tufrepo --key-name offline-targets
+
+status "Uploading new targets"
+garage-sign targets push --repo ./tufrepo
+
+status  "Updating credentials.zip with new key"
+garage-sign export-credentials \
+	--repo ./tufrepo --key-name offline-targets \
+	--output /var/cache/bitbake/credentials.zip
+
+cd tuf
+tar -czf /var/cache/bitbake/offline-keys-${sha}.tgz tufrepo/
+
+curl -XPUT \
+	-H "OSF-TOKEN: $(cat /secrets/osftok)" \
+	-F "file=@/var/cache/bitbake/credentials.zip;type=application/zip" \
+	https://api.foundries.io/ota/factories/$(dirname $H_PROJECT)/online-creds.zip
