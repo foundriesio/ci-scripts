@@ -64,6 +64,10 @@ for i in `seq 12` ; do
 	fi
 done
 
+if [ -n "$DOCKER_SECRETS" ] ; then
+	run docker buildx create --use
+fi
+
 TAG=$(git log -1 --format=%h)
 LATEST=${OTA_LITE_TAG-"latest"}
 LATEST=$(echo $LATEST | cut -d: -f1 | cut -d, -f1)  # Take into account advanced tagging
@@ -142,6 +146,9 @@ for x in $IMAGES ; do
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
 			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
+			if [ -n "$DOCKER_SECRETS" ] ; then
+				docker_cmd="${docker_cmd}-${ARCH}_cache"
+			fi
 		else
 			status Building docker image $x for $ARCH with no cache
 			docker_cmd="$docker_cmd  --no-cache"
@@ -150,7 +157,7 @@ for x in $IMAGES ; do
 		if [ -n "$DOCKER_SECRETS" ] ; then
 			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
 			export DOCKER_BUILDKIT=1
-			docker_cmd="$docker_cmd --build-arg BUILDKIT_INLINE_CACHE=1"
+			docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 			for secret in `ls /secrets` ; do
 				docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
 			done
@@ -168,7 +175,12 @@ for x in $IMAGES ; do
 	echo "Build step $((completed+1)) of $total is complete"
 
 	if [ $auth -eq 1 ] ; then
-		run docker push ${ct_base}:$TAG-$ARCH
+		if [[ -z "$DOCKER_SECRETS" ]] || [[ $no_op_tag -eq 1 ]] ; then
+			# if docker secrets doesn't exist, we aren't using buildx - we need to push
+			# if secrets are defined but no_op_tag is 1, then we didn't build with
+			# buildx and need to push
+			run docker push ${ct_base}:$TAG-$ARCH
+		fi
 
 		var="EXTRA_TAGS_$ARCH"
 		for t in $(eval echo "\$$var") ; do
