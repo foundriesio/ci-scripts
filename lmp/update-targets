@@ -1,0 +1,66 @@
+#!/bin/bash -e
+
+HERE=$(dirname $(readlink -f $0))
+source $HERE/../helpers.sh
+
+apk add curl
+
+CREDENTIALS=$(mktemp)
+$HERE/../create-creds /var/cache/bitbake/credentials.zip $CREDENTIALS
+
+status Extracting credentials
+garage-sign init --repo /tufrepo --credentials $CREDENTIALS
+
+status Pulling TUF targets
+garage-sign targets pull --repo /tufrepo
+
+status Updating targets
+cp /tufrepo/roles/unsigned/targets.json /archive/targets-before.json
+
+python3 -c "
+import json, os, sys
+
+def patch_item(item, data):
+    if type(item) != type(data):
+        sys.exit('ERROR: Unable to patch(type mismatch) (%r) into (%r)' % (data, item))
+
+    for k, v in data.items():
+        if isinstance(v, dict):
+            patch_item(item.setdefault(k, {}), v)
+        else:
+            item[k] = v
+
+action = os.environ['UPDATE_ACTION']
+update = json.load(open('/secrets/targets'))
+data = json.load(open('/archive/targets-before.json'))
+targets = data['targets']
+
+if action == 'patch':
+    print('Patching targets')
+    for name, val in update.items():
+        cur = targets.get(name)
+        if not cur:
+            sys.exit('Missing target(%s)' % name)
+        patch_item(cur, val)
+elif action == 'delete':
+    print('Deleting targets')
+    for name in update:
+        try:
+            del targets[name]
+        except KeyError:
+            sys.exit('ERROR: ' + name + ' not in targets')
+elif action == 'put':
+    print('Putting targets')
+    data['targets'] = update
+else:
+    sys.exit('ERROR: Unsupport update action: ' + action)
+
+json.dump(data, open('/archive/targets.json', 'w'), indent=2)
+"
+cp /archive/targets.json /tufrepo/roles/unsigned/targets.json
+
+status Signing new targets
+garage-sign targets sign --repo /tufrepo --key-name targets
+
+status Uploading new targets
+garage-sign targets push --repo /tufrepo
