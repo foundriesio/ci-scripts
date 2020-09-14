@@ -28,6 +28,19 @@ ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
 
+docker_build="docker build"
+if [ -n "$DOCKER_SECRETS" ] ; then
+	status "Downloading buildx to use for image building"
+	bxarch=$ARCH
+	if [ "$ARCH" = "arm" ] ; then
+		bxarch="arm-v7"
+	fi
+	mkdir -p ~/.docker/cli-plugins
+	wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-${bxarch}
+	chmod +x ~/.docker/cli-plugins/docker-buildx
+	docker_build="docker buildx build"
+fi
+
 pbc=pre-build.conf
 if [ -f $pbc ] ; then
   echo "Sourcing pre-build.conf."
@@ -41,7 +54,7 @@ fi
 
 status Launching dockerd
 unset DOCKER_HOST
-DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --raw-logs >/archive/dockerd.log 2>&1 &
+DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12` ; do
 	sleep 1
 	docker info >/dev/null 2>&1 && break
@@ -125,7 +138,7 @@ for x in $IMAGES ; do
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
 	else
-		docker_cmd="docker build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
+		docker_cmd="$docker_build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
 			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
