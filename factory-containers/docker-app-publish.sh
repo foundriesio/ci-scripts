@@ -11,6 +11,12 @@ apps=$(ls -d *.dockerapp 2>/dev/null || true)
 
 run apk --no-cache add git
 
+pbc=pre-build.conf
+if [ -f $pbc ] ; then
+  echo "Sourcing pre-build.conf."
+  . $pbc
+fi
+
 if [ -n "$DOCKER_COMPOSE_APP" ] ; then
 	status "Launching dockerd"
 	unset DOCKER_HOST
