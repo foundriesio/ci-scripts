@@ -163,6 +163,12 @@ for x in $IMAGES ; do
 			done
 		fi
 
+		db_args_file="$REPO_ROOT/$x/.docker_build_args"
+		if [ -f $db_args_file ] ; then
+			status "Adding .docker_build_args"
+			docker_cmd="$docker_cmd $(cat $db_args_file | sed  '/^#/d' | sed 's/^/--build-arg /' | paste -s -d " ")"
+		fi
+
 		DOCKERFILE="$REPO_ROOT/$x/${DOCKERFILE-Dockerfile}"
 		if [ -n "$BUILD_CONTEXT" ] ; then
 			status "Using custom build context $BUILD_CONTEXT"
@@ -170,7 +176,9 @@ for x in $IMAGES ; do
 		else
 			BUILD_CONTEXT="$REPO_ROOT/$x/"
 		fi
-		run $docker_cmd -f $DOCKERFILE $BUILD_CONTEXT
+		# we have to use eval because the some parts of docker_cmd are
+		# variables quotes with spaces: --build-arg "foo=bar blah"
+		run eval "$docker_cmd -f $DOCKERFILE $BUILD_CONTEXT"
 	fi
 	echo "Build step $((completed+1)) of $total is complete"
 
