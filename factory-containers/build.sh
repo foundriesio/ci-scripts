@@ -28,6 +28,19 @@ ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
 
+docker_build="docker build"
+if [ -n "$DOCKER_SECRETS" ] ; then
+	status "Downloading buildx to use for image building"
+	bxarch=$ARCH
+	if [ "$ARCH" = "arm" ] ; then
+		bxarch="arm-v7"
+	fi
+	mkdir -p ~/.docker/cli-plugins
+	wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-${bxarch}
+	chmod +x ~/.docker/cli-plugins/docker-buildx
+	docker_build="docker buildx build"
+fi
+
 pbc=pre-build.conf
 if [ -f $pbc ] ; then
   echo "Sourcing pre-build.conf."
@@ -41,7 +54,7 @@ fi
 
 status Launching dockerd
 unset DOCKER_HOST
-DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --raw-logs >/archive/dockerd.log 2>&1 &
+DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12` ; do
 	sleep 1
 	docker info >/dev/null 2>&1 && break
@@ -50,6 +63,10 @@ for i in `seq 12` ; do
 		exit 1
 	fi
 done
+
+if [ -n "$DOCKER_SECRETS" ] ; then
+	run docker buildx create --use
+fi
 
 TAG=$(git log -1 --format=%h)
 LATEST=${OTA_LITE_TAG-"latest"}
@@ -125,10 +142,13 @@ for x in $IMAGES ; do
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
 	else
-		docker_cmd="docker build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
+		docker_cmd="$docker_build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
 			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
+			if [ -n "$DOCKER_SECRETS" ] ; then
+				docker_cmd="${docker_cmd}-${ARCH}_cache"
+			fi
 		else
 			status Building docker image $x for $ARCH with no cache
 			docker_cmd="$docker_cmd  --no-cache"
@@ -137,7 +157,7 @@ for x in $IMAGES ; do
 		if [ -n "$DOCKER_SECRETS" ] ; then
 			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
 			export DOCKER_BUILDKIT=1
-			docker_cmd="$docker_cmd --build-arg BUILDKIT_INLINE_CACHE=1"
+			docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 			for secret in `ls /secrets` ; do
 				docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
 			done
@@ -155,7 +175,12 @@ for x in $IMAGES ; do
 	echo "Build step $((completed+1)) of $total is complete"
 
 	if [ $auth -eq 1 ] ; then
-		run docker push ${ct_base}:$TAG-$ARCH
+		if [[ -z "$DOCKER_SECRETS" ]] || [[ $no_op_tag -eq 1 ]] ; then
+			# if docker secrets doesn't exist, we aren't using buildx - we need to push
+			# if secrets are defined but no_op_tag is 1, then we didn't build with
+			# buildx and need to push
+			run docker push ${ct_base}:$TAG-$ARCH
+		fi
 
 		var="EXTRA_TAGS_$ARCH"
 		for t in $(eval echo "\$$var") ; do
