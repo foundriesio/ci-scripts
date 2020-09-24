@@ -11,6 +11,7 @@ H_BUILD="${H_BUILD-lmp-localdev}"
 LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags 2>/dev/null || echo unknown)
 FACTORY="${FACTORY-lmp}"
 UBOOT_SIGN_ENABLE="${UBOOT_SIGN_ENABLE-0}"
+DISABLE_GPLV3="${DISABLE_GPLV3-0}"
 ENABLE_PTEST="${ENABLE_PTEST-0}"
 DOCKER_MAX_CONCURRENT_DOWNLOADS="${DOCKER_MAX_CONCURRENT_DOWNLOADS-3}"
 DOCKER_MAX_DOWNLOAD_ATTEMPTS="${DOCKER_MAX_DOWNLOAD_ATTEMPTS-5}"
@@ -107,6 +108,14 @@ if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then
 	status "SOTA_PACKED_CREDENTIALS not found, disabling OSTree publishing logic"
 	cat << EOFEOF >> conf/local.conf
 SOTA_PACKED_CREDENTIALS = ""
+EOFEOF
+fi
+
+if [ "${DISABLE_GPLV3}" = "1" ]; then
+	cat << EOFEOF >> conf/local.conf
+INHERIT += "image-license-checker lmp-disable-gplv3"
+IMAGE_LICENSE_CHECKER_ROOTFS_BLACKLIST = "GPL-3.0 LGPL-3.0 AGPL-3.0"
+IMAGE_LICENSE_CHECKER_NON_ROOTFS_BLACKLIST = "GPL-3.0 LGPL-3.0 AGPL-3.0"
 EOFEOF
 fi
 
