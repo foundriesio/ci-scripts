@@ -33,8 +33,12 @@ triggers:
     type: simple
     runs:
       - name: publish-docker-app
-        container: hub.foundries.io/aktualizr
+        container: foundries/lmp-image-tools
         host-tag: amd64-osf
+        privileged: true
+        params:
+          DOCKER_COMPOSE_APP: "1"
+          MANIFEST_PLATFORMS_DEFAULT: linux/amd64,linux/arm64,linux/arm
         script-repo:
           name: fio
           path: factory-containers/docker-app-publish.sh
