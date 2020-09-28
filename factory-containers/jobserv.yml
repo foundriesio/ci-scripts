@@ -14,6 +14,7 @@ triggers:
         https://github.com/foundriesio/containers.git
       GIT_POLL_REFS: "refs/heads/master"
       OTA_LITE_TAG: postmerge,postmerge-ptest
+      DOCKER_COMPOSE_APP: "1"
     runs:
       - name: build-{loop}
         container: docker:dind
@@ -48,6 +49,7 @@ triggers:
         privileged: true
         params:
           OTA_LITE_TAG: premerge:postmerge,premerge-ptest:postmerge-ptest
+          DOCKER_COMPOSE_APP: "1"
         loop-on:
           - param: host-tag
             values: [aarch64, armhf, amd64]
