@@ -116,7 +116,13 @@ def publish(factory: str, tag: str, app_name: str) -> str:
                     svc['image'] = img + ':' + tag
                     changed = True
                 elif len(parts) == 2:
-                    if parts[1] not in ('${TAG}', 'latest', tag):
+                    allowed = ['${TAG}', 'latest', tag]
+                    if factory == 'lmp':
+                        # the lmp containers repo pulls in fiotest which sets
+                        # its tag to "postmerge" which is okay based on how
+                        # we do tagging for that repo.
+                        allowed.append('postmerge')
+                    if parts[1] not in allowed:
                         sys.exit('Image pinned to %s should be ${TAG} or %s' % (
                                  parts[1], tag))
                     svc['image'] = parts[0] + ':' + tag
