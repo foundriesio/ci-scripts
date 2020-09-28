@@ -35,6 +35,8 @@ triggers:
       - name: publish-docker-app
         container: hub.foundries.io/aktualizr
         host-tag: amd64-osf
+        params:
+          DOCKER_COMPOSE_APP: "1"
         script-repo:
           name: fio
           path: factory-containers/docker-app-publish.sh
