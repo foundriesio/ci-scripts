@@ -8,10 +8,9 @@ set -o pipefail
 HERE=$(dirname $(readlink -f $0))
 . $HERE/../helpers.sh
 
-require_params FACTORY TARGETS TOKEN_FILE APP_IMAGE_DIR OUT_IMAGE_DIR
+require_params FACTORY TOKEN_FILE APP_IMAGE_DIR OUT_IMAGE_DIR
 
 export PYTHONPATH=${HERE}/../
 status Running: Assemble System Image script
-/usr/local/bin/dind ${HERE}/assemble-system-image 2>&1 | indent
 
-
+/usr/local/bin/dind ${HERE}/assemble-system-image.py 2>&1 | indent
