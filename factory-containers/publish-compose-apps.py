@@ -1,98 +1,24 @@
 #!/usr/bin/python3
+#
+# Copyright (c) 2019 Foundries.io
+# SPDX-License-Identifier: Apache-2.0
+
 import json
 import os
 import sys
 import tempfile
 import shutil
 import subprocess
-
+import logging
 import yaml
+import argparse
+
+from copy import deepcopy
 
 from helpers import cmd, require_env, status
 from compose_app_downloader import main as dump_app_images
 
-
-def normalize_keyvals(params: dict, prefix=''):
-    """Handles two types of docker-app params:
-
-       1) traditional. eg:
-          key: val
-
-          returns data as is
-       2) docker app nested. eg:
-          shellhttp:
-            port: 80
-          returns dict: {shell.httpd: 80}
-    """
-    normalized = {}
-    for k, v in params.items():
-        assert type(k) == str
-        if type(v) == str:
-            normalized[prefix + k] = v
-        elif type(v) == int:
-            normalized[prefix + k] = str(v)
-        elif type(v) == dict:
-            sub = normalize_keyvals(v, prefix + k + '.')
-            normalized.update(sub)
-        else:
-            raise ValueError('Invalid parameter type for: %r' % v)
-    return normalized
-
-
-def convert_docker_app(path: str):
-    """Take a .dockerapp file to directory format.
-
-       The file format isn't supported by docker-app 0.8 and beyond. Just
-       split a 3 sectioned yaml file into its pieces
-    """
-    with open(path) as f:
-        _, compose, params = yaml.safe_load_all(f)
-    if params is None:
-        params = {}
-
-    os.unlink(path)
-    path, _ = os.path.splitext(path)
-    try:
-        # this directory might already exist. ie the user has:
-        # shellhttpd.dockerapp
-        # shellhttpd/Dockerfile...
-        os.rename(path, path + '.orig')  # just move out of the way
-    except FileNotFoundError:
-        pass
-    os.mkdir(path)
-
-    # We need to try and convert docker-app style parameters to parameters
-    # that are compatible with docker-compose
-    params = normalize_keyvals(params)
-    compose_str = yaml.dump(compose)
-    for k, v in params.items():
-        # there are two things we have to replace:
-        # 1) Things with no defaults - ie ports: 8080:${PORT}
-        #    We need to make this ${PORT-<default>} if we can
-        compose_str = compose_str.replace('${%s}' % k, '${%s-%s}' % (k, v))
-        # 2) Things that are nested - ie foo.bar=12
-        #    We have to make this foo_bar so compose will accept it
-        if '.' in k:
-            safek = k.replace('.', '_')
-            status('Replacing parameter "%s" with "%s" for compatibility' % (
-                   k, safek))
-            compose_str = compose_str.replace('${' + k, '${' + safek)
-
-    with open(os.path.join(path, 'docker-compose.yml'), 'w') as f:
-        f.write(compose_str)
-    status('Converted docker-compose for %s\n' % compose_str)
-
-
-def convert_docker_apps():
-    """Loop through all the .dockerapp files in a directory and convert them
-       to directory-based docker-compose.yml friendly representations.
-    """
-    for p in os.listdir():
-        if not p.endswith('.dockerapp'):
-            continue
-        if os.path.isfile(p):
-            status('Converting .dockerapp file for: ' + p)
-            convert_docker_app(p)
+logging.basicConfig(level='INFO')
 
 
 def publish(factory: str, tag: str, app_name: str) -> str:
@@ -144,8 +70,89 @@ def publish(factory: str, tag: str, app_name: str) -> str:
     return app + '@sha256:' + sha.decode()
 
 
-def main(factory: str, tag: str, platforms: str, sha: str, app_preload_flag: str, app_dir=None):
-    convert_docker_apps()
+class TagMgr:
+    def __init__(self):
+        # Convert thinkgs like:
+        #    tag1,tag2 -> [(tag1, tag1), (tag2, tag2)]
+        #    tag1:blah,tag2 -> [(tag1, blah), (tag2, tag2)]
+        self._tags = []
+        for x in (os.environ.get('OTA_LITE_TAG') or '').split(','):
+            parts = x.strip().split(':', 1)
+            if len(parts) == 1 or parts[1] == '':
+                self._tags.append((parts[0], parts[0]))
+            else:
+                self._tags.append((parts[0], parts[1]))
+
+    def __repr__(self):
+        return str(self._tags)
+
+    def intersection(self, tags):
+        if self._tags == [('', '')]:
+            # Factory doesn't use tags, so its good.
+            # This empty value is special and understood by the caller
+            yield ''
+        else:
+            for t in tags:
+                for target, parent in self._tags:
+                    if t == parent:
+                        yield target
+
+    def create_target_name(self, target, version, tag):
+        name = target['custom']['name'] + '-' + version
+        if len(self._tags) == 1:
+            return name
+        # we have more than one tag - so we need something else to make
+        # this dictionary key name unique:
+        return name + '-' + tag
+
+    @property
+    def target_tags(self):
+        """Return the list of tags we should produce Targets for."""
+        return [x[0] for x in self._tags]
+
+
+def create_target(targets_json, version, compose_apps):
+    tagmgr = TagMgr()
+    logging.info('Doing Target tagging for: %s', tagmgr)
+
+    latest_tags = {x: {} for x in tagmgr.target_tags}
+
+    with open(targets_json) as f:
+        data = json.load(f)
+        for name, target in data['targets'].items():
+            if target['custom']['targetFormat'] == 'OSTREE':
+                tgt_tags = target['custom'].get('tags') or []
+                for tag in tagmgr.intersection(tgt_tags):
+                    hwid = target['custom']['hardwareIds'][0]
+                    cur = latest_tags[tag].get(hwid)
+                    ver = int(target['custom']['version'])
+                    if not cur or int(cur['custom']['version']) < ver:
+                        latest_tags[tag][hwid] = target
+
+    logging.info('Latest targets: %r', latest_tags)
+    for tag, latest in latest_tags.items():
+        for target in latest.values():
+            target = deepcopy(target)
+            tgt_name = tagmgr.create_target_name(target, version, tag)
+            data['targets'][tgt_name] = target
+
+            target['custom']['version'] = version
+            if tag:
+                target['custom']['tags'] = [tag]
+            apps = {}
+            target['custom']['containers-sha'] = os.environ['GIT_SHA']
+            if compose_apps:
+                target['custom']['docker_compose_apps'] = compose_apps
+            elif 'docker_compose_apps' in target['custom']:
+                del target['custom']['docker_compose_apps']
+            logging.info('Targets with apps: %r', target)
+
+    with open(targets_json, 'w') as f:
+        json.dump(data, f, indent=2)
+
+
+def main(factory: str, tag: str, platforms: str, sha: str, version: str, targets_json: str,
+         app_preload_flag: str, app_dir=None):
     apps = {}
 
     cur_work_dir = os.path.abspath(os.getcwd())
@@ -163,9 +170,7 @@ def main(factory: str, tag: str, platforms: str, sha: str, app_preload_flag: str
             uri = publish(factory, tag, app)
             apps[app] = {'uri': uri}
 
-    # this is a bit of a hack. ota-dockerapp.py needs this to create a target:
-    with open('/archive/compose-apps.json', mode='w') as f:
-        json.dump(apps, f, indent=2)
+    create_target(targets_json, version, apps)
 
     if app_preload_flag == '1':
         # ------ Dumping container images of all apps -----
@@ -195,6 +200,16 @@ def main(factory: str, tag: str, platforms: str, sha: str, app_preload_flag: str
         os.chdir(cur_work_dir)
 
 
+def get_args():
+    parser = argparse.ArgumentParser('''Publish Target Compose Apps''')
+    parser.add_argument('-t', '--targets', help='Targets json file')
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == '__main__':
-    factory, tag, platforms, sha = require_env('FACTORY', 'TAG', 'MANIFEST_PLATFORMS_DEFAULT', 'GIT_SHA')
-    main(factory, tag, platforms, sha, os.environ.get('DOCKER_COMPOSE_APP_PRELOAD', '0'), os.environ.get('COMPOSE_APP_ROOT_DIR'))
+    args = get_args()
+    factory, tag, platforms, sha, build_number = require_env('FACTORY', 'TAG', 'MANIFEST_PLATFORMS_DEFAULT', 'GIT_SHA', 'H_BUILD')
+    main(factory, tag, platforms, sha,
+         build_number, args.targets,
+         os.environ.get('DOCKER_COMPOSE_APP_PRELOAD', '0'), os.environ.get('COMPOSE_APP_ROOT_DIR'))
