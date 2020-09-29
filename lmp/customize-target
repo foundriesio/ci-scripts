@@ -11,32 +11,12 @@ import subprocess
 import urllib.request
 
 from copy import deepcopy
+from tag_manager import TagMgr
 
 logging.basicConfig(level='INFO')
 fh = logging.FileHandler('/archive/customize-target.log')
 fh.setFormatter(logging.getLogger().handlers[0].formatter)
 logging.getLogger().addHandler(fh)
-
-
-class TagMgr:
-    def __init__(self):
-        # Convert thinkgs like:
-        #    tag1,tag2 -> [(tag1, tag1), (tag2, tag2)]
-        #    tag1:blah,tag2 -> [(tag1, blah), (tag2, tag2)]
-        self._tags = []
-        for x in (os.environ.get('OTA_LITE_TAG') or '').split(','):
-            parts = x.strip().split(':', 1)
-            if len(parts) == 1 or parts[1] == '':
-                self._tags.append((parts[0], parts[0]))
-            else:
-                self._tags.append((parts[0], parts[1]))
-
-    def __repr__(self):
-        return str(self._tags)
-
-    @property
-    def tags(self):
-        return self._tags
 
 
 def git_hash(gitdir):
@@ -66,8 +46,9 @@ def targets_from_api():
         return data['signed']['targets']
 
 
-def merge(args):
-    with open(args.targets_json) as f:
+def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
+          machine, meta_subscriber_overrides_sha):
+    with open(targets_json) as f:
         data = json.load(f)
 
     changed = False
@@ -77,7 +58,7 @@ def merge(args):
     except KeyError:
         logging.info('Assuming installed_versions file')
         # have a dict: ostree-hash: target-name, convert to a target
-        name, version = args.target_name.rsplit('-', 1)
+        name, version = target_name.rsplit('-', 1)
         machine, _ = name.split('-lmp', 1)
         data = {
             v: {
@@ -95,18 +76,18 @@ def merge(args):
         targets.update(data)
         changed = True
 
-    tagmgr = TagMgr()
-    logging.info('Target is: %r', targets[args.target_name])
+    tagmgr = TagMgr(os.environ.get('OTA_LITE_TAG', ''))
+    logging.info('Target is: %r', targets[target_name])
     logging.info('Doing Target tagging for: %s', tagmgr)
 
     updates = []
     for idx, (tgt_tag, apps_tag) in enumerate(tagmgr.tags):
         tgt = targets[args.target_name]
-        tgt['custom']['lmp-manifest-sha'] = git_hash(args.manifest_repo_path)
-        tgt['custom']['arch'] = args.image_arch
-        tgt['custom']['image-file'] = '{}-{}.wic.gz'.format(args.image_name, args.machine)
+        tgt['custom']['lmp-manifest-sha'] = lmp_manifest_sha
+        tgt['custom']['arch'] = arch
+        tgt['custom']['image-file'] = '{}-{}.wic.gz'.format(image_name, machine)
         try:
-            tgt['custom']['meta-subscriber-overrides-sha'] = git_hash(args.meta_subscriber_overrides)
+            tgt['custom']['meta-subscriber-overrides-sha'] = meta_subscriber_overrides_sha
         except Exception:
             pass  # okay - LMP build doesn't have this repo
         if idx:
@@ -139,14 +120,6 @@ def merge(args):
     for u in updates:
         if u['prev']:
             logging.info('Prev is: %r', u['prev'])
-            apps = u['prev']['custom'].get('docker_apps')
-            if apps:
-                logging.info('Updating build to have apps: %r', apps)
-                u['tgt']['custom']['docker_apps'] = apps
-                sha = u['prev']['custom'].get('containers-sha')
-                if sha:
-                    u['tgt']['custom']['containers-sha'] = sha
-                changed = True
             apps = u['prev']['custom'].get('docker_compose_apps')
             if apps:
                 logging.info('Updating build to have compose apps: %r', apps)
@@ -165,7 +138,7 @@ def merge(args):
 def get_args():
     parser = argparse.ArgumentParser(
         '''Do LMP customiziations of the current build target. Including
-           copying docker apps defined in the previous build target.''')
+           copying Compose Apps defined in the previous build target.''')
 
     parser.add_argument('machine')
     parser.add_argument('image_name')
@@ -174,13 +147,16 @@ def get_args():
     parser.add_argument('targets_json')
     parser.add_argument('target_name')
 
+    parser.add_argument('manifest_repo',
+                        default=os.environ.get('MANIFEST_REPO', '/srv/oe/.repo/manifests'))
+    parser.add_argument('meta_sub_overrides_repo',
+                        default=os.environ.get('META_SUB_OVERRIDES_REPO', '/srv/oe/layers/meta-subscriber-overrides'))
+
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_args()
 
-    vars(args)['manifest_repo_path'] = os.environ.get('MANIFEST_REPO', '/srv/oe/.repo/manifests')
-    vars(args)['meta_subscriber_overrides'] = os.environ.get('META_SUB_OVERRIDES_REPO', '/srv/oe/layers/meta-subscriber-overrides')
-
-    merge(args)
+    merge(args.targets_json, args.target_name, git_hash(args.manifest_repo),
+          args.image_arch, args.image_name, args.machine, git_hash(args.meta_sub_overrides_repo))
