@@ -63,8 +63,8 @@ def temp_json_file(data):
 
 
 def customize_target(tag, targets_file, target_name):
-    args = ['./lmp/customize-target', 'machine_name', 'lmp-factory-image', 'amd64',
-            targets_file, target_name, './', './']
+    args = ['./customize-target.sh', 'machine_name', 'lmp-factory-image', 'amd64',
+            targets_file, target_name, '--manifest-repo=./', '--meta-sub-overrides-repo=./']
     env = os.environ.copy()
     env['OTA_LITE_TAG'] = tag
     subprocess.check_call(args, env=env)
@@ -150,3 +150,7 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual(['postmerge'], target['custom']['tags'])
                 self.assertEqual(
                     {'foo': 'devel-r'}, target['custom']['docker_compose_apps'])
+
+
+if __name__ == '__main__':
+    unittest.main()

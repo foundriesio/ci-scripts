@@ -147,9 +147,9 @@ def get_args():
     parser.add_argument('targets_json')
     parser.add_argument('target_name')
 
-    parser.add_argument('manifest_repo',
+    parser.add_argument('--manifest-repo',
                         default=os.environ.get('MANIFEST_REPO', '/srv/oe/.repo/manifests'))
-    parser.add_argument('meta_sub_overrides_repo',
+    parser.add_argument('--meta-sub-overrides-repo',
                         default=os.environ.get('META_SUB_OVERRIDES_REPO', '/srv/oe/layers/meta-subscriber-overrides'))
 
     return parser.parse_args()
