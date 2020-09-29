@@ -16,7 +16,7 @@ TARGETS_JSON = {
                 'tags': ['devel'],
                 'version': '12',
                 'hardwareIds': ['rpi3-cm'],
-                'docker_apps': {'foo': 'devel-r'},
+                'docker_compose_apps': {'foo': 'devel-r'},
             },
         },
         'minnow-12': {
@@ -27,7 +27,7 @@ TARGETS_JSON = {
                 'tags': ['devel'],
                 'version': '12',
                 'hardwareIds': ['minnow'],
-                'docker_apps': {'foo': 'devel-m'},
+                'docker_compose_apps': {'foo': 'devel-m'},
             },
         },
         'rpi3-cm-10': {
@@ -38,7 +38,7 @@ TARGETS_JSON = {
                 'tags': ['postmerge'],
                 'version': '10',
                 'hardwareIds': ['rpi3-cm'],
-                'docker_apps': {'foo': 'postmerge-r'},
+                'docker_compose_apps': {'foo': 'postmerge-r'},
             },
         },
         'rpi3-cm-13': {
@@ -63,10 +63,11 @@ def temp_json_file(data):
 
 
 def customize_target(tag, targets_file, target_name):
-    args = ['./customize-target', targets_file, target_name]
+    args = ['./lmp/customize-target', 'machine_name', 'lmp-factory-image', 'amd64',
+            targets_file, target_name, './', './']
     env = os.environ.copy()
     env['OTA_LITE_TAG'] = tag
-    subprocess.check_call(args, env=env, cwd=os.path.dirname(__file__))
+    subprocess.check_call(args, env=env)
     with open(targets_file) as f:
         return json.load(f)
 
@@ -85,7 +86,7 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual('BADBEEF', target['hashes']['sha256'])
                 self.assertEqual(['devel'], target['custom']['tags'])
                 self.assertEqual(
-                    {'foo': 'devel-r'}, target['custom']['docker_apps'])
+                    {'foo': 'devel-r'}, target['custom']['docker_compose_apps'])
 
         with temp_json_file(TARGETS_JSON) as filename:
             customize_target('postmerge', filename, 'rpi3-cm-13')
@@ -96,7 +97,7 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual('BADBEEF', target['hashes']['sha256'])
                 self.assertEqual(['postmerge'], target['custom']['tags'])
                 self.assertEqual(
-                    {'foo': 'postmerge-r'}, target['custom']['docker_apps'])
+                    {'foo': 'postmerge-r'}, target['custom']['docker_compose_apps'])
 
     def test_alternate_containers(self):
         """Grab containers from a different tag"""
@@ -110,7 +111,7 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual('BADBEEF', target['hashes']['sha256'])
                 self.assertEqual(['devel'], target['custom']['tags'])
                 self.assertEqual(
-                    {'foo': 'postmerge-r'}, target['custom']['docker_apps'])
+                    {'foo': 'postmerge-r'}, target['custom']['docker_compose_apps'])
 
     def test_no_tags(self):
         """Grab the latest containers if no tags are used."""
@@ -124,7 +125,7 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual('BADBEEF', target['hashes']['sha256'])
                 self.assertIsNone(target['custom'].get('tags'))
                 self.assertEqual(
-                    {'foo': 'devel-r'}, target['custom']['docker_apps'])
+                    {'foo': 'devel-r'}, target['custom']['docker_compose_apps'])
 
     def test_multiple_targets(self):
         """A single platform build can produce more than one target."""
@@ -141,11 +142,11 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual('BADBEEF', target['hashes']['sha256'])
                 self.assertEqual(['devel'], target['custom']['tags'])
                 self.assertEqual(
-                    {'foo': 'postmerge-r'}, target['custom']['docker_apps'])
+                    {'foo': 'postmerge-r'}, target['custom']['docker_compose_apps'])
 
                 target = data['targets']['rpi3-cm-13-1']
                 # we should get the hash of the previous "devel" build
                 self.assertEqual('BADBEEF', target['hashes']['sha256'])
                 self.assertEqual(['postmerge'], target['custom']['tags'])
                 self.assertEqual(
-                    {'foo': 'devel-r'}, target['custom']['docker_apps'])
+                    {'foo': 'devel-r'}, target['custom']['docker_compose_apps'])

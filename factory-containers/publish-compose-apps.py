@@ -3,7 +3,6 @@
 # Copyright (c) 2019 Foundries.io
 # SPDX-License-Identifier: Apache-2.0
 
-import json
 import os
 import sys
 import tempfile
@@ -13,10 +12,10 @@ import logging
 import yaml
 import argparse
 
-from copy import deepcopy
 
 from helpers import cmd, require_env, status
 from compose_app_downloader import main as dump_app_images
+from target_manager import create_target
 
 logging.basicConfig(level='INFO')
 
@@ -70,88 +69,7 @@ def publish(factory: str, tag: str, app_name: str) -> str:
     return app + '@sha256:' + sha.decode()
 
 
-class TagMgr:
-    def __init__(self):
-        # Convert thinkgs like:
-        #    tag1,tag2 -> [(tag1, tag1), (tag2, tag2)]
-        #    tag1:blah,tag2 -> [(tag1, blah), (tag2, tag2)]
-        self._tags = []
-        for x in (os.environ.get('OTA_LITE_TAG') or '').split(','):
-            parts = x.strip().split(':', 1)
-            if len(parts) == 1 or parts[1] == '':
-                self._tags.append((parts[0], parts[0]))
-            else:
-                self._tags.append((parts[0], parts[1]))
-
-    def __repr__(self):
-        return str(self._tags)
-
-    def intersection(self, tags):
-        if self._tags == [('', '')]:
-            # Factory doesn't use tags, so its good.
-            # This empty value is special and understood by the caller
-            yield ''
-        else:
-            for t in tags:
-                for target, parent in self._tags:
-                    if t == parent:
-                        yield target
-
-    def create_target_name(self, target, version, tag):
-        name = target['custom']['name'] + '-' + version
-        if len(self._tags) == 1:
-            return name
-        # we have more than one tag - so we need something else to make
-        # this dictionary key name unique:
-        return name + '-' + tag
-
-    @property
-    def target_tags(self):
-        """Return the list of tags we should produce Targets for."""
-        return [x[0] for x in self._tags]
-
-
-def create_target(targets_json, version, compose_apps):
-    tagmgr = TagMgr()
-    logging.info('Doing Target tagging for: %s', tagmgr)
-
-    latest_tags = {x: {} for x in tagmgr.target_tags}
-
-    with open(targets_json) as f:
-        data = json.load(f)
-        for name, target in data['targets'].items():
-            if target['custom']['targetFormat'] == 'OSTREE':
-                tgt_tags = target['custom'].get('tags') or []
-                for tag in tagmgr.intersection(tgt_tags):
-                    hwid = target['custom']['hardwareIds'][0]
-                    cur = latest_tags[tag].get(hwid)
-                    ver = int(target['custom']['version'])
-                    if not cur or int(cur['custom']['version']) < ver:
-                        latest_tags[tag][hwid] = target
-
-    logging.info('Latest targets: %r', latest_tags)
-    for tag, latest in latest_tags.items():
-        for target in latest.values():
-            target = deepcopy(target)
-            tgt_name = tagmgr.create_target_name(target, version, tag)
-            data['targets'][tgt_name] = target
-
-            target['custom']['version'] = version
-            if tag:
-                target['custom']['tags'] = [tag]
-            apps = {}
-            target['custom']['containers-sha'] = os.environ['GIT_SHA']
-            if compose_apps:
-                target['custom']['docker_compose_apps'] = compose_apps
-            elif 'docker_compose_apps' in target['custom']:
-                del target['custom']['docker_compose_apps']
-            logging.info('Targets with apps: %r', target)
-
-    with open(targets_json, 'w') as f:
-        json.dump(data, f, indent=2)
-
-
-def main(factory: str, tag: str, platforms: str, sha: str, version: str, targets_json: str,
+def main(factory: str, tag: str, ota_lite_tag: str, platforms: str, sha: str, version: str, targets_json: str,
          app_preload_flag: str, app_dir=None):
     apps = {}
 
@@ -170,7 +88,7 @@ def main(factory: str, tag: str, platforms: str, sha: str, version: str, targets
             uri = publish(factory, tag, app)
             apps[app] = {'uri': uri}
 
-    create_target(targets_json, version, apps)
+    create_target(targets_json, version, apps, ota_lite_tag, sha)
 
     if app_preload_flag == '1':
         # ------ Dumping container images of all apps -----
@@ -209,7 +127,9 @@ def get_args():
 
 if __name__ == '__main__':
     args = get_args()
-    factory, tag, platforms, sha, build_number = require_env('FACTORY', 'TAG', 'MANIFEST_PLATFORMS_DEFAULT', 'GIT_SHA', 'H_BUILD')
-    main(factory, tag, platforms, sha,
+    factory, tag, ota_lite_tag, platforms, sha, build_number = \
+        require_env('FACTORY', 'TAG', 'OTA_LITE_TAG',
+                    'MANIFEST_PLATFORMS_DEFAULT', 'GIT_SHA', 'H_BUILD')
+    main(factory, tag, ota_lite_tag, platforms, sha,
          build_number, args.targets,
          os.environ.get('DOCKER_COMPOSE_APP_PRELOAD', '0'), os.environ.get('COMPOSE_APP_ROOT_DIR'))
