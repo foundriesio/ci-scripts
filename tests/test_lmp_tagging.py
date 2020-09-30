@@ -63,7 +63,7 @@ def temp_json_file(data):
 
 
 def customize_target(tag, targets_file, target_name):
-    args = ['./customize-target.sh', 'machine_name', 'lmp-factory-image', 'amd64',
+    args = ['./lmp/customize-target.sh', 'machine_name', 'lmp-factory-image', 'amd64',
             targets_file, target_name, '--manifest-repo=./', '--meta-sub-overrides-repo=./']
     env = os.environ.copy()
     env['OTA_LITE_TAG'] = tag

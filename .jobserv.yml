@@ -1,15 +1,15 @@
 timeout: 30
+
 triggers:
   - name: pull-request
     type: github_pr
     runs:
       - name: unit-test
-        container: ubuntu
+        container: foundries/lmp-image-tools
         host-tag: amd64
         script: unit-test
 
 scripts:
 
   unit-test: |
-    #!/bin/sh -ex
     ./unit-test.sh
