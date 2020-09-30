@@ -191,6 +191,7 @@ class WicImage:
     def __exit__(self, exc_type, exc_val, exc_tb):
         cmd('umount', self._mnt_dir)
         os.rmdir(self._mnt_dir)
+        cmd('umount', '/dev')
         cmd('losetup', '-d', self._loop_device)
 
     def _resize_wic_file(self, increase_bytes: int, extra_space=0.2):
