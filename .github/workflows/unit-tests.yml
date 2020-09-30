@@ -1,0 +1,16 @@
+name: unit-tests
+on:
+  pull_request:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    container:
+      image:
+        foundries/lmp-image-tools:latest
+      volumes:
+        - /tmp:/archive
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./unit-test.sh

@@ -10,6 +10,6 @@ triggers:
         script: unit-test
 
 scripts:
-
   unit-test: |
+    #!/bin/sh
     ./unit-test.sh
