@@ -1,0 +1,15 @@
+timeout: 30
+triggers:
+  - name: pull-request
+    type: github_pr
+    runs:
+      - name: unit-test
+        container: ubuntu
+        host-tag: amd64
+        script: unit-test
+
+scripts:
+
+  unit-test: |
+    #!/bin/sh -ex
+    ./unit-test.sh
