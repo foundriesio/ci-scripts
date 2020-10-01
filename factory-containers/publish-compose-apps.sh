@@ -7,8 +7,6 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY H_BUILD
 
-run apk --no-cache add git
-
 pbc=pre-build.conf
 if [ -f $pbc ] ; then
   echo "Sourcing pre-build.conf."
