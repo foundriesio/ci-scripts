@@ -76,6 +76,7 @@ triggers:
               - apalis-imx8
               - beaglebone-yocto
               - imx6ullevk
+              - imx7ulpea-ucom
               - imx8mmevk
               - qemuarm64
               - raspberrypi3
@@ -261,6 +262,7 @@ triggers:
               - apalis-imx6
               - apalis-imx8
               - imx6ullevk
+              - imx7ulpea-ucom
               - imx8mmevk
               - qemuarm64
               - raspberrypi3
