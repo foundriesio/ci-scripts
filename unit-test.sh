@@ -1,3 +1,3 @@
 #!/bin/sh -e
 
-PYTHONPATH=./:factory-containers/ python3 -m unittest discover -s tests
+PYTHONPATH=./ python3 -m unittest discover -v -s tests

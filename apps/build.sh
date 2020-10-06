@@ -7,7 +7,7 @@
 #     files have changed. This is the default behavior.
 #   * If the image cache cannot be pulled, a fresh rebuild will be forced.
 #   * If the image cache _CAN_ be pulled, this cached image is tagged with
-#     the current SHA. This allows the subsequent docker-app publish to provide
+#     the current SHA. This allows the subsequent app publishing functionality to provide
 #     an update which has a valid container image in the registry.
 set -o pipefail
 
