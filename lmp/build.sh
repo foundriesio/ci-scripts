@@ -56,7 +56,7 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 # Link the license manifest for all the images produced by the build
 for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest; do
 	image_name=`basename ${img} | sed -e "s/.manifest//"`
-	image_name_id=`readlink ${img} | sed -e "s/.rootfs.manifest//"`
+	image_name_id=`readlink ${img} | sed -e "s/\..*manifest//"`
 	cp ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
 	ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
 	# Also take care of the image_license, which contains the binaries used by wic outside the rootfs
