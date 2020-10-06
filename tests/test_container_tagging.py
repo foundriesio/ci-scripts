@@ -3,7 +3,8 @@ import unittest
 
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
-from target_manager import create_target as update_targets
+
+from apps.target_manager import create_target as update_targets
 
 ONE_TO_ONE_JSON = {
     'targets': {
@@ -67,7 +68,7 @@ def temp_json_file(data):
 
 
 def create_target(tag, version, targets_file, apps):
-    update_targets(targets_file, version, apps, tag, 'sadasd')
+    update_targets(targets_file, apps, tag, 'some-sha', version)
     with open(targets_file) as f:
         return json.load(f)
 
