@@ -46,6 +46,8 @@ def create_target(targets_json, version, compose_apps, ota_lite_tag, git_sha):
                 target['custom']['docker_compose_apps'] = compose_apps
             elif 'docker_compose_apps' in target['custom']:
                 del target['custom']['docker_compose_apps']
+            if 'docker_apps' in target['custom']:
+                del target['custom']['docker_apps']
             logging.info('Targets with apps: %r', target)
 
     with open(targets_json, 'w') as f:
