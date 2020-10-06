@@ -81,6 +81,7 @@ triggers:
               - raspberrypi3
               - raspberrypi4
               - raspberrypi4-64
+              - uz3eg-iocc
         params:
           IMAGE: lmp-base-console-image
         script-repo:
@@ -265,6 +266,7 @@ triggers:
               - raspberrypi3
               - raspberrypi4
               - raspberrypi4-64
+              - uz3eg-iocc
         params:
           IMAGE: lmp-base-console-image
         script-repo:
