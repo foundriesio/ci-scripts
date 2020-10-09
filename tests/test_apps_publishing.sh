@@ -4,7 +4,8 @@
 set -euo pipefail
 
 # examples
-#./tests/test_apps_publishing.sh $FACTORY $OSF_TOKEN $FIO_USER_ID $FIO_CREDS $FACTORY_DIR/containers.git
+# sudo is required for apps/containers images dumping
+# sudo ./tests/test_apps_publishing.sh $FACTORY $OSF_TOKEN $FIO_USER_ID $FIO_CREDS $FACTORY_DIR/containers.git master
 
 REQ_ARG_NUMB=5
 if [[ $# -lt ${REQ_ARG_NUMB} ]]; then
@@ -58,6 +59,17 @@ if [[ ! -d ${TUF_REPO} ]]; then
   mkdir "${TUF_REPO}"
 fi
 
+DOCKER_COMPOSE_APP_PRELOAD="1"
+PRELOAD_DIR="${WORK_DIR}/preload"
+if [[ ! -d ${PRELOAD_DIR} ]]; then
+  mkdir "${PRELOAD_DIR}"
+fi
+APP_IMAGE_DIR="${WORK_DIR}/app-images"
+if [[ ! -d ${APP_IMAGE_DIR} ]]; then
+  mkdir "${APP_IMAGE_DIR}"
+fi
+
+
 CMD=./apps/publish.sh
 
 docker run -v -it --rm --privileged \
@@ -69,6 +81,10 @@ docker run -v -it --rm --privileged \
   -e APPS_ROOT_DIR=/apps \
   -e PUBLISH_TOOL=/usr/local/bin/compose-publish \
   -e PUSH_TARGETS=$PUSH_TARGET \
+  -e DOCKER_COMPOSE_APP_PRELOAD=$DOCKER_COMPOSE_APP_PRELOAD \
+  -e PRELOAD_DIR=/preload \
+  -e APP_IMAGE_DIR=/app-images \
+  -e HOME=/home/test \
   -v $PWD:/ci-scripts \
   -v $ARCHIVE:/archive \
   -v $SECRETS:/secrets \
@@ -76,6 +92,8 @@ docker run -v -it --rm --privileged \
   -v $APPS_ROOT_DIR:/apps \
   -v $PUBLISH_TOOL:/usr/local/bin/compose-publish \
   -v $CREDS_ARCH:/secrets/credentials.zip \
+  -v $PRELOAD_DIR:/preload \
+  -v $APP_IMAGE_DIR:/app-images \
   -w /ci-scripts \
   -u $(id -u ${USER}):$(id -g ${USER}) \
   foundries/lmp-image-tools ${CMD}

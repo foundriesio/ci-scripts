@@ -1,3 +1,6 @@
+# Copyright (c) 2020 Foundries.io
+# SPDX-License-Identifier: Apache-2.0
+
 import json
 import unittest
 
