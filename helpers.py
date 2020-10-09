@@ -81,7 +81,6 @@ def cmd(*args, cwd=None, capture=False):
         if capture:
             out += line
     sys.stdout.buffer.write(b'|--\n')
-    p.wait()
     p.communicate()
     if p.returncode != 0:
         raise subprocess.CalledProcessError(p.returncode, args)

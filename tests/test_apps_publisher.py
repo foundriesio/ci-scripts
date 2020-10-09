@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from apps.compose_apps import ComposeApps
-
+from apps.apps_publisher import AppsPublisher
 
 import shutil
 import unittest
@@ -11,7 +11,7 @@ import os
 import yaml
 
 
-class ComposeAppsTest(unittest.TestCase):
+class ComposeAppsPublisherTest(unittest.TestCase):
     ComposeAppDesc = '''
     services:
       nginx-01:
@@ -37,45 +37,34 @@ class ComposeAppsTest(unittest.TestCase):
     def setUp(self):
         self.apps_root_dir = tempfile.mkdtemp()
         self.app_name = 'app1'
+        self.factory = 'test_factory'
+        self.publish_tool = 'some-fake-publish-tool'
+
         os.mkdir(os.path.join(self.apps_root_dir, self.app_name))
         with open(os.path.join(self.apps_root_dir, self.app_name, ComposeApps.App.ComposeFile), 'w') as compose_file:
             yaml_data = yaml.safe_load(self.ComposeAppDesc)
             yaml.dump(yaml_data, compose_file)
 
         self.apps = ComposeApps(self.apps_root_dir)
+        self.publisher = AppsPublisher(self.factory, self.publish_tool)
 
     def tearDown(self):
         shutil.rmtree(self.apps_root_dir)
 
-    def test_compose_apps_init(self):
-        self.assertEqual(len(self.apps), 1)
-        self.apps.validate()
-        self.assertEqual(self.apps.str, self.app_name)
-        self.assertEqual(len(self.apps), 1)
+    def test_compose_apps_image_tagging(self):
+        tag = '192837465'
 
-    def test_compose_apps_app_init(self):
-        app = self.apps[0]
-        app.validate()
-        self.assertEqual(len(app.services()), 3)
+        self.publisher.tag(self.apps, tag)
 
-    def test_compose_apps_app_images(self):
-        app = self.apps[0]
-        expected_images = ['hub.foundries.io/test_factory/nginx',
+        expected_images = ['hub.foundries.io/test_factory/nginx:{}'.format(tag),
                            'nginx:1.19.2-alpine',
-                           'hub.foundries.io/test_factory/app-07:latest']
-        for image in app.images():
+                           'hub.foundries.io/test_factory/app-07:{}'.format(tag)]
+        for image in self.apps[0].images():
             self.assertIn(image, expected_images)
 
-    # def test_compose_apps_app_image_tagging(self):
-    #     app = self.apps[0]
-    #     tag = '192837465'
-    #     app.tag_images(tag, 'hub.foundries.io/test_factory')
-    #
-    #     expected_images = ['hub.foundries.io/test_factory/nginx:{}'.format(tag),
-    #                        'nginx:1.19.2-alpine',
-    #                        'hub.foundries.io/test_factory/app-07:{}'.format(tag)]
-    #     for image in app.images():
-    #         self.assertIn(image, expected_images)
+    # TODO: implement AppsPublisher::publish test, requires emulator/mock of the compose-publisher/compose-ref tool
+    # unless we implement it in python
+    # def test_compose_apps_publishing(self):
 
 
 if __name__ == '__main__':

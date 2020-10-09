@@ -1,5 +1,4 @@
-#
-# Copyright (c) 2019 Foundries.io
+# Copyright (c) 2020 Foundries.io
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
@@ -12,7 +11,7 @@ from tag_manager import TagMgr
 logger = logging.getLogger(__name__)
 
 
-def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, in_version=None):
+def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, in_version=None, new_target_dest_file=None) -> dict:
     tagmgr = TagMgr(ota_lite_tag)
     logging.info('Doing Target tagging for: %s', tagmgr)
 
@@ -36,10 +35,10 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, in_version=
     if not version:
         version = str(latest_version + 1)
 
-    logging.info('Latest targets for the given build number {}\n{}'.format(
+    logger.info('Latest targets for the given build number {}\n{}'.format(
                  version, json.dumps(latest_targets, ensure_ascii=True, indent=2)))
 
-    new_target_counter = 0
+    new_targets = {}
     for tag, latest in latest_targets.items():
         for target in latest.values():
             target = deepcopy(target)
@@ -56,11 +55,15 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, in_version=
                 del target['custom']['docker_compose_apps']
             if 'docker_apps' in target['custom']:
                 del target['custom']['docker_apps']
-            logging.info('New Target with {}\n{}'.
+            logger.info('New Target with {}\n{}'.
                          format(tgt_name, json.dumps(target, ensure_ascii=True, indent=2)))
-            new_target_counter += 1
+            new_targets[tgt_name] = target
 
     with open(targets_json, 'w') as f:
         json.dump(data, f, indent=2)
 
-    return new_target_counter > 0
+    if new_target_dest_file and len(new_targets) > 0:
+        with open(new_target_dest_file, 'w') as f:
+            json.dump(new_targets, f, indent=2)
+
+    return new_targets

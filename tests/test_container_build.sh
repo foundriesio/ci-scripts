@@ -18,7 +18,7 @@ docker run --rm --privileged -it -w $PWD \
 	-e FACTORY=test-value \
 	-e IMAGES=mosquitto \
 	-e GIT_SHA=unit_test \
-	docker:dind $HERE/build.sh
+	docker:dind "${parent}/apps/build.sh"
 
 echo "Junit Results"
 cat $tmpdir/junit.xml

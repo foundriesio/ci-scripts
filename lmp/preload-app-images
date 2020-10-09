@@ -8,44 +8,57 @@ import argparse
 import logging
 import json
 import os
-import subprocess
+
+from apps.target_apps_store import ArchiveTargetAppsStore
+from factory_client import FactoryClient
 
 
-logging.basicConfig(level='INFO')
-fh = logging.FileHandler('/archive/preload-app-images.log')
-fh.setFormatter(logging.getLogger().handlers[0].formatter)
-logging.getLogger().addHandler(fh)
+logger = logging.getLogger(__name__)
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('installed_versions')
     parser.add_argument('dst_dir')
+    # TODO: remove it from here and meta-lmp
     parser.add_argument('arch')
+    parser.add_argument('--images-root-dir', default=os.getenv('APP_IMAGE_DIR', '/var/cache/bitbake/app-images/'))
+    parser.add_argument('--archive-dir', default='/archive')
     return parser.parse_args()
 
 
-def preload_app_images(target_json_file_filepath, dst_dir, arch):
+def preload_app_images(target_json_file_filepath, dst_dir, app_images_root_dir):
     with open(target_json_file_filepath) as target_json_file:
         target_json = json.load(target_json_file)
 
     target_name = list(target_json.keys())[0]
-    logging.info('Preloading app images for ' + target_name)
-    sha = target_json[target_name]['custom']['containers-sha']
-    image_data_dir = os.path.join('/var/cache/bitbake/app-images/', sha)
+    target = FactoryClient.Target(target_name, target_json[target_name])
 
-    arch_map = {'aarch64': 'arm64', 'x86_64': 'amd64', 'arm': 'arm'}
-    image_data_tar = os.path.join(image_data_dir, '{}-{}.tar'.format(sha, arch_map[arch]))
+    target_apps_store = ArchiveTargetAppsStore(app_images_root_dir)
+    logging.info('Preloading app images for ' + target.name)
+    _, app_image_tar, _ = target_apps_store.apps_location(target)
 
-    if not os.path.exists(image_data_tar):
-        logging.error('The app images are missing; container sha: {}, arch: {}, image data file: {}'.
-                      format(sha, arch, image_data_tar))
-        exit(1)
-
-    logging.info('Preloading container images; container sha: {}, arch: {}, dst: {}'.format(sha, arch, dst_dir))
-    subprocess.check_call(['tar', '-xf', image_data_tar, '-C', dst_dir])
+    if not target_apps_store.exist(target):
+        logger.error('The app images are missing; container sha: {},'
+                     ' location: {}'.format(target.sha, app_image_tar))
+    else:
+        target_apps_store.copy(target, dst_dir)
 
 
 if __name__ == '__main__':
     args = get_args()
-    preload_app_images(args.installed_versions, args.dst_dir, args.arch)
+
+    logging.basicConfig(level='INFO')
+    fh = logging.FileHandler(os.path.join(args.archive_dir, 'preload-app-images.log'))
+    formatter = logging.Formatter('%(levelname)s: App Images Preloader: %(module)s: %(message)s')
+    fh.setFormatter(formatter)
+    logging.getLogger().addHandler(fh)
+
+    try:
+        preload_app_images(args.installed_versions, args.dst_dir, args.images_root_dir)
+    except Exception as exc:
+        logger.warning('Failed to preload Apps images: {}'.format(exc))
+
+    # we return 0/successful exit code regardless of the preloading status to make sure
+    # that the LmP/bitbake job, that invoked the given preloading script, proceeds further (is not interrupted)
+    exit(0)
