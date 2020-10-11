@@ -86,10 +86,8 @@ def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
         tgt['custom']['lmp-manifest-sha'] = lmp_manifest_sha
         tgt['custom']['arch'] = arch
         tgt['custom']['image-file'] = '{}-{}.wic.gz'.format(image_name, machine)
-        try:
+        if meta_subscriber_overrides_sha:
             tgt['custom']['meta-subscriber-overrides-sha'] = meta_subscriber_overrides_sha
-        except Exception:
-            pass  # okay - LMP build doesn't have this repo
         if idx:
             tgt = deepcopy(tgt)
             targets[args.target_name + '-%d' % idx] = tgt
@@ -158,5 +156,10 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
+    if os.path.exists(args.meta_sub_overrides_repo):
+        overrides_sha = git_hash(args.meta_sub_overrides_repo)
+    else:
+        logging.info("meta-subscriber-overrides layer/repo wasn't fetched")
+        overrides_sha = None
     merge(args.targets_json, args.target_name, git_hash(args.manifest_repo),
-          args.image_arch, args.image_name, args.machine, git_hash(args.meta_sub_overrides_repo))
+          args.image_arch, args.image_name, args.machine, overrides_sha)
