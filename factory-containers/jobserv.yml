@@ -27,9 +27,9 @@ triggers:
           path: factory-containers/build.sh
 
     triggers:
-      - name: promote
+      - name: promote-postmerge
 
-  - name: promote
+  - name: promote-postmerge
     type: simple
     runs:
       - name: publish-apps
@@ -39,11 +39,29 @@ triggers:
         params:
           DOCKER_COMPOSE_APP: "1"
           MANIFEST_PLATFORMS_DEFAULT: linux/amd64,linux/arm64,linux/arm
+          OTA_LITE_TAG: postmerge,postmerge-ptest
         script-repo:
           name: fio
           path: factory-containers/publish-compose-apps.sh
         persistent-volumes:
           bitbake: /var/cache/bitbake
+
+  - name: promote-pr
+      type: simple
+      runs:
+        - name: publish-apps
+          container: foundries/lmp-image-tools
+          host-tag: amd64-osf
+          privileged: true
+          params:
+            DOCKER_COMPOSE_APP: "1"
+            MANIFEST_PLATFORMS_DEFAULT: linux/amd64,linux/arm64,linux/arm
+            OTA_LITE_TAG: premerge:postmerge,premerge-ptest:postmerge-ptest
+          script-repo:
+            name: fio
+            path: factory-containers/publish-compose-apps.sh
+          persistent-volumes:
+            bitbake: /var/cache/bitbake
 
   - name: pull-request-containers
     type: github_pr
@@ -62,7 +80,7 @@ triggers:
           path: factory-containers/build.sh
 
     triggers:
-      - name: promote
+      - name: promote-pr
 
 script-repos:
   fio:
