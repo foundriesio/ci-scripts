@@ -83,6 +83,7 @@ triggers:
               - raspberrypi4
               - raspberrypi4-64
               - uz3eg-iocc
+              - corstone700-mps3
         params:
           IMAGE: lmp-base-console-image
         script-repo:
@@ -270,6 +271,7 @@ triggers:
               - raspberrypi4
               - raspberrypi4-64
               - uz3eg-iocc
+              - corstone700-mps3
         params:
           IMAGE: lmp-base-console-image
         script-repo:
