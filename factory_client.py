@@ -1,8 +1,9 @@
 import os
 import logging
 import subprocess
+from typing import Optional
 
-from helpers import http_get
+from helpers import Progress, http_get
 
 
 logger = logging.getLogger(__name__)
@@ -92,7 +93,7 @@ class FactoryClient:
 
         return res_targets
 
-    def get_target_system_image(self, target: Target, out_dir: str):
+    def get_target_system_image(self, target: Target, out_dir: str, progress: Progress):
         # https://api.foundries.io/projects/<factory>/lmp/builds/<build-numb>/runs/<machine>/<image-name>-<machine>.wic.gz
 
         image_base_url = target['custom']['uri']
@@ -105,6 +106,8 @@ class FactoryClient:
         image_file_path = os.path.join(out_dir, image_filename)
         extracted_image_file_path = image_file_path.rstrip('.gz')
 
+        p = Progress(2, progress)
+
         if not os.path.exists(extracted_image_file_path):
             logger.info('Downloading Target system image...; Target: {}, image: {}'
                         .format(target.name, image_filename))
@@ -113,9 +116,11 @@ class FactoryClient:
             with open(image_file_path, 'wb') as image_file:
                 for data_chunk in image_resp.iter_content(chunk_size=65536):
                     image_file.write(data_chunk)
+            p.tick()
 
             logger.info('Extracting Target system image: {}'.format(image_file_path))
             subprocess.check_call(['gunzip', '-f', image_file_path])
+            p.tick()
         else:
             logger.info('Target system image has been already downloaded: {}'.format(extracted_image_file_path))
 

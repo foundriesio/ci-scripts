@@ -10,7 +10,7 @@ import argparse
 import logging
 from math import ceil
 
-from helpers import cmd
+from helpers import cmd, Progress
 from apps.target_apps_fetcher import TargetAppsFetcher
 from apps.fetch import ArchiveTargetAppsStore
 from factory_client import FactoryClient
@@ -85,7 +85,10 @@ class WicImage:
 
 
 def copy_container_images_to_wic(target: FactoryClient.Target, app_image_dir: str, app_preload_dir: str,
-                                 wic_image: str, token: str, apps_shortlist: list):
+                                 wic_image: str, token: str, apps_shortlist: list,
+                                 progress: Progress):
+
+    p = Progress(2, progress)
     target_app_store = ArchiveTargetAppsStore(app_image_dir)
     target.shortlist = apps_shortlist
     if not target_app_store.exist(target):
@@ -94,12 +97,14 @@ def copy_container_images_to_wic(target: FactoryClient.Target, app_image_dir: st
         apps_fetcher.fetch_target_apps(target, apps_shortlist)
         apps_fetcher.fetch_apps_images()
         target_app_store.store(target, apps_fetcher.images_dir(target.name))
+    p.tick()
 
     # in kilobytes
     image_data_size = target_app_store.images_size(target)
     with WicImage(wic_image, image_data_size * 1024) as wic_image:
         target_app_store.copy(target, wic_image.docker_data_root)
         wic_image.update_target({target.name: target.json})
+    p.tick()
 
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
@@ -169,13 +174,18 @@ if __name__ == '__main__':
             logger.warning(err_msg)
             exit(1)
 
+        p = Progress(len(targets))
         logger.info('Found {} Targets to assemble image for'.format(found_targets_number))
         for target in targets:
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
-            image_file_path = factory_client.get_target_system_image(target, args.out_image_dir)
+            subprog = Progress(3, p)
+            image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
             copy_container_images_to_wic(target, args.app_image_dir, args.preload_dir,
-                                         image_file_path, args.token, args.app_shortlist)
+                                         image_file_path, args.token, args.app_shortlist,
+                                         subprog)
             archive_and_output_assembled_wic(image_file_path, args.out_image_dir)
+            subprog.tick(complete=True)
+
     except Exception as exc:
         logger.error('Failed to assemble a system image: {}'.format(exc))
         exit_code = 1
