@@ -41,6 +41,8 @@ PLATFORMS=${MANIFEST_PLATFORMS_DEFAULT-""}
 require_params FACTORY ARCHIVE TARGET_TAG
 #-- END: Input params
 
+apk add tar
+
 pbc=pre-build.conf
 if [ -f $pbc ] ; then
   echo "Sourcing pre-build.conf."

@@ -21,6 +21,7 @@ logger = logging.getLogger("System Image Assembler")
 class WicImage:
     DockerDataRootDir = 'ostree/deploy/lmp/var/lib/docker/'
     InstalledTargetFile = 'ostree/deploy/lmp/var/sota/import/installed_versions'
+    SotaDir = 'ostree/deploy/lmp/var/sota'
 
     def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
         self._path = wic_image_path
@@ -31,6 +32,7 @@ class WicImage:
             self._resized_image = True
         self.docker_data_root = os.path.join(self._mnt_dir, self.DockerDataRootDir)
         self.installed_target_filepath = os.path.join(self._mnt_dir, self.InstalledTargetFile)
+        self.sota_dir = os.path.join(self._mnt_dir, self.SotaDir)
 
     def __enter__(self):
         cmd('losetup', '-P', '-f', self._path)
@@ -98,13 +100,13 @@ def copy_container_images_to_wic(target: FactoryClient.Target, app_image_dir: st
         apps_fetcher = TargetAppsFetcher(token, app_preload_dir)
         apps_fetcher.fetch_target_apps(target, apps_shortlist)
         apps_fetcher.fetch_apps_images()
-        target_app_store.store(target, apps_fetcher.images_dir(target.name))
+        target_app_store.store(target, apps_fetcher.images_dir(target.name), apps_fetcher.apps_dir(target.name))
     p.tick()
 
     # in kilobytes
     image_data_size = target_app_store.images_size(target)
     with WicImage(wic_image, image_data_size * 1024) as wic_image:
-        target_app_store.copy(target, wic_image.docker_data_root)
+        target_app_store.copy(target, wic_image.docker_data_root, os.path.join(wic_image.sota_dir, 'compose-apps'))
         wic_image.update_target(target)
     p.tick()
 

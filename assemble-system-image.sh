@@ -29,6 +29,8 @@ fi
 export PYTHONPATH=${HERE}
 status Running: Assemble System Image script
 
+apk add tar
+
 /usr/local/bin/dind "${HERE}/assemble.py" \
   --factory "${FACTORY}" \
   --token "$(cat "${SECRETS}/osftok")" \
