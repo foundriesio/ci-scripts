@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import traceback
+from typing import Optional
 
 import requests
 
@@ -162,3 +163,30 @@ def generate_credential_tokens(creds_zip_in: str, creds_zip_out: str):
                     data['oauth2']['client_secret'] = secret('osftok')
                     buf = json.dumps(data).encode()
                 zout.writestr(name, buf)
+
+
+class Progress:
+    def __init__(self, total: int, parent: Optional["Progress"] = None):
+        if total == 0:
+            raise ValueError("Invalid total")
+        self.total = total
+        self.cur = 0
+        self.parent = parent
+
+    def tick(self, complete=False):
+        if complete and self.cur != self.total:
+            self.cur = self.total
+        elif self.cur < self.total:
+            self.cur += 1
+
+        percent = round(self.cur / self.total * 100)
+        if self.parent:
+            parent_total = round(self.parent.cur / self.parent.total * 100)
+            percent = parent_total + round(percent / self.parent.total)
+
+            if self.cur == self.total:
+                self.parent.cur += 1
+        self.show_progress(percent)
+
+    def show_progress(self, percent_complete: int):
+        status('Run is %d%% complete' % percent_complete, prefix='##')
