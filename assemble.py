@@ -151,7 +151,7 @@ if __name__ == '__main__':
     exit_code = 0
 
     try:
-        logging.basicConfig(format='%(levelname)s: Image Assembler: %(module)s: %(message)s', level=logging.INFO)
+        logging.basicConfig(format='%(asctime)s %(levelname)s: Image Assembler: %(module)s: %(message)s', level=logging.INFO)
         args = get_args()
 
         factory_client = FactoryClient(args.factory, args.token)

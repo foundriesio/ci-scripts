@@ -37,5 +37,4 @@ status Running: Assemble System Image script
   --app-image-dir "${APP_IMAGE_DIR}" \
   --preload-dir "${PRELOAD_DIR}" \
   --targets "${TARGETS}" \
-  --app-shortlist="${APP_SHORTLIST}" \
-  2>&1 | indent
+  --app-shortlist="${APP_SHORTLIST}"
