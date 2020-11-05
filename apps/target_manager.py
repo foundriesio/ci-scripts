@@ -11,7 +11,11 @@ from tag_manager import TagMgr
 logger = logging.getLogger(__name__)
 
 
-def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, in_version=None, new_target_dest_file=None) -> dict:
+def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines,
+                  in_version=None, new_target_dest_file=None) -> dict:
+    # TODO: take into account containers.platforms, we cannot create a new Target with Apps
+    # for machine that does not have matching platform in containers.platforms
+
     tagmgr = TagMgr(ota_lite_tag)
     logging.info('Doing Target tagging for: %s', tagmgr)
 
@@ -20,16 +24,25 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, in_version=
     with open(targets_json) as f:
         data = json.load(f)
         latest_version = -1
+        latest_tag_version = {}
+
         for name, target in data['targets'].items():
-            if target['custom']['targetFormat'] == 'OSTREE':
-                ver = int(target['custom']['version'])
-                latest_version = ver if latest_version < ver else latest_version
+            hwid = target['custom']['hardwareIds'][0]
+            ver = int(target['custom']['version'])
+            latest_version = ver if latest_version < ver else latest_version
+            # create new Targets based on existing Targets that
+            # 1. are OSTREE type (TODO: it's redundant since we have only ostree Targets)
+            # 2. matches currently defined MACHINES (target.hwid in MACHINES),
+            #    use-case: machine was removed  just before the container build
+            if target['custom']['targetFormat'] == 'OSTREE' and (hwid in machines if machines else True):
                 tgt_tags = target['custom'].get('tags') or []
                 for tag in tagmgr.intersection(tgt_tags):
-                    hwid = target['custom']['hardwareIds'][0]
                     cur = latest_targets[tag].get(hwid)
                     if not cur or int(cur['custom']['version']) < ver:
                         latest_targets[tag][hwid] = target
+                        # The latest version across all hwid/machines per tag
+                        if not latest_tag_version.get(tag) or ver > latest_tag_version[tag]:
+                            latest_tag_version[tag] = ver
 
     version = in_version
     if not version:
@@ -41,6 +54,15 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, in_version=
     new_targets = {}
     for tag, latest in latest_targets.items():
         for target in latest.values():
+            # Assumption/Policy is that the latest version should be same across all hwids/machines for a specific tag,
+            # if it's not true for some parent Target then we skip creation of the new Target. It can be so
+            # in the case if the expected version of the parent Target failed and for some reason we don't
+            # want to create a new Target based on the latest available Target
+            if int(target['custom']['version']) != latest_tag_version[tag]:
+                logger.warning('Skipping Target creation: {}, corresponding latest parent Target has not been found'
+                               .format(tagmgr.create_target_name(target, version, tag),
+                                       tagmgr.create_target_name(target, str(latest_tag_version[tag]), tag)))
+                continue
             target = deepcopy(target)
             tgt_name = tagmgr.create_target_name(target, version, tag)
             data['targets'][tgt_name] = target

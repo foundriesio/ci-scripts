@@ -41,9 +41,29 @@ ONE_TO_ONE_JSON = {
                 'hardwareIds': ['rpi3-cm'],
             },
         },
+        'imx8mm-11': {
+            'hashes': {'sha256': 'YDFHK'},
+            'custom': {
+                'name': 'imx8mm-lmp',
+                'targetFormat': 'OSTREE',
+                'tags': ['devel'],
+                'version': '11',
+                'hardwareIds': ['imx8mm'],
+            },
+        },
+        'imx8mm-12': {
+            'hashes': {'sha256': 'TFTRET'},
+            'custom': {
+                'name': 'imx8mm-lmp',
+                'targetFormat': 'OSTREE',
+                'tags': ['devel-feature'],
+                'version': '12',
+                'hardwareIds': ['imx8mm'],
+            },
+        },
     }
 }
-
+TARGETS_MACHINES = ['rpi3-cm', 'minnow', 'imx8mm']
 ONE_TO_MANY_JSON = ONE_TO_ONE_JSON  # That has what we need for a test
 
 # Default factories have no tags configured
@@ -70,8 +90,10 @@ def temp_json_file(data):
         yield f.name
 
 
-def create_target(tag, version, targets_file, apps):
-    update_targets(targets_file, apps, tag, 'some-sha', version)
+def create_target(tag, version, targets_file, apps, machines=None):
+    if machines is None:
+        machines = TARGETS_MACHINES
+    update_targets(targets_file, apps, tag, 'some-sha', machines, version)
     with open(targets_file) as f:
         return json.load(f)
 
@@ -165,6 +187,108 @@ class TestTagging(unittest.TestCase):
                 self.assertEqual(
                     ['app1'], list(target['custom']['docker_compose_apps'].keys()))
                 self.assertEqual(['postmerge-foo'], target['custom']['tags'])
+
+    def test_machine_removal(self):
+        """Make sure that the new Targets do not include Target of the removed machine."""
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}}, machines=['rpi3-cm'])
+            with open(filename) as f:
+                data = json.load(f)
+                # make sure that only one new Target was added
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 1)
+                # make sure that only target(s) listed in `machines` was/were included
+                self.assertEqual(None, data['targets'].get('minnow-lmp-13'))
+                target = data['targets']['raspberrypi-cm3-lmp-13']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('DEADBEEF', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}}, machines=['minnow'])
+            with open(filename) as f:
+                data = json.load(f)
+                # make sure that only one new Target was added
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 1)
+                # make sure that only target(s) listed in `machines` was/were included
+                self.assertEqual(None, data['targets'].get('raspberrypi-cm3-lmp-13'))
+                target = data['targets']['minnow-lmp-13']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('ABCD', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}}, machines=['rpi3-cm', 'minnow'])
+            with open(filename) as f:
+                data = json.load(f)
+                # make sure that only one new Target was added
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 2)
+                # make sure that only target(s) listed in `machines` was/were included
+                self.assertIsNotNone(data['targets'].get('minnow-lmp-13'))
+                self.assertIsNotNone(data['targets'].get('raspberrypi-cm3-lmp-13'))
+
+                target = data['targets']['raspberrypi-cm3-lmp-13']
+                self.assertEqual('DEADBEEF', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+                target = data['targets']['minnow-lmp-13']
+                self.assertEqual('ABCD', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+    def test_outdated_target(self):
+        """Make sure that Targets for the outdated parent Targets are not created"""
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}})
+            with open(filename) as f:
+                data = json.load(f)
+                # make sure that just two new Targets were added
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 2)
+                # make sure that the outdated Target (version 11) was not added
+                self.assertEqual(None, data['targets'].get('imx8mm-lmp-13'))
+
+                # check if all expected Target were created
+                target = data['targets']['raspberrypi-cm3-lmp-13']
+                # we should get the hash of the previous "devel" build
+                self.assertEqual('DEADBEEF', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+                target = data['targets']['minnow-lmp-13']
+                self.assertEqual('ABCD', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel-feature', '13', filename, {'app1': {'uri': ''}})
+            with open(filename) as f:
+                data = json.load(f)
+                # make sure that just one new Target was created
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 1)
+                # make sure that the outdated Target (version 11) was not added
+                self.assertIsNotNone(data['targets'].get('imx8mm-lmp-13'))
+
+                target = data['targets']['imx8mm-lmp-13']
+                # we should get the hash of the previous "devel-feature" build
+                self.assertEqual('TFTRET', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}}, machines=['minnow', 'imx8mm'])
+            with open(filename) as f:
+                data = json.load(f)
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 1)
+                # make sure that the outdated Target (version 11) was not added
+                self.assertEqual(None, data['targets'].get('imx8mm-lmp-13'))
+
+                target = data['targets']['minnow-lmp-13']
+                self.assertEqual('ABCD', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel-feature', '13', filename, {'app1': {'uri': ''}}, machines=['minnow'])
+            with open(filename) as f:
+                data = json.load(f)
+                # make sure that just one new Target was created
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 0)
 
 
 if __name__ == '__main__':

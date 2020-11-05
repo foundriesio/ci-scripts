@@ -35,6 +35,7 @@ PUSH_TARGETS=${PUSH_TARGETS-true}
 DOCKER_COMPOSE_APP_PRELOAD=${DOCKER_COMPOSE_APP_PRELOAD-""}
 PRELOAD_DIR="${PRELOAD_DIR-$(mktemp -u -d)}"
 APP_IMAGE_DIR="${APP_IMAGE_DIR-/var/cache/bitbake/app-images}"
+MACHINES=${MACHINES-""}
 
 require_params FACTORY ARCHIVE TARGET_TAG
 #-- END: Input params
@@ -82,6 +83,7 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
 "${HERE}/publish.py" \
     --factory "${FACTORY}" \
     --targets "${TUF_REPO}/roles/unsigned/targets.json" \
+    --machines "${MACHINES}" \
     --apps-root-dir "${APPS_ROOT_DIR}" \
     --publish-tool "${PUBLISH_TOOL}" \
     --apps-version "${APPS_VERSION}" \
