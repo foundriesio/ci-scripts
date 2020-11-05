@@ -11,27 +11,8 @@ triggers:
         refs/heads/master
       OTA_LITE_TAG: postmerge
     runs:
-      # supported images that have OTA
-      - name: supported-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
-              - raspberrypi3-64
-        triggers:
-          - name: ota-{loop}
-          - name: ptest-build-{loop}
-        params:
-          IMAGE: lmp-base-console-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # other images that have OTA
-      - name: other-{loop}
+      # images that have OTA and ptest
+      - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-osf
         loop-on:
@@ -49,24 +30,8 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-      # mini images
-      - name: other-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
-              - qemuriscv64
-        params:
-          IMAGE: lmp-mini-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # Other images with no OTA
-      - name: other-{loop}
+      # images with no OTA
+      - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-osf
         loop-on:
@@ -75,15 +40,20 @@ triggers:
               - apalis-imx6
               - apalis-imx8
               - beaglebone-yocto
+              - corstone700-mps3
+              - freedom-u540
               - imx6ullevk
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mqevk
+              - qemuarm
               - qemuarm64
+              - qemuriscv64
               - raspberrypi3
+              - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
               - uz3eg-iocc
-              - corstone700-mps3
         params:
           IMAGE: lmp-base-console-image
         script-repo:
@@ -100,9 +70,11 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
+              - apalis-imx8
               - imx6ullevk
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mqevk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -125,24 +97,7 @@ triggers:
       OTA_LITE_TAG: 'postmerge-stable:postmerge'
       AKLITE_TAG: promoted-stable
     runs:
-      # supported images
-      - name: supported-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
-              - raspberrypi3-64
-        params:
-          IMAGE: lmp-base-console-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # other images
-      - name: other-{loop}
+      - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-osf
         loop-on:
@@ -154,27 +109,13 @@ triggers:
               - imx8mmevk
               - intel-corei7-64
               - qemuarm64
+              - qemuriscv64
               - raspberrypi3
+              - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
         params:
           IMAGE: lmp-base-console-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # other mini images
-      - name: other-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
-              - qemuriscv64
-        params:
-          IMAGE: lmp-mini-image
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -212,7 +153,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - raspberrypi3-64
               - intel-corei7-64
         triggers:
           - name: ota-{loop}
@@ -231,47 +171,23 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - beaglebone-yocto
-        params:
-          IMAGE: lmp-base-console-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      - name: build-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
-              - qemuriscv64
-        params:
-          IMAGE: lmp-mini-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      - name: build-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        loop-on:
-          - param: MACHINE
-            values:
               - apalis-imx6
               - apalis-imx8
+              - beaglebone-yocto
+              - corstone700-mps3
+              - freedom-u540
               - imx6ullevk
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mqevk
+              - qemuarm
               - qemuarm64
+              - qemuriscv64
               - raspberrypi3
+              - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
               - uz3eg-iocc
-              - corstone700-mps3
         params:
           IMAGE: lmp-base-console-image
         script-repo:
@@ -288,29 +204,15 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
+              - apalis-imx8
               - imx6ullevk
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mqevk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-  - name: ptest-build-raspberrypi3-64
-    type: simple
-    runs:
-      - name: build-raspberrypi3-64-ptest
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
-        params:
-          IMAGE: lmp-base-console-image
-          MACHINE: raspberrypi3-64
-          ENABLE_PTEST: "1"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -332,20 +234,6 @@ triggers:
           path: lmp/build.sh
         persistent-volumes:
           bitbake: /var/cache/bitbake
-
-  - name: ota-raspberrypi3-64
-    type: simple
-    runs:
-      - name: lmp-ota-raspberrypi3-64
-        container: hub.foundries.io/ota-runner
-        host-tag: raspberrypi3-64-ota
-        privileged: true
-        test-grepping:
-          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
-          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
-        script-repo:
-          name: fio
-          path: lmp/ota.sh
 
   - name: ota-intel-corei7-64
     type: simple
