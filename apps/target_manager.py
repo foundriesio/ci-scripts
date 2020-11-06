@@ -11,11 +11,8 @@ from tag_manager import TagMgr
 logger = logging.getLogger(__name__)
 
 
-def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines,
+def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines, platforms,
                   in_version=None, new_target_dest_file=None) -> dict:
-    # TODO: take into account containers.platforms, we cannot create a new Target with Apps
-    # for machine that does not have matching platform in containers.platforms
-
     tagmgr = TagMgr(ota_lite_tag)
     logging.info('Doing Target tagging for: %s', tagmgr)
 
@@ -31,7 +28,7 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines,
             ver = int(target['custom']['version'])
             latest_version = ver if latest_version < ver else latest_version
             # create new Targets based on existing Targets that
-            # 1. are OSTREE type (TODO: it's redundant since we have only ostree Targets)
+            # 1. are OSTREE type
             # 2. matches currently defined MACHINES (target.hwid in MACHINES),
             #    use-case: machine was removed  just before the container build
             if target['custom']['targetFormat'] == 'OSTREE' and (hwid in machines if machines else True):
@@ -58,11 +55,52 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines,
             # if it's not true for some parent Target then we skip creation of the new Target. It can be so
             # in the case if the expected version of the parent Target failed and for some reason we don't
             # want to create a new Target based on the latest available Target
+            # For example, in the following case we should just create one Target v65 for rpi3 based on its v64
+            # targets:
+            # rpi3-lmp-64:
+            # 	custom:
+            # 		version: 64
+            # 		hwids: rpi3
+            # 		tags: master
+            # intel-lmp-63:
+            # 	custom:
+            # 		version: 63
+            # 		hwids: intel
+            # 		tags: master
             if int(target['custom']['version']) != latest_tag_version[tag]:
                 logger.warning('Skipping Target creation: {}, corresponding latest parent Target has not been found'
                                .format(tagmgr.create_target_name(target, version, tag),
                                        tagmgr.create_target_name(target, str(latest_tag_version[tag]), tag)))
                 continue
+
+            # Do not create Targets with MACHINE architectures (aka hardware ID) on which the Compose Apps built
+            # in the given build cannot run due to lack of compatible platform.
+            # For example, in the following case we should just create Target v65 for rpi3, it doesn't make sense
+            # to create Target v65 for intel since the Compose Apps built in the given build cannot be run on
+            # x86_64, they can be run only on aarch64 MACHINEs
+            # rpi3-lmp-64:
+            # 	custom:
+            # 		version: 64
+            # 		hwids: aarch64
+            # 		tags: master
+            # intel-lmp-64:
+            # 	custom:
+            # 		version: 64
+            # 		hwids: x86_64
+            # 		tags: master
+            #
+            # factory_config.yml
+            # containers:
+            #   platforms:
+            #    - arm64
+            if not _can_apps_run_on_target_machine(target, platforms):
+                logger.warning('Skipping Target creation: {};'
+                               ' None of the container platforms are compatible with Target\'s architecture;'
+                               ' Container platforms: {}, Machine: {}'.
+                               format(tagmgr.create_target_name(target, version, tag),
+                                      platforms, target['custom']['hardwareIds'][0]))
+                continue
+
             target = deepcopy(target)
             tgt_name = tagmgr.create_target_name(target, version, tag)
             data['targets'][tgt_name] = target
@@ -89,3 +127,35 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines,
             json.dump(new_targets, f, indent=2)
 
     return new_targets
+
+
+def _can_apps_run_on_target_machine(target, factory_containers_platforms):
+    """ Checks if there is at least one container platform among configured in factory_config.yml:containers.platforms
+        that is compatible with the given Target's architecture/hardware ID.
+    """
+
+    # map MACHINE's archs to compatible containers/Apps' platforms
+    # e.g. 'arm64' and 'arm' containers can be run on 'aarch64' MACHINEs
+    OEArchToAppPlatformsMap = {
+        'aarch64': ['arm64', 'arm'],
+        'x86_64': ['amd64', 'amd'],
+        'arm': ['arm']
+    }
+    machine_arch = target['custom'].get('arch')
+    # If MACHINE's arch or factory containers' platforms is missing just skip this verification
+    # and create the given Target
+    if machine_arch and factory_containers_platforms:
+        # get a list of container platforms that are compatible with the given Target's architecture
+        target_platforms = OEArchToAppPlatformsMap[machine_arch]
+
+        # get an intersection of container platforms that are compatible with the given Target's architecture and
+        # the platforms enabled/configured in factory_config.yml:containers.platforms
+        # Compose Apps' images are built only for platforms that are configured
+        # in factory_config.yml:containers.platforms, so we cannot create Target that refers to Compose Apps
+        # that cannot be run on the Target's machine architecture
+        compatible_and_enabled_platforms =\
+            [value for value in target_platforms if value in factory_containers_platforms]
+        if len(compatible_and_enabled_platforms) == 0:
+            return False
+
+    return True

@@ -19,6 +19,7 @@ ONE_TO_ONE_JSON = {
                 'tags': ['devel'],
                 'version': '12',
                 'hardwareIds': ['rpi3-cm'],
+                'arch': 'aarch64',
             },
         },
         'minnow-12': {
@@ -29,6 +30,7 @@ ONE_TO_ONE_JSON = {
                 'tags': ['devel'],
                 'version': '12',
                 'hardwareIds': ['minnow'],
+                'arch': 'x86_64',
             },
         },
         'rpi3-cm-10': {
@@ -39,6 +41,7 @@ ONE_TO_ONE_JSON = {
                 'tags': ['postmerge'],
                 'version': '10',
                 'hardwareIds': ['rpi3-cm'],
+                'arch': 'aarch64',
             },
         },
         'imx8mm-11': {
@@ -49,6 +52,7 @@ ONE_TO_ONE_JSON = {
                 'tags': ['devel'],
                 'version': '11',
                 'hardwareIds': ['imx8mm'],
+                'arch': 'aarch64',
             },
         },
         'imx8mm-12': {
@@ -59,6 +63,7 @@ ONE_TO_ONE_JSON = {
                 'tags': ['devel-feature'],
                 'version': '12',
                 'hardwareIds': ['imx8mm'],
+                'arch': 'aarch64',
             },
         },
     }
@@ -90,10 +95,10 @@ def temp_json_file(data):
         yield f.name
 
 
-def create_target(tag, version, targets_file, apps, machines=None):
+def create_target(tag, version, targets_file, apps, machines=None, platforms=None):
     if machines is None:
         machines = TARGETS_MACHINES
-    update_targets(targets_file, apps, tag, 'some-sha', machines, version)
+    update_targets(targets_file, apps, tag, 'some-sha', machines, platforms, version)
     with open(targets_file) as f:
         return json.load(f)
 
@@ -287,8 +292,50 @@ class TestTagging(unittest.TestCase):
             create_target('devel-feature', '13', filename, {'app1': {'uri': ''}}, machines=['minnow'])
             with open(filename) as f:
                 data = json.load(f)
-                # make sure that just one new Target was created
+                # make sure that zero new Targets were created
                 self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 0)
+
+    def test_containers_platforms_compatibility(self):
+        """ Make sure that at least one of the platforms of the created containers is compatible
+            with an architecture of Target being created
+        """
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}},
+                          machines=['rpi3-cm', 'minnow'], platforms=['amd'])
+
+            with open(filename) as f:
+                data = json.load(f)
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 1)
+                self.assertIsNone(data['targets'].get('raspberrypi-cm3-lmp-13'))
+                self.assertIsNotNone(data['targets'].get('minnow-lmp-13'))
+                target = data['targets']['minnow-lmp-13']
+                self.assertEqual('ABCD', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}},
+                          machines=['rpi3-cm'], platforms=['amd', 'arm'])
+
+            with open(filename) as f:
+                data = json.load(f)
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 1)
+                self.assertIsNotNone(data['targets'].get('raspberrypi-cm3-lmp-13'))
+                self.assertIsNone(data['targets'].get('minnow-lmp-13'))
+                target = data['targets']['raspberrypi-cm3-lmp-13']
+                self.assertEqual('DEADBEEF', target['hashes']['sha256'])
+                self.assertEqual(['app1'], list(target['custom']['docker_compose_apps'].keys()))
+
+        with temp_json_file(ONE_TO_ONE_JSON) as filename:
+            create_target('devel', '13', filename, {'app1': {'uri': ''}},
+                          machines=['imx8mm', 'minnow'], platforms=['arm'])
+
+            with open(filename) as f:
+                data = json.load(f)
+                # imx8mm is outdated so Target should not be created for it
+                # there is no container platform (arm) for minnow (x86_64)
+                self.assertEqual(len(data['targets'].items()), len(ONE_TO_ONE_JSON['targets'].items()) + 0)
+                self.assertIsNone(data['targets'].get('imx8mm-lmp-13'))
+                self.assertIsNone(data['targets'].get('minnow-lmp-13'))
 
 
 if __name__ == '__main__':
