@@ -17,8 +17,8 @@ from apps.docker_to_compose import convert_docker_apps
 logger = logging.getLogger(__name__)
 
 
-def main(factory: str, sha: str, targets_json: str, machines: str, app_root_dir: str, publish_tool: str,
-         apps_version: str, target_tag: str, target_version: str, new_targets_file: str):
+def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [], app_root_dir: str,
+         publish_tool: str, apps_version: str, target_tag: str, target_version: str, new_targets_file: str):
     convert_docker_apps()
     status('Searching for Compose Apps in {}'.format(app_root_dir))
     apps = ComposeApps(app_root_dir)
@@ -30,10 +30,11 @@ def main(factory: str, sha: str, targets_json: str, machines: str, app_root_dir:
 
     apps_to_add_to_target = AppsPublisher(factory, publish_tool).publish(apps, apps_version)
 
-    status('Creating Target(s) that refers to the published Apps; tag: {}, version: {} '
-           .format(target_tag, target_version))
+    status('Creating Targets that refer to the published Apps; tag: {}, version: {}, machines: {}, platforms: {} '
+           .format(target_tag, target_version, ','.join(machines) if machines else '[]',
+                   ','.join(platforms) if platforms else '[]'))
     new_targets = create_target(targets_json, apps_to_add_to_target, target_tag, sha,
-                                machines, target_version, new_targets_file)
+                                machines, platforms, target_version, new_targets_file)
     if len(new_targets) == 0:
         logger.error('Failed to create Targets for the published Apps')
         return 1
@@ -46,6 +47,7 @@ def get_args():
     parser.add_argument('-f', '--factory', help='Apps Factory')
     parser.add_argument('-t', '--targets', help='Targets json file')
     parser.add_argument('-m', '--machines', help='Factory machines', default=None)
+    parser.add_argument('-a', '--platforms', help='Factory container platforms', default=None)
     parser.add_argument('-d', '--apps-root-dir', help='Compose Apps root directory')
     parser.add_argument('-p', '--publish-tool', help='A utility to be used for publishing (compose-ref)')
     parser.add_argument('-v', '--apps-version', help='Apps version which is by default is an abbreviated commit hash'
@@ -66,9 +68,16 @@ if __name__ == '__main__':
     try:
         logging.basicConfig(format='%(levelname)s: Apps Publisher: %(module)s: %(message)s', level=logging.INFO)
         args = get_args()
-        machines = args.machines.split(',')
-        exit_code = main(args.factory, args.git_sha, args.targets, machines, args.apps_root_dir,
-                         args.publish_tool, args.apps_version, args.target_tag,
+        machines = args.machines.split(',') if args.machines else None
+        platforms = None
+        if args.platforms:
+            platforms = []
+            platforms_old_format = args.platforms.split(',')
+            for platform in platforms_old_format:
+                platforms.append(platform.split('/')[1])
+
+        exit_code = main(args.factory, args.git_sha, args.targets, machines, platforms,
+                         args.apps_root_dir, args.publish_tool, args.apps_version, args.target_tag,
                          args.target_version, args.new_targets_file)
     except Exception as exc:
         logging.error('Failed to publish apps: {}'.format(exc))
