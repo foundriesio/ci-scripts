@@ -35,6 +35,7 @@ PUSH_TARGETS=${PUSH_TARGETS-true}
 DOCKER_COMPOSE_APP_PRELOAD=${DOCKER_COMPOSE_APP_PRELOAD-""}
 PRELOAD_DIR="${PRELOAD_DIR-$(mktemp -u -d)}"
 APP_IMAGE_DIR="${APP_IMAGE_DIR-/var/cache/bitbake/app-images}"
+OSTREE_REPO_DIR="${APP_IMAGE_DIR}/ostree-repo"
 
 require_params FACTORY ARCHIVE TARGET_TAG
 #-- END: Input params
@@ -79,6 +80,7 @@ cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-before.json"
 #
 # 2. create new Targets and adds them to targets.json
 status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
+
 "${HERE}/publish.py" \
     --factory "${FACTORY}" \
     --targets "${TUF_REPO}/roles/unsigned/targets.json" \
@@ -91,7 +93,18 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
     --new-targets-file="${ARCHIVE}/targets-created.json" \
     2>&1 | indent
 
-cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
+cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-before1.json"
+cp "${ARCHIVE}/targets-before.json" "${TUF_REPO}/roles/unsigned/targets.json"
+
+
+/usr/local/bin/dind "${HERE}/publish_apps_to_ostree.py" \
+  --factory "${FACTORY}" \
+  --token "$(cat "${SECRETS}/osftok")" \
+  --cred-arch "${CREDS_ARCH_UPDATED}" \
+  --targets-created "${ARCHIVE}/targets-created.json" \
+  --targets "${TUF_REPO}/roles/unsigned/targets.json" \
+  --fetch-dir "${PRELOAD_DIR}" \
+  --repo-dir "${OSTREE_REPO_DIR}"
 
 if [ "${DOCKER_COMPOSE_APP_PRELOAD}" = "1" ]; then
   status "Dumping apps and their images; version: ${APPS_VERSION}"
@@ -103,6 +116,8 @@ if [ "${DOCKER_COMPOSE_APP_PRELOAD}" = "1" ]; then
     --out-images-root-dir "${APP_IMAGE_DIR}" \
     2>&1 | indent
 fi
+
+cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
 
 echo "Signing local TUF targets"
 run garage-sign targets sign --repo "${TUF_REPO}" --key-name targets
