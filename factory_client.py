@@ -22,6 +22,10 @@ class FactoryClient:
             return self.OEArchToAppPlatformMap[self['custom']['arch']]
 
         @property
+        def tags(self):
+            return self['custom']['tags']
+
+        @property
         def sha(self):
             return self['custom']['containers-sha']
 
