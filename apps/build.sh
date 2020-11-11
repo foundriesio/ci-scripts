@@ -24,6 +24,11 @@ export  DOCKER_CLI_EXPERIMENTAL=enabled
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
+if [ -f /secrets/docker_host_config.json ] ; then
+	mkdir -p $HOME/.docker
+	cp /secrets/docker_host_config.json $HOME/.docker/config.json
+fi
+
 ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
