@@ -10,6 +10,7 @@ AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
 LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags 2>/dev/null || echo unknown)
 FACTORY="${FACTORY-lmp}"
+LMP_DEVICE_API="${LMP_DEVICE_API-https://api.foundries.io/ota/devices/}"
 UBOOT_SIGN_ENABLE="${UBOOT_SIGN_ENABLE-0}"
 DISABLE_GPLV3="${DISABLE_GPLV3-0}"
 ENABLE_PTEST="${ENABLE_PTEST-0}"
@@ -105,6 +106,8 @@ export OTA_LITE_TAG = "${OTA_LITE_TAG}"
 #  https://docs.foundries.io/latest/reference/advanced-tagging.html
 # and find the first tag name to produce a senible default
 LMP_DEVICE_REGISTER_TAG = "$(echo ${OTA_LITE_TAG} | cut -d: -f1 | cut -d, -f1)"
+LMP_DEVICE_FACTORY = "${FACTORY}"
+LMP_DEVICE_API = "${LMP_DEVICE_API}"
 EOFEOF
 fi
 
