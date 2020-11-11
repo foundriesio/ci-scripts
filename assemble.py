@@ -65,6 +65,8 @@ class WicImage:
 
     def update_target(self, target_json):
         logger.info('Updating installed Target (aka `installed_versions`) for the given system image\n')
+        # make sure installed target dir path exists (e.g. wic-based installers)
+        os.makedirs(os.path.dirname(self.installed_target_filepath), exist_ok=True)
         with open(self.installed_target_filepath, 'w') as installed_target_file:
             target_json['is_current'] = True
             json.dump(target_json, installed_target_file, indent=2)
