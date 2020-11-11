@@ -63,13 +63,13 @@ class WicImage:
         cmd('umount', '/dev')
         cmd('losetup', '-d', self._loop_device)
 
-    def update_target(self, target_json):
+    def update_target(self, target):
         logger.info('Updating installed Target (aka `installed_versions`) for the given system image\n')
         # make sure installed target dir path exists (e.g. wic-based installers)
         os.makedirs(os.path.dirname(self.installed_target_filepath), exist_ok=True)
         with open(self.installed_target_filepath, 'w') as installed_target_file:
-            target_json['is_current'] = True
-            json.dump(target_json, installed_target_file, indent=2)
+            target.json['is_current'] = True
+            json.dump({target.name: target.json}, installed_target_file, indent=2)
 
     def _resize_wic_file(self, increase_bytes: int, extra_space=0.2):
         bs = 1024
@@ -105,7 +105,7 @@ def copy_container_images_to_wic(target: FactoryClient.Target, app_image_dir: st
     image_data_size = target_app_store.images_size(target)
     with WicImage(wic_image, image_data_size * 1024) as wic_image:
         target_app_store.copy(target, wic_image.docker_data_root)
-        wic_image.update_target({target.name: target.json})
+        wic_image.update_target(target)
     p.tick()
 
 
