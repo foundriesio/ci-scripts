@@ -37,8 +37,8 @@ class WicImage:
         out = cmd('losetup', '-a', capture=True).decode()
         for line in out.splitlines():
             if self._path in line:
-                self._loop_device = out.split(':', 1)[0]
-                self._wic_device = out.split(':', 1)[0] + 'p2'
+                self._loop_device = line.split(':', 1)[0]
+                self._wic_device = line.split(':', 1)[0] + 'p2'
                 break
         else:
             raise RuntimeError('Unable to find loop device for wic image')
