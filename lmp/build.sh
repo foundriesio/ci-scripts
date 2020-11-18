@@ -134,8 +134,27 @@ if [ -d "${archive}" ] ; then
 
 	# Make the main img.gz be in the root of the archive
 	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
-	mv ${archive}/other/boot*.img ${archive}/ || true
-	mv ${archive}/other/imx-boot ${archive}/ || true
+
+	# Move bootloader / boot firmware to the root of the archive
+	## Intel (used by Qemu)
+	mv ${archive}/other/ovmf.qcow2 ${archive}/ || true
+	mv ${archive}/other/ovmf.secboot.qcow2 ${archive}/ || true
+	## Only move files consumed by iMX if not mfgtool to avoid confusion
+	if [ "${DISTRO}" != "lmp-mfgtool" ]; then
+		## Targets with SPL / u-boot.itb
+		mv ${archive}/other/SPL-${MACHINE} ${archive}/ || true
+		mv ${archive}/other/u-boot-${MACHINE}.itb ${archive}/ || true
+		## iMX targets with imx-boot
+		mv ${archive}/other/imx-boot ${archive}/ || true
+		mv ${archive}/other/imx-boot-${MACHINE} ${archive}/ || true
+	fi
+	## ARM custom targets
+	mv ${archive}/other/se_romfw.bin ${archive}/ || true
+	mv ${archive}/other/es_flashfw.bin ${archive}/ || true
+	mv ${archive}/other/bl1.bin ${archive}/ || true
+	mv ${archive}/other/flash.bin ${archive}/ || true
+	## RISC-V (used by Qemu)
+	mv ${archive}/other/fw_payload.elf ${archive}/ || true
 
 	# Create MD5SUMS file
 	find ${archive} -type f | sort | xargs md5sum > MD5SUMS.txt
