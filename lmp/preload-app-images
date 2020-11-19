@@ -21,8 +21,9 @@ def get_args():
     parser.add_argument('installed_versions')
     parser.add_argument('dst_dir')
     # TODO: remove it from here and meta-lmp
-    parser.add_argument('arch')
-    parser.add_argument('--images-root-dir', default=os.getenv('APP_IMAGE_DIR', '/var/cache/bitbake/app-images/'))
+    parser.add_argument('arch', nargs='?', default='none')
+    parser.add_argument('--images-root-dir', default=os.getenv('APP_IMAGE_DIR',
+                                                               '/var/cache/bitbake/app-images/'))
     parser.add_argument('--archive-dir', default='/archive')
     return parser.parse_args()
 
