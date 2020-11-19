@@ -125,6 +125,10 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/se_*.bin ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/es_*.bin ${archive}/other/ || true
 
+	# mfgtool-files (iMX targets)
+	if [ "${DISTRO}" = "lmp-mfgtool" ]; then
+		cp ${DEPLOY_DIR_IMAGE}/mfgtool-files-${MACHINE}.tar.gz ${archive}/ || true
+	fi
 	# Handle user provided extra artifacts
 	if [ ! -z "${EXTRA_ARTIFACTS}" ]; then
 		for extra_file in ${EXTRA_ARTIFACTS}; do
