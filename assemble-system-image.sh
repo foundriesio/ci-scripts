@@ -15,7 +15,7 @@ TARGET_VERSION="${TARGET_VERSION-${H_BUILD}}"
 OUT_IMAGE_DIR="${OUT_IMAGE_DIR-/archive}"
 # a dir where snapshotted/dumped images (archive/tar) are supposed to be located
 # if not found there assemble.py will dump images, archive them and put into the given location
-APP_IMAGE_DIR="${APP_IMAGE_DIR-/var/cache/bitbake/app-images}"
+APP_IMAGES_ROOT_DIR="${APP_IMAGES_ROOT_DIR-/var/cache/bitbake/app-images}"
 APP_SHORTLIST="${APP_SHORTLIST-""}"
 # directory to preload/dump/snapshot apps images to
 PRELOAD_DIR="${PRELOAD_DIR-$(mktemp -u -d)}"
@@ -34,7 +34,7 @@ status Running: Assemble System Image script
   --token "$(cat "${SECRETS}/osftok")" \
   --target-version "${TARGET_VERSION}" \
   --out-image-dir "${OUT_IMAGE_DIR}" \
-  --app-image-dir "${APP_IMAGE_DIR}" \
+  --app-image-dir "${APP_IMAGES_ROOT_DIR}" \
   --preload-dir "${PRELOAD_DIR}" \
   --targets "${TARGETS}" \
   --app-shortlist="${APP_SHORTLIST}"

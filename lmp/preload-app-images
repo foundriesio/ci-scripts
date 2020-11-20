@@ -18,18 +18,25 @@ logger = logging.getLogger(__name__)
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('installed_versions')
-    parser.add_argument('dst_dir')
-    # TODO: remove it from here and meta-lmp
+    parser.add_argument('installed_versions', help='A file that contains a Target json with list of'
+                                                   'Compose Apps to be preloaded')
+    parser.add_argument('dst_dir', help='A directory to output')
+    # TODO: remove it from here one the corresponding change in meta-lmp is used on all devices
     parser.add_argument('arch', nargs='?', default='none')
-    parser.add_argument('--images-root-dir', default=os.getenv('APP_IMAGE_DIR',
-                                                               '/var/cache/bitbake/app-images/'))
-    parser.add_argument('--archive-dir', default='/archive')
+
+    parser.add_argument('--images-root-dir', default='/var/cache/bitbake/app-images/',
+                        help='A root directory Compose App images are stored in')
+    parser.add_argument('--factory', default=None)
     parser.add_argument('--apps-root-dir', default=None, help='A path to Compose Apps root dir')
+    parser.add_argument('--creds-arch', default=None)
     parser.add_argument('-s', '--app-shortlist', help='A coma separated list of Target Apps'
                                                       ' to include into a system image', default=None)
     parser.add_argument('--fail-on-error', action='store_true',
                         help='Fail OE build if an error occurs')
+
+    parser.add_argument('--log-file', default='/archive/preload-app-images.log',
+                        help='A file to output logs to')
+
     args = parser.parse_args()
 
     if args.app_shortlist:
@@ -64,8 +71,8 @@ if __name__ == '__main__':
     args = get_args()
 
     logging.basicConfig(level='INFO')
-    fh = logging.FileHandler(os.path.join(args.archive_dir, 'preload-app-images.log'))
-    formatter = logging.Formatter('%(levelname)s: App Images Preloader: %(module)s: %(message)s')
+    fh = logging.FileHandler(args.log_file)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s: App Images Preloader: %(module)s: %(message)s')
     fh.setFormatter(formatter)
     logging.getLogger().addHandler(fh)
 

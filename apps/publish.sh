@@ -34,10 +34,10 @@ PUSH_TARGETS=${PUSH_TARGETS-true}
 
 DOCKER_COMPOSE_APP_PRELOAD=${DOCKER_COMPOSE_APP_PRELOAD-""}
 PRELOAD_DIR="${PRELOAD_DIR-$(mktemp -u -d)}"
-APP_IMAGE_DIR="${APP_IMAGE_DIR-/var/cache/bitbake/app-images}"
+APP_IMAGES_ROOT_DIR="${APP_IMAGES_ROOT_DIR-/var/cache/bitbake/app-images}"
 MACHINES=${MACHINES-""}
 PLATFORMS=${MANIFEST_PLATFORMS_DEFAULT-""}
-OSTREE_REPO_DIR="${APP_IMAGE_DIR}/ostree-repo"
+OSTREE_REPO_DIR="${APP_IMAGES_ROOT_DIR}/ostree-repo"
 
 require_params FACTORY ARCHIVE TARGET_TAG
 #-- END: Input params
@@ -117,7 +117,7 @@ if [ "${DOCKER_COMPOSE_APP_PRELOAD}" = "1" ]; then
     --targets "${ARCHIVE}/targets-created.json" \
     --token "$(cat "${SECRETS}/osftok")" \
     --preload-dir "${PRELOAD_DIR}" \
-    --out-images-root-dir "${APP_IMAGE_DIR}" \
+    --out-images-root-dir "${APP_IMAGES_ROOT_DIR}" \
     2>&1 | indent
 fi
 
