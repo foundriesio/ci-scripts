@@ -17,7 +17,7 @@ TARGET_VERSION=$4
 TARGETS=${5-""}
 APP_SHORTLIST=${6-""}
 
-WORK_DIR="$(mktemp -d -t asseble-image-XXXXXXXXXX)"
+WORK_DIR="${7-$(mktemp -d -t asseble-image-XXXXXXXXXX)}"
 echo ">> Work dir: ${WORK_DIR}"
 
 SECRETS=$WORK_DIR/secrets # directory to store secrets,
@@ -27,24 +27,32 @@ if [[ ! -d ${SECRETS} ]]; then
 fi
 echo -n "${OSF_TOKEN}" > "${WORK_DIR}/secrets/osftok"
 
-APP_IMAGE_DIR="${WORK_DIR}/app-images"
-if [[ ! -d ${APP_IMAGE_DIR} ]]; then
-  mkdir "${APP_IMAGE_DIR}"
+APP_IMAGES_ROOT_DIR="${WORK_DIR}/app-images"
+if [[ ! -d ${APP_IMAGES_ROOT_DIR} ]]; then
+  mkdir "${APP_IMAGES_ROOT_DIR}"
+fi
+
+FETCH_DIR="${APP_IMAGES_ROOT_DIR}/fetch-dir"
+if [[ ! -d ${FETCH_DIR} ]]; then
+  mkdir "${FETCH_DIR}"
 fi
 
 CMD=./assemble-system-image.sh
 
 docker run -v -it --rm --privileged \
   -e FACTORY="$FACTORY" \
-  -e APP_IMAGE_DIR=/app-images \
+  -e HOME=/home/test \
+  -e FETCH_DIR=/fetch-dir \
+  -e APP_IMAGES_ROOT_DIR=/app-images \
   -e OUT_IMAGE_DIR=/out-image-dir \
   -e TARGET_VERSION="${TARGET_VERSION}" \
   -e TARGETS="${TARGETS}" \
   -e APP_SHORTLIST="${APP_SHORTLIST}" \
   -v "$PWD":/ci-scripts \
   -v "$SECRETS":/secrets \
-  -v "$APP_IMAGE_DIR":/app-images \
+  -v "$APP_IMAGES_ROOT_DIR":/app-images \
   -v "$OUT_IMAGE_DIR":/out-image-dir \
+  -v $FETCH_DIR:/fetch-dir \
   -w /ci-scripts \
   -u "$(id -u ${USER})":"$(id -g ${USER})" \
   foundries/lmp-image-tools "${CMD}"

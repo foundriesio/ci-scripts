@@ -32,12 +32,12 @@ CREDS_ARCH=${CREDS_ARCH-/var/cache/bitbake/credentials.zip}
 CREDS_ARCH_UPDATED=${CREDS_ARCH_UPDATED-$(mktemp -p ${HOME})}
 PUSH_TARGETS=${PUSH_TARGETS-true}
 
-DOCKER_COMPOSE_APP_PRELOAD=${DOCKER_COMPOSE_APP_PRELOAD-""}
-PRELOAD_DIR="${PRELOAD_DIR-$(mktemp -u -d)}"
-APP_IMAGES_ROOT_DIR="${APP_IMAGES_ROOT_DIR-/var/cache/bitbake/app-images}"
 MACHINES=${MACHINES-""}
 PLATFORMS=${MANIFEST_PLATFORMS_DEFAULT-""}
+
+APP_IMAGES_ROOT_DIR="${APP_IMAGES_ROOT_DIR-/var/cache/bitbake/app-images}"
 OSTREE_REPO_DIR="${APP_IMAGES_ROOT_DIR}/ostree-repo"
+FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
 
 require_params FACTORY ARCHIVE TARGET_TAG
 #-- END: Input params
@@ -94,32 +94,22 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
     --target-tag "${TARGET_TAG}" \
     --git-sha "${GIT_SHA}" \
     --target-version="${TARGET_VERSION}" \
-    --new-targets-file="${ARCHIVE}/targets-created.json" \
-    2>&1 | indent
-
-cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-before1.json"
-cp "${ARCHIVE}/targets-before.json" "${TUF_REPO}/roles/unsigned/targets.json"
+    --new-targets-file="${ARCHIVE}/targets-created.json"
 
 
+# 1. Dump new Targets' Apps and their images
+# 2. Store them on a shared storage, so can be reused by subsequent container builds
+#    - store as an archive (backward compatibility) and as a commit in an ostree repo
+# 3. Push to Treehub
 /usr/local/bin/dind "${HERE}/publish_apps_to_ostree.py" \
   --factory "${FACTORY}" \
   --token "$(cat "${SECRETS}/osftok")" \
   --cred-arch "${CREDS_ARCH_UPDATED}" \
   --targets-file "${TUF_REPO}/roles/unsigned/targets.json" \
   --targets-to-publish "${ARCHIVE}/targets-created.json" \
-  --fetch-dir "${PRELOAD_DIR}" \
-  --repo-dir "${OSTREE_REPO_DIR}"
-
-if [ "${DOCKER_COMPOSE_APP_PRELOAD}" = "1" ]; then
-  status "Dumping apps and their images; version: ${APPS_VERSION}"
-  /usr/local/bin/dind "${HERE}/fetch.py" \
-    --factory "${FACTORY}" \
-    --targets "${ARCHIVE}/targets-created.json" \
-    --token "$(cat "${SECRETS}/osftok")" \
-    --preload-dir "${PRELOAD_DIR}" \
-    --out-images-root-dir "${APP_IMAGES_ROOT_DIR}" \
-    2>&1 | indent
-fi
+  --fetch-dir "${FETCH_DIR}" \
+  --repo-dir "${OSTREE_REPO_DIR}" \
+  --archive-root-dir "${APP_IMAGES_ROOT_DIR}"
 
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
 

@@ -30,8 +30,20 @@ class FactoryClient:
             return self['custom']['containers-sha']
 
         @property
-        def sha(self):
-            return self['custom']['containers-sha']
+        def apps_sha(self):
+            return self['custom']['compose-apps-hash']
+
+        @apps_sha.setter
+        def apps_sha(self, apps_commit_sha: str):
+            self['custom']['compose-apps-hash'] = apps_commit_sha
+
+        @property
+        def apps_branch(self):
+            return self['custom']['compose-apps-branch']
+
+        @apps_branch.setter
+        def apps_branch(self, apps_commit_branch: str):
+            self['custom']['compose-apps-branch'] = apps_commit_branch
 
         @property
         def shortlist(self):

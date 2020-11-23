@@ -66,7 +66,7 @@ def get_args():
 if __name__ == '__main__':
     exit_code = 0
     try:
-        logging.basicConfig(format='%(levelname)s: Apps Publisher: %(module)s: %(message)s', level=logging.INFO)
+        logging.basicConfig(format='%(asctime)s %(levelname)s: %(module)s: %(message)s', level=logging.INFO)
         args = get_args()
         machines = args.machines.split(',') if args.machines else None
         platforms = None

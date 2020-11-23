@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
+# Examples
+# sudo ./tests/test_apps_publishing_to_ostree.sh $FACTORY $OSF_TOKEN $FACTORY_CREDS tuf/tuf-repo/roles/unsigned/targets.json targets-created-msul-dev02.json fetch-dir/ repo-dir/
+
 # Input params
 FACTORY=$1
 OSF_TOKEN=$2
@@ -11,9 +14,6 @@ ALL_TARGETS=$4
 TARGETS_TO_PUBLISH=$5
 FETCH_DIR=$6
 REPO_DIR=$7
-
-# Examples
-#
 
 CMD="/usr/local/bin/dind ./apps/publish_apps_to_ostree.py"
 
