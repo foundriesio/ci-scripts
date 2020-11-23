@@ -42,7 +42,8 @@ chown -R builder .
 
 su builder -c $HERE/bb-config.sh
 touch ${archive}/customize-target.log && chown builder ${archive}/customize-target.log
-touch ${archive}/preload-app-images.log && chown builder ${archive}/preload-app-images.log
+# It has to be inline with definition of APP_IMAGES_PRELOAD_LOG_FILE in bb-config.sh
+touch "${archive}/app-images-preload.log" && chown builder "${archive}/app-images-preload.log"
 su builder -c $HERE/bb-build.sh
 
 DEPLOY_DIR="$(cat build/deploy_dir)"
