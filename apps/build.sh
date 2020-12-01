@@ -171,7 +171,7 @@ for x in $IMAGES ; do
 		db_args_file="$REPO_ROOT/$x/.docker_build_args"
 		if [ -f $db_args_file ] ; then
 			status "Adding .docker_build_args"
-			docker_cmd="$docker_cmd $(cat $db_args_file | sed  '/^#/d' | sed 's/^/--build-arg /' | paste -s -d " ")"
+			docker_cmd="$docker_cmd $(cat $db_args_file | sed '/^[[:space:]]*$/d' | sed '/^#/d' | sed 's/^/--build-arg /' | paste -s -d " ")"
 		fi
 
 		DOCKERFILE="$REPO_ROOT/$x/${DOCKERFILE-Dockerfile}"
