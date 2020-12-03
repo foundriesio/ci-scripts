@@ -124,6 +124,7 @@ if [ -d "${archive}" ] ; then
 	# Copy the ARM firmware binaries
 	cp ${DEPLOY_DIR_IMAGE}/se_*.bin ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/es_*.bin ${archive}/other/ || true
+	cp ${DEPLOY_DIR_IMAGE}/*-board-firmware*.tar.gz ${archive}/other/ || true
 
 	# mfgtool-files (iMX targets)
 	if [ "${DISTRO}" = "lmp-mfgtool" ]; then
