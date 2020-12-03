@@ -2,10 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
-from helpers import cmd as cmd_exe
+import os
+from tempfile import NamedTemporaryFile
+
+from expandvars import expandvars
 
 from apps.compose_apps import ComposeApps
 from apps.docker_registry_client import DockerRegistryClient
+from helpers import cmd as cmd_exe
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +44,8 @@ class AppsPublisher:
     def __tag(self, app: ComposeApps.App, tag: str):
         changed = False
         for _, service_cfg in app.services():
-            image_url = service_cfg['image']
+            image_url = expandvars(service_cfg['image'])
+            logger.info('Service image url: %s', image_url)
             if not image_url.startswith(self._image_base_url):
                 # TODO: verify if URL points to some other factory
                 continue
@@ -67,13 +72,6 @@ class AppsPublisher:
         app_base_url = self._image_base_url + '/' + app.name
         self._app_tagged_url = app_base_url + ':app-' + tag
         # TODO: Consider implementation of the "publish tool" in DockerRegistryClient
-        out = cmd_exe(self._publish_tool, self._app_tagged_url, cwd=app.dir, capture=True)
-        # The publish command produces output like:
-        # = Publishing app...
-        # |-> app:  sha256:fc73321368c7a805b0f697a0a845470bc022b6bdd45a8b34
-        # |-> manifest:  sha256:e15e3824fc21ce13815aecb0490d60b3a32
-        # We need the manifest sha so we can pin it properly in targets.json
-        needle = b'|-> manifest:  sha256:'
-        sha = out[out.find(needle) + len(needle):].strip()
-        app_hashed_uri = app_base_url + '@sha256:' + sha.decode()
-        return app_hashed_uri
+        with NamedTemporaryFile(mode="w+") as f:
+            cmd_exe(self._publish_tool, '-d', f.name, self._app_tagged_url, cwd=app.dir)
+            return app_base_url + '@' + f.read().strip()
