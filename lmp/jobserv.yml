@@ -46,6 +46,7 @@ triggers:
               - imx7ulpea-ucom
               - imx8mmevk
               - imx8mqevk
+              - n1sdp
               - qemuarm
               - qemuarm64
               - qemuriscv64
@@ -180,6 +181,7 @@ triggers:
               - imx7ulpea-ucom
               - imx8mmevk
               - imx8mqevk
+              - n1sdp
               - qemuarm
               - qemuarm64
               - qemuriscv64
