@@ -94,7 +94,7 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
-        refs/heads/dunfell
+        refs/heads/gatesgarth
       OTA_LITE_TAG: 'postmerge-stable:postmerge'
       AKLITE_TAG: promoted-stable
     runs:
@@ -105,16 +105,24 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
+              - apalis-imx8
               - beaglebone-yocto
+              - corstone700-mps3
+              - freedom-u540
               - imx6ullevk
+              - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mqevk
               - intel-corei7-64
+              - n1sdp
+              - qemuarm
               - qemuarm64
               - qemuriscv64
               - raspberrypi3
               - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
+              - uz3eg-iocc
         params:
           IMAGE: lmp-base-console-image
         script-repo:
@@ -130,8 +138,12 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - apalis-imx6
+              - apalis-imx8
               - imx6ullevk
+              - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mqevk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
