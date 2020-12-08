@@ -122,11 +122,6 @@ fi
 
 # Add build id H_BUILD to output files names
 cat << EOFEOF >> conf/auto.conf
-IMAGE_NAME_append = "-${H_BUILD}"
-KERNEL_IMAGE_BASE_NAME_append = "-${H_BUILD}"
-MODULE_IMAGE_BASE_NAME_append = "-${H_BUILD}"
-DT_IMAGE_BASE_NAME_append = "-${H_BUILD}"
-BOOT_IMAGE_BASE_NAME_append = "-${H_BUILD}"
 DISTRO_VERSION_append = "-${H_BUILD}-${LMP_VERSION}"
 
 # get build stats to make sure that we use sstate properly
