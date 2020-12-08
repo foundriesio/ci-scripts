@@ -143,12 +143,10 @@ INHERIT += "archiver"
 COPYLEFT_RECIPE_TYPES = "target"
 ARCHIVER_MODE[src] = "original"
 ARCHIVER_MODE[diff] = "1"
-EOFEOF
 
-if [ $(ls ../sstate-cache | wc -l) -ne 0 ] ; then
-	status "Found existing sstate cache, using local copy"
-	echo 'SSTATE_MIRRORS = ""' >> conf/auto.conf
-fi
+# no sstate mirrors, using local copy
+SSTATE_MIRRORS = ""
+EOFEOF
 
 for x in $(ls conf/*.conf) ; do
 	status "$x"
