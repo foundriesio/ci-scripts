@@ -2,7 +2,7 @@
 
 HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
-require_params MACHINE IMAGE
+require_params MACHINE IMAGE OTA_LITE_TAG
 
 OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME-lmp-localdev}"
 SOTA_CLIENT="${SOTA_CLIENT-aktualizr}"
@@ -47,7 +47,7 @@ OSTREE_BRANCHNAME = "${MACHINE}-${OSTREE_BRANCHNAME}"
 GARAGE_SIGN_REPO = "/tmp/garage_sign_repo"
 GARAGE_TARGET_VERSION = "${H_BUILD}"
 GARAGE_TARGET_URL = "https://ci.foundries.io/projects/${H_PROJECT}/builds/${H_BUILD}"
-GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target.sh ${GARAGE_CUSTOMIZE_TARGET_PARAMS}"
+GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target.sh ${FACTORY} ${OTA_LITE_TAG} ${GARAGE_CUSTOMIZE_TARGET_PARAMS}"
 DOCKER_COMPOSE_APP = "${DOCKER_COMPOSE_APP}"
 APP_IMAGES_PRELOADER = "PYTHONPATH=${HERE}/../ ${HERE}/preload-app-images"
 DOCKER_COMPOSE_APP_PRELOAD = "${DOCKER_COMPOSE_APP_PRELOAD}"
@@ -61,9 +61,6 @@ LMP_VERSION = "${LMP_VERSION}"
 # Default AKLITE tag
 AKLITE_TAG = "${AKLITE_TAG}"
 
-# Who's factory is this?
-export FOUNDRIES_FACTORY = "${FACTORY}"
-
 # Additional packages based on the CI job used
 IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
 
@@ -75,33 +72,31 @@ DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
 MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
 EOFEOF
 
-if [ -n "$OTA_LITE_TAG" ] ; then
-	# Ptest-based builds require the same build settings and variables,
-	# but the final image needs to be tagged differently, such as
-	# <main tag>-ptest, so perform the change at the OTA_LITE_TAG variable
-	if [ "${ENABLE_PTEST}" = "1" ]; then
-		IFS=","
-		PTAGS=""
-		for tag in ${OTA_LITE_TAG}; do
-			lmptag=$(echo $tag | cut -d: -f1)
-			PTAGS="${PTAGS} ${lmptag}-ptest"
-			contag=$(echo $tag | cut -s -d: -f1 --complement)
-			if [ -n "${contag}" ]; then
-				PTAGS="${PTAGS}:${contag}"
-			fi
-		done
-		unset IFS
-		OTA_LITE_TAG=$(echo ${PTAGS} | sed -e "s/ /,/g")
-		status "PTEST enabled, OTA_LITE_TAG updated to: ${OTA_LITE_TAG}"
+# Ptest-based builds require the same build settings and variables,
+# but the final image needs to be tagged differently, such as
+# <main tag>-ptest, so perform the change at the OTA_LITE_TAG variable
+if [ "${ENABLE_PTEST}" = "1" ]; then
+	IFS=","
+	PTAGS=""
+	for tag in ${OTA_LITE_TAG}; do
+		lmptag=$(echo $tag | cut -d: -f1)
+		PTAGS="${PTAGS} ${lmptag}-ptest"
+		contag=$(echo $tag | cut -s -d: -f1 --complement)
+		if [ -n "${contag}" ]; then
+			PTAGS="${PTAGS}:${contag}"
+		fi
+	done
+	unset IFS
+	OTA_LITE_TAG=$(echo ${PTAGS} | sed -e "s/ /,/g")
+	status "PTEST enabled, OTA_LITE_TAG updated to: ${OTA_LITE_TAG}"
 
-		# Install ptest related packages via extra image features
-		cat << EOFEOF >> conf/local.conf
+	# Install ptest related packages via extra image features
+	cat << EOFEOF >> conf/local.conf
 EXTRA_IMAGE_FEATURES += " ptest-pkgs"
 EOFEOF
-	fi
+fi
 
-	cat << EOFEOF >> conf/local.conf
-export OTA_LITE_TAG = "${OTA_LITE_TAG}"
+cat << EOFEOF >> conf/local.conf
 # Take a tag from a spec like:
 #  https://docs.foundries.io/latest/reference/advanced-tagging.html
 # and find the first tag name to produce a senible default
@@ -109,7 +104,6 @@ LMP_DEVICE_REGISTER_TAG = "$(echo ${OTA_LITE_TAG} | cut -d: -f1 | cut -d, -f1)"
 LMP_DEVICE_FACTORY = "${FACTORY}"
 LMP_DEVICE_API = "${LMP_DEVICE_API}"
 EOFEOF
-fi
 
 if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then
 	status "SOTA_PACKED_CREDENTIALS not found, disabling OSTree publishing logic"
