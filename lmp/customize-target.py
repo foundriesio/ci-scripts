@@ -25,13 +25,13 @@ def git_hash(gitdir):
     ).strip().decode()
 
 
-def targets_from_api():
+def targets_from_api(factory):
     """ When we are called to create the installed_targets file, we'll
     We need to get the targets from the API so that we can help find the
        current docker-apps.
     """
     url = 'https://api.foundries.io/ota/repo/'
-    url += os.environ['FOUNDRIES_FACTORY']
+    url += factory
     url += '/api/v1/user_repo/targets.json'
     try:
         with open('/secrets/osftok') as f:
@@ -47,7 +47,7 @@ def targets_from_api():
 
 
 def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
-          machine, meta_subscriber_overrides_sha):
+          machine, factory, ota_lite_tag, meta_subscriber_overrides_sha):
     with open(targets_json) as f:
         data = json.load(f)
 
@@ -72,11 +72,11 @@ def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
                 }
             } for k, v in data.items()
         }
-        targets = targets_from_api()
+        targets = targets_from_api(factory)
         targets.update(data)
         changed = True
 
-    tagmgr = TagMgr(os.environ.get('OTA_LITE_TAG', ''))
+    tagmgr = TagMgr(ota_lite_tag)
     logging.info('Target is: %r', targets[target_name])
     logging.info('Doing Target tagging for: %s', tagmgr)
 
@@ -138,6 +138,8 @@ def get_args():
         '''Do LMP customiziations of the current build target. Including
            copying Compose Apps defined in the previous build target.''')
 
+    parser.add_argument('factory')
+    parser.add_argument('ota_lite_tag')
     parser.add_argument('machine')
     parser.add_argument('image_name')
     parser.add_argument('image_arch')
@@ -162,4 +164,5 @@ if __name__ == '__main__':
         logging.info("meta-subscriber-overrides layer/repo wasn't fetched")
         overrides_sha = None
     merge(args.targets_json, args.target_name, git_hash(args.manifest_repo),
-          args.image_arch, args.image_name, args.machine, overrides_sha)
+          args.image_arch, args.image_name, args.machine, args.factory,
+          args.ota_lite_tag, overrides_sha)
