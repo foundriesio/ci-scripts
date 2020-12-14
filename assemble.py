@@ -140,15 +140,6 @@ def get_args():
         args.targets = args.targets.split(',')
 
     if args.app_shortlist:
-        if not args.targets:
-            logger.error('Argument `App Shortlist` can be used only if `Targets` argument is specified')
-            parser.print_help()
-            exit(1)
-
-        if len(args.targets) > 1:
-            logger.error('Argument `App Shortlist` can be used only if `Targets` argument includes a single element')
-            parser.print_help()
-            exit(1)
         args.app_shortlist = args.app_shortlist.split(',')
 
     return args
