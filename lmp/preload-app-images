@@ -28,7 +28,12 @@ def get_args():
     parser.add_argument('--images-root-dir', default=os.getenv('APP_IMAGE_DIR',
                                                                '/var/cache/bitbake/app-images/'))
     parser.add_argument('--archive-dir', default='/archive')
+    parser.add_argument('-s', '--app-shortlist',
+                        help='A coma separated list of Target Apps to include into a system image', default=None)
     args = parser.parse_args()
+
+    if args.app_shortlist:
+        args.app_shortlist = args.app_shortlist.split(',')
 
     if not args.compose_apps_dir:
         sota_root = os.path.dirname(os.path.dirname(args.installed_versions))
