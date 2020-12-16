@@ -71,6 +71,9 @@ DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
 
 # mfgtool params
 MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
+
+# Bitbake custom logconfig
+BB_LOGCONFIG = "${HERE}/bb_logconfig.json"
 EOFEOF
 
 # Ptest-based builds require the same build settings and variables,
