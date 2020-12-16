@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
         store = ArchiveTargetAppsStore(args.out_images_root_dir)
         for target, _ in apps_fetcher.target_apps.items():
-            store.store(target, apps_fetcher.images_dir(target.name))
+            store.store(target, apps_fetcher.target_dir(target.name))
     except Exception as exc:
         logging.error('Failed to fetch Target apps and images: {}'.format(exc))
         exit_code = 1
