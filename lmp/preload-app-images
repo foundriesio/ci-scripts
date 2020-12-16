@@ -25,10 +25,11 @@ def get_args():
     parser.add_argument('--images-root-dir', default=os.getenv('APP_IMAGE_DIR',
                                                                '/var/cache/bitbake/app-images/'))
     parser.add_argument('--archive-dir', default='/archive')
+    parser.add_argument('--apps-root-dir', default=None, help='A path to Compose Apps root dir')
     return parser.parse_args()
 
 
-def preload_app_images(target_json_file_filepath, dst_dir, app_images_root_dir):
+def preload_app_images(target_json_file_filepath, app_images_root_dir, dst_apps_root_dir, dst_docker_data_root_dir):
     with open(target_json_file_filepath) as target_json_file:
         target_json = json.load(target_json_file)
 
@@ -39,11 +40,11 @@ def preload_app_images(target_json_file_filepath, dst_dir, app_images_root_dir):
     logging.info('Preloading app images for ' + target.name)
     _, app_image_tar, _ = target_apps_store.apps_location(target)
 
-    if not target_apps_store.exist(target):
+    if not target_apps_store.exist(target) and not target_apps_store.exist(target, just_images=True):
         logger.error('The app images are missing; container sha: {},'
                      ' location: {}'.format(target.sha, app_image_tar))
     else:
-        target_apps_store.copy(target, dst_dir)
+        target_apps_store.copy(target, dst_docker_data_root_dir, dst_apps_root_dir)
 
 
 if __name__ == '__main__':
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     logging.getLogger().addHandler(fh)
 
     try:
-        preload_app_images(args.installed_versions, args.dst_dir, args.images_root_dir)
+        preload_app_images(args.installed_versions, args.images_root_dir, args.apps_root_dir, args.dst_dir)
     except Exception as exc:
         logger.warning('Failed to preload Apps images: {}'.format(exc))
 
