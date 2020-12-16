@@ -1,0 +1,49 @@
+{
+    "version": 1,
+    "handlers": {
+        "BitBake.console": {
+            "class": "logging.StreamHandler",
+            "formatter": "debugFormatter",
+            "level": "INFO",
+            "stream": "ext://sys.stdout",
+            "filters": ["BitBake.stdoutFilter"],
+            ".": {
+                "is_console": true
+            }
+        },
+        "bitbake_debug": {
+            "class": "logging.FileHandler",
+            "formatter": "debugFormatter",
+            "filename": "bitbake_debug.log",
+            "level": "DEBUG",
+            "mode": "w"
+        },
+        "bitbake_warnings": {
+            "class": "logging.FileHandler",
+            "formatter": "jsonFormatter",
+            "filename": "bitbake_warning.log",
+            "level": "WARNING",
+            "mode": "w"
+        }
+    },
+    "formatters": {
+        "debugFormatter": {
+            "format": "(%(asctime)s) %(levelname)s: %(message)s"
+        },
+        "jsonFormatter": {
+            "class": "jsonformatter.JsonFormatter",
+            "format": {
+                "levelname": "levelname",
+                "message": "message"
+            }
+        }
+    },
+    "loggers": {
+        "BitBake": {
+            "handlers": [
+                "bitbake_debug",
+                "bitbake_warnings"
+            ]
+        }
+    }
+}
