@@ -95,6 +95,13 @@ fi
 if [ -d "${archive}" ] ; then
 	mkdir ${archive}/other
 
+	# Compress and publish bitbake's debug build output
+	if [ -f build/bitbake_debug.log ]; then
+		gzip -f build/bitbake_debug.log
+		mv build/bitbake_debug.log.gz ${archive}/other/
+		mv build/bitbake_warning.log ${archive}/other/
+	fi
+
 	# Compress and publish source tarball (for *GPL* packages)
 	if [ -d ${DEPLOY_DIR_IMAGE}/source-release ]; then
 		tar --remove-files -C ${DEPLOY_DIR_IMAGE} -cf ${MACHINE}-source-release.tar source-release
