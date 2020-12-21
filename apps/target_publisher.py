@@ -22,7 +22,8 @@ class TargetPublisher:
         self.fetch_targets_apps_and_images(targets)
         logging.info('Caching and Publishing Targets\' Apps...')
         for target, _ in self._apps_fetcher.target_apps.items():
-            target_apps_branch, target_apps_hash = self._app_tree_store.store(target, self._apps_fetcher.target_dir(target.name))
+            target_apps_branch, target_apps_hash = \
+                self._app_tree_store.store(target, self._apps_fetcher.target_dir(target.name))
             targets[target.name]['custom']['compose-apps-branch'] = target_apps_branch
             targets[target.name]['custom']['compose-apps-hash'] = target_apps_hash
             if self._app_archive_store:

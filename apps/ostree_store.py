@@ -1,5 +1,6 @@
 import subprocess
 import os
+import stat
 import logging
 
 from apps.target_apps_store import TargetAppsStore
@@ -69,6 +70,16 @@ class OSTreeRepo:
     def size_in_kbs(self):
         return int(subprocess.check_output(['du', '-sk', self._repo_dir], universal_newlines=True).split()[0])
 
+    def path_exists(self, ref, path):
+        ret_value = False
+        try:
+            self._cmd('ls {} {}'.format(ref, path))
+            ret_value = True
+        except subprocess.CalledProcessError as err:
+            pass
+
+        return ret_value
+
     def _cmd(self, cmd):
         cmd_args = cmd.split()
         full_cmd = ['ostree', '--repo={}'.format(self._repo_dir)]
@@ -77,6 +88,10 @@ class OSTreeRepo:
 
 
 class OSTreeTargetAppsStore(TargetAppsStore):
+    WhiteoutsFile = '.whiteouts'
+    ContainerImagesDir = 'images'
+    AppsDir = 'apps'
+
     def __init__(self, repo_dir, create=False, factory=None, creds_arch=None):
         self._repo = OSTreeRepo(repo_dir, create=create, raise_exception=False)
         self._factory = factory
@@ -89,12 +104,13 @@ class OSTreeTargetAppsStore(TargetAppsStore):
     def initialized(self):
         return self._repo.initialized()
 
-    def store(self, target: FactoryClient.Target, images_dir: str, push_to_treehub: bool = True):
+    def store(self, target: FactoryClient.Target, target_dir: str, push_to_treehub: bool = True):
         if not self._repo.initialized():
             self._repo.create()
-        self._remove_and_index_character_devices(images_dir)
+        self._remove_and_record_non_regular_files(os.path.join(target_dir, self.ContainerImagesDir),
+                                                  os.path.join(target_dir, self.WhiteoutsFile))
         branch = self.branch(target)
-        hash = self._repo.commit(images_dir, branch)
+        hash = self._repo.commit(target_dir, branch)
         if push_to_treehub:
             self._push_to_treehub(branch)
 
@@ -102,6 +118,21 @@ class OSTreeTargetAppsStore(TargetAppsStore):
 
     def copy(self, target: FactoryClient.Target, dst_repo: OSTreeRepo):
         dst_repo.pull_local(self._repo.dir, self.branch(target))
+
+    def copy_and_checkout(self, target: FactoryClient.Target, dst_repo_dir, dst_apps_dir, dst_images_dir):
+        logger.info('Copying Target\'s ostree repo; dst: {}'.format(dst_repo_dir))
+        dst_repo = OSTreeRepo(dst_repo_dir, 'bare-user', create=True)
+        dst_repo.pull_local(self._repo.dir, self.branch(target))
+
+        logger.info('Checking out Apps from an ostree repo; src={}, dst={}'.format(dst_repo_dir, dst_apps_dir))
+        dst_repo.checkout(target.apps_sha, self.AppsDir, dst_apps_dir)
+
+        logger.info('Checking out Apps\' container images from an ostree repo; src={}, dst={}'.
+                    format(dst_repo_dir, dst_images_dir))
+        dst_repo.checkout(target.apps_sha, self.ContainerImagesDir, dst_images_dir)
+
+        logger.info('Applying non-regular files if any...')
+        self._apply_whiteouts(target.apps_sha, dst_images_dir)
 
     def exist(self, target: FactoryClient.Target):
         if not self._repo.initialized():
@@ -125,13 +156,56 @@ class OSTreeTargetAppsStore(TargetAppsStore):
         return True
 
     @staticmethod
-    def _remove_and_index_character_devices(tree_to_commit):
-        # TODO: We cannot just simply remove non-regular files (character devices),
-        # since overlayfs uses them for removing files from a lower layer
-        char_dev_list = subprocess.check_output(['find', tree_to_commit, '-type', 'c'])
-        for dev_file in char_dev_list.splitlines():
-            logger.info('Removing non-regular file: ' + dev_file.decode('utf-8'))
-            os.remove(dev_file)
+    def _remove_and_record_non_regular_files(root_dir, dst_record_file):
+        files_to_record = []
+        for root, _, files in os.walk(root_dir):
+            for file in files:
+                filepath = os.path.join(root, file)
+                if os.path.exists(filepath):
+                    file_stat = os.stat(filepath)
+                    # OSTree allows to commit only regular files and symlinks
+                    if not stat.S_ISREG(file_stat.st_mode) and not stat.S_ISLNK(file_stat.st_mode):
+                        if file_stat.st_size != 0:
+                            logger.error('Not regular file and is its size is not zero, what\'s the heck to do with it?')
+                            continue
+
+                        item_path = os.path.relpath(filepath, root_dir)
+                        logger.info('Recording a non-regular file: {}'.format(item_path))
+                        files_to_record.append((item_path, file_stat.st_mode, file_stat.st_rdev))
+
+        with open(dst_record_file, 'w') as f:
+            for item in files_to_record:
+                f.write('{} {} {}\n'.format(item[0], item[1], item[2]))
+                logger.info('Removing a non-regular file: {}'.format(item[0]))
+                os.remove(os.path.join(root_dir, item[0]))
+
+    def _apply_whiteouts(self, commit_hash, dst_images_dir):
+        if not self._repo.path_exists(commit_hash, self.WhiteoutsFile):
+            logger.info('There are no any non-regular files in the given commit/ref {}'.format(commit_hash))
+            return
+
+        self._repo.checkout(commit_hash, self.WhiteoutsFile, dst_images_dir)
+        with open(os.path.join(dst_images_dir, self.WhiteoutsFile)) as whiteouts_file:
+            for line in whiteouts_file.readlines():
+                items = line.split()
+                if len(items) != 3:
+                    logger.error('Invalid the non-regular file record: expected three items got {}'.format(len(items)))
+                    return
+                filename = os.path.join(dst_images_dir, items[0])
+                filemode = int(items[1])
+                filedevice = int(items[2])
+
+                if os.path.exists(filename):
+                    logger.info('A non-regular file already exists: {}'.format(filename))
+                    continue
+
+                try:
+                    logger.info('Creating a non-regular file: {} {} {}'.format(filename, filemode, filedevice))
+                    os.mknod(filename, mode=filemode, device=filedevice)
+                except Exception as exc:
+                    pass
+                if not os.path.exists(filename):
+                    raise Exception('Failed to create a non-regular file: {}, error: {}'.format(filename, exc))
 
     def _push_to_treehub(self, ref):
         exit_code = 1

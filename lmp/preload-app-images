@@ -89,13 +89,7 @@ def _preload_app_images_from_ostree(target, src_apps_tree_dir, dst_apps_tree_dir
                                     factory):
     logger.info('Preloading Apps from an ostree repo; src={}, dst={}'.format(src_apps_tree_dir, dst_apps_tree_dir))
     src_store = OSTreeTargetAppsStore(src_apps_tree_dir, create=False, factory=factory)
-    dst_repo = OSTreeRepo(dst_apps_tree_dir, 'bare-user', create=True)
-    src_store.copy(target, dst_repo)
-    logger.info('Checking out Apps from an ostree repo; src={}, dst={}'.format(dst_apps_tree_dir, dst_apps_root_dir))
-    dst_repo.checkout(target.apps_sha, '/apps', dst_apps_root_dir)
-    logger.info('Checking out Apps\' container images from an ostree repo; src={}, dst={}'.
-                 format(dst_apps_tree_dir, dst_docker_data_root_dir))
-    dst_repo.checkout(target.apps_sha, '/images', dst_docker_data_root_dir)
+    src_store.copy_and_checkout(target, dst_apps_tree_dir, dst_apps_root_dir, dst_docker_data_root_dir)
 
 
 def _preload_app_images_from_archive(target, app_images_root_dir, dst_apps_root_dir, dst_docker_data_root_dir):
