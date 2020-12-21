@@ -105,9 +105,10 @@ def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, app
     if not target_app_store.exist(target):
         logger.info('Compose Apps haven\'t been found, fetching them...')
         apps_fetcher = TargetAppsFetcher(token, app_fetch_dir)
-        apps_fetcher.fetch_target_apps(target, apps_shortlist)
+        apps_fetcher.fetch_target_apps(target, target.shortlist)
         apps_fetcher.fetch_apps_images()
-        target_app_store.store(target, apps_fetcher.target_dir(target.name))
+        target.apps_branch, target.apps_sha = target_app_store.store(target, apps_fetcher.target_dir(target.name),
+                                                                     push_to_treehub=False)
     p.tick()
 
     with TemporaryDirectory(dir=os.environ['HOME']) as apps_tree_dir:
@@ -117,23 +118,16 @@ def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, app
         p.tick()
         target_app_store.copy(target, apps_tree_repo)
         p.tick()
+
         with WicImage(wic_image, apps_tree_repo.size_in_kbs() * 1024) as wic_image:
             logger.info('Removing previously preloaded Apps if any...')
+
             shutil.rmtree(wic_image.docker_data_root, ignore_errors=True)
             shutil.rmtree(wic_image.compose_apps_root, ignore_errors=True)
             shutil.rmtree(wic_image.compose_apps_tree, ignore_errors=True)
             p.tick()
-            logger.info('Copying Target\'s ostree repo to the system image; dst: {}'.
-                        format(wic_image.compose_apps_tree))
-            shutil.copytree(apps_tree_dir, wic_image.compose_apps_tree)
-            p.tick()
-            dst_apps_tree_repo = OSTreeRepo(wic_image.compose_apps_tree, 'bare-user')
-            logger.info('Checking out Apps from an ostree repo; src={}, dst={}'.
-                        format(wic_image.compose_apps_tree, wic_image.compose_apps_root))
-            dst_apps_tree_repo.checkout(target.apps_sha, '/apps', wic_image.compose_apps_root)
-            logger.info('Checking out Apps\' container images from an ostree repo; src={}, dst={}'.
-                        format(wic_image.compose_apps_tree, wic_image.docker_data_root))
-            dst_apps_tree_repo.checkout(target.apps_sha, '/images', wic_image.docker_data_root)
+            target_app_store.copy_and_checkout(target, wic_image.compose_apps_tree,
+                                               wic_image.compose_apps_root, wic_image.docker_data_root)
             wic_image.update_target(target)
     p.tick()
 
