@@ -215,7 +215,7 @@ class OSTreeTargetAppsStore(TargetAppsStore):
             push_process = subprocess.Popen(['garage-push', '--repo', self._repo.dir,
                                              '--credentials', self._creds_arch, '--ref', ref,
                                              '-v'], universal_newlines=True)
-            push_process_output, _ = push_process.communicate(timeout=600)
+            push_process_output, _ = push_process.communicate(timeout=2000)
             exit_code = push_process.returncode
             error_msg = push_process_output
         except subprocess.TimeoutExpired as timeout_exc:
