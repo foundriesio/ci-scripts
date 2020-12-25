@@ -94,7 +94,7 @@ docker run -v -it --rm --privileged \
   -e PUSH_TARGETS=$PUSH_TARGET \
   -e FETCH_DIR=/fetch-dir \
   -e APP_IMAGES_ROOT_DIR=/app-images \
-  -e HOME=/home/test \
+  -e HOME=/home/ \
   -e MACHINES="${MACHINES}" \
   -e MANIFEST_PLATFORMS_DEFAULT="${PLATFORMS}" \
   -v $PWD:/ci-scripts \

@@ -55,7 +55,7 @@ class OSTreeTargetAppsStoreTest(unittest.TestCase):
     DefaultTarget = {'custom': {
         'arch': 'x86_64',
         'tags': ['devel'],
-        'compose-apps-hash': 'sd'
+        'compose-apps-uri': 'sd'
     }}
 
     def setUp(self):
@@ -79,8 +79,7 @@ class OSTreeTargetAppsStoreTest(unittest.TestCase):
             with open(os.path.join(tree_dir, test_file_name), 'w') as test_file:
                 test_file.write(test_file_content)
 
-            _, commit_hash = self._app_tree_store.store(self._target, tree_dir, push_to_treehub=False)
-            self._target['custom']['compose-apps-hash'] = commit_hash
+            self._target.apps_uri = self._app_tree_store.store(self._target, tree_dir, push_to_treehub=False)
 
         self.assertTrue(self._app_tree_store.exist(self._target))
 
