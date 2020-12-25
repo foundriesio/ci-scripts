@@ -114,7 +114,7 @@ class OSTreeTargetAppsStore(TargetAppsStore):
         if push_to_treehub:
             self._push_to_treehub(branch)
 
-        return branch, hash
+        return '{}@{}'.format(branch, hash)
 
     def copy(self, target: FactoryClient.Target, dst_repo: OSTreeRepo):
         dst_repo.pull_local(self._repo.dir, self.branch(target))
@@ -125,21 +125,21 @@ class OSTreeTargetAppsStore(TargetAppsStore):
         dst_repo.pull_local(self._repo.dir, self.branch(target))
 
         logger.info('Checking out Apps from an ostree repo; src={}, dst={}'.format(dst_repo_dir, dst_apps_dir))
-        dst_repo.checkout(target.apps_sha, self.AppsDir, dst_apps_dir)
+        dst_repo.checkout(target.apps_commit_hash, self.AppsDir, dst_apps_dir)
 
         logger.info('Checking out Apps\' container images from an ostree repo; src={}, dst={}'.
                     format(dst_repo_dir, dst_images_dir))
-        dst_repo.checkout(target.apps_sha, self.ContainerImagesDir, dst_images_dir)
+        dst_repo.checkout(target.apps_commit_hash, self.ContainerImagesDir, dst_images_dir)
 
         logger.info('Applying non-regular files if any...')
-        self._apply_whiteouts(target.apps_sha, dst_images_dir)
+        self._apply_whiteouts(target.apps_commit_hash, dst_images_dir)
 
     def exist(self, target: FactoryClient.Target):
         if not self._repo.initialized():
             # ostree repo is not present at all
             return False
 
-        if not target.apps_sha:
+        if not target.apps_uri:
             # there is no apps' commit hash in the given Target at all
             return False
 
@@ -148,7 +148,7 @@ class OSTreeTargetAppsStore(TargetAppsStore):
             # only non shortlisted Targets
             return False
 
-        target_commit_hash_info = self._repo.show(target.apps_sha)
+        target_commit_hash_info = self._repo.show(target.apps_commit_hash)
         if not target_commit_hash_info:
             # Commit specified in Target does not exists in the repo
             return False

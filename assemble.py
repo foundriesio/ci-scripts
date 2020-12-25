@@ -107,8 +107,7 @@ def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, app
         apps_fetcher = TargetAppsFetcher(token, app_fetch_dir)
         apps_fetcher.fetch_target_apps(target, target.shortlist)
         apps_fetcher.fetch_apps_images()
-        target.apps_branch, target.apps_sha = target_app_store.store(target, apps_fetcher.target_dir(target.name),
-                                                                     push_to_treehub=False)
+        target.apps_uri = target_app_store.store(target, apps_fetcher.target_dir(target.name), push_to_treehub=False)
     p.tick()
 
     with TemporaryDirectory(dir=os.environ['HOME']) as apps_tree_dir:

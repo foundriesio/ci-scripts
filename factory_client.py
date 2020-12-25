@@ -16,6 +16,7 @@ class FactoryClient:
         def __init__(self, target_name, target_json):
             self.name = target_name
             self.json = target_json
+            self._set_apps_commit_hash()
 
         @property
         def platform(self):
@@ -30,20 +31,17 @@ class FactoryClient:
             return self['custom']['containers-sha']
 
         @property
-        def apps_sha(self):
-            return self['custom']['compose-apps-hash']
+        def apps_uri(self):
+            return self['custom'].get('compose-apps-uri')
 
-        @apps_sha.setter
-        def apps_sha(self, apps_commit_sha: str):
-            self['custom']['compose-apps-hash'] = apps_commit_sha
+        @apps_uri.setter
+        def apps_uri(self, apps_commit_uri: str):
+            self['custom']['compose-apps-uri'] = apps_commit_uri
+            self._set_apps_commit_hash()
 
         @property
-        def apps_branch(self):
-            return self['custom']['compose-apps-branch']
-
-        @apps_branch.setter
-        def apps_branch(self, apps_commit_branch: str):
-            self['custom']['compose-apps-branch'] = apps_commit_branch
+        def apps_commit_hash(self):
+            return self._apps_commit_hash
 
         @property
         def shortlist(self):
@@ -60,6 +58,13 @@ class FactoryClient:
 
             for app_name, app_desc in apps.items():
                 yield app_name, app_desc['uri']
+
+        def _set_apps_commit_hash(self):
+            self._apps_commit_hash = None
+            if self.apps_uri:
+                uri_components = self.apps_uri.split('@')
+                if len(uri_components) == 2:
+                    self._apps_commit_hash = uri_components[1]
 
         def __getitem__(self, item):
             return self.json[item]
