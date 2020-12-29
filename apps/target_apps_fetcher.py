@@ -34,51 +34,44 @@ class TargetAppsFetcher:
     def images_dir(self, target_name):
         return os.path.join(self.target_dir(target_name), self.ImagesDir)
 
-    def fetch_target_apps(self, target: FactoryClient.Target, apps_shortlist=None):
-        self.target_apps[target] = self.__fetch_apps(target.name, apps_shortlist, target)
+    def fetch_target(self, target: FactoryClient.Target, apps_shortlist=None, force=False):
+        self.fetch_target_apps(target, apps_shortlist=apps_shortlist, force=force)
+        self.fetch_apps_images(force=force)
+
+    def fetch_target_apps(self, target: FactoryClient.Target, apps_shortlist=None, force=False):
+        self.target_apps[target] = self._fetch_apps(target, apps_shortlist=apps_shortlist, force=force)
 
     def fetch_apps(self, targets: dict):
         for target_name, target_json in targets.items():
             target = FactoryClient.Target(target_name, target_json)
-            self.target_apps[target] = self.__fetch_apps(target_name, target=target)
+            self.target_apps[target] = self._fetch_apps(target)
 
-    def fetch_apps_images(self, graphdriver='overlay2'):
+    def fetch_apps_images(self, graphdriver='overlay2', force=False):
         self._registry_client.login()
         for target, apps in self.target_apps.items():
-            if not os.path.exists(self.images_dir(target.name)):
-                self.__download_apps_images(apps, self.images_dir(target.name), target.platform, graphdriver)
+            if not os.path.exists(self.images_dir(target.name)) or force:
+                self._download_apps_images(apps, self.images_dir(target.name), target.platform, graphdriver)
+            else:
+                logger.info('Target Apps\' images have been already fetched; Target: {}'.format(target.name))
 
     @staticmethod
-    def __download_apps_images(apps: ComposeApps, app_images_dir, platform, graphdriver='overlay2'):
+    def _download_apps_images(apps: ComposeApps, app_images_dir, platform, graphdriver='overlay2'):
         os.makedirs(app_images_dir, exist_ok=True)
         with DockerDaemon(app_images_dir, graphdriver) as dockerd:
             for app in apps:
                 app.download_images(platform, dockerd.host)
 
-    def __fetch_apps(self, target_name, apps_shortlist=None, target=None):
-        if not target:
-            target = self.__fetch_target(target_name)
-
+    def _fetch_apps(self, target, apps_shortlist=None, force=False):
         for app_name, app_uri in target.apps():
             if apps_shortlist and app_name not in apps_shortlist:
                 logger.info('{} is not in the shortlist, skipping it'.format(app_name))
                 continue
 
-            app_dir = os.path.join(self.apps_dir(target_name), app_name)
-            if not os.path.exists(app_dir):
+            app_dir = os.path.join(self.apps_dir(target.name), app_name)
+            if not os.path.exists(app_dir) or force:
                 os.makedirs(app_dir, exist_ok=True)
-                logger.info('Downloading App; Target: {}, App: {}, Uri: {} '.format(target_name, app_name, app_uri))
+                logger.info('Downloading App; Target: {}, App: {}, Uri: {} '.format(target.name, app_name, app_uri))
                 self._registry_client.download_compose_app(app_uri, app_dir)
-        return ComposeApps(self.apps_dir(target_name))
-
-    def __fetch_target(self, target_name):
-        logger.info('Downloading Target: {} '.format(target_name))
-        if not os.path.exists(self.target_file(target_name)):
-            target = self._factory_client.get_target(target_name)
-            os.makedirs(self.target_dir(target_name), exist_ok=True)
-            with open(self.target_file(target_name), "w") as ff:
-                json.dump(target.target_json, ff)
-        else:
-            with open(self.target_file(target_name), "r") as ff:
-                target = FactoryClient.Target(json.load(ff))
-        return target
+            else:
+                logger.info('App has been already fetched; Target: {}, App: {}'.format(target.name, app_name))
+        return ComposeApps(self.apps_dir(target.name))
