@@ -67,7 +67,7 @@ class DockerDaemon:
                                           '--storage-driver', self._graphdriver,
                                           '--data-root', self.data_root,
                                           '--containerd', self._containerd.address,
-                                          '--experimental']
+                                          '--experimental', '--max-concurrent-downloads', '10']
 
         if self._output_logs:
             self._process = subprocess.Popen(cmd)
