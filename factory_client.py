@@ -88,7 +88,7 @@ class FactoryClient:
     def get_targets(self, target_names: list):
         # TODO: add support of GETing a single resource/item from collection
         # targets_endpoint = http_get(os.path.join(self.targets_endpoint, target_name), headers=self._auth_headers)
-        targets = self.__get_targets()
+        targets = self._get_targets()
 
         res_targets = []
         for target_name, target in targets.items():
@@ -97,14 +97,11 @@ class FactoryClient:
         return res_targets
 
     def get_target(self, target_name):
-        # TODO: add support of GETing a single resource/item from collection
-        # targets_endpoint = http_get(os.path.join(self.targets_endpoint, target_name), headers=self._auth_headers)
-        targets = self.__get_targets()
-        return self.Target(target_name, targets.get(target_name))
+        return self.Target(target_name, self._get_target(target_name))
 
     def get_targets_by_version(self, version):
         res_targets = []
-        targets = self.__get_targets()
+        targets = self._get_targets()
         for target_name, target in targets.items():
             custom = target.get('custom')
             if not custom:
@@ -147,6 +144,10 @@ class FactoryClient:
 
         return extracted_image_file_path
 
-    def __get_targets(self):
+    def _get_targets(self):
         target_resp = http_get(self.targets_endpoint, headers=self._auth_headers)
         return target_resp.json()['signed']['targets']
+
+    def _get_target(self, target_name):
+        target_resp = http_get(self.targets_endpoint + target_name + '/', headers=self._auth_headers)
+        return target_resp.json()
