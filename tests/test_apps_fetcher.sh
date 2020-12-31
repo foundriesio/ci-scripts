@@ -4,28 +4,34 @@
 set -euo pipefail
 
 # examples
-sudo ./tests/test_apps_fetcher.sh $FACTORY $OSF_TOKEN intel-corei7-64-lmp-275 $PWD/preload-dir $PWD/out-images
+# sudo ./tests/test_apps_fetcher.sh $FACTORY $OSF_TOKEN $FACTORY_CREDS intel-corei7-64-lmp-284 $PWD/work-dir/ $PWD/arch-repo-dir/
 
 # Input params
 FACTORY=$1
 OSF_TOKEN=$2
-TARGETS=$3
-PRELOAD_DIR=$4
-OUT_IMAGES_ROOT_DIR=$5
+CRED_ARCH=$3
+TARGETS=$4
+WORK_DIR=$5
+IN_OUT_REPO_ARCH_DIR=$6
 
 CMD="./apps/fetch.py"
 
 docker run -it --rm --privileged \
-  -e PYTHONPATH=/ci-scripts \
+  -e CRED_ARCH=/secrets/credentials.zip \
+  -v $CRED_ARCH:/secrets/credentials.zip \
   -v $PWD:/ci-scripts \
-  -v $PRELOAD_DIR:/preload \
-  -v $OUT_IMAGES_ROOT_DIR:/out-image \
+  -v $IN_OUT_REPO_ARCH_DIR:/nfs \
+  -v $WORK_DIR:/work-dir \
   -w /ci-scripts \
   -u $(id -u ${USER}):$(id -g ${USER}) \
+  -e PYTHONPATH=/ci-scripts \
   foundries/lmp-image-tools ${CMD} \
   --factory "${FACTORY}" \
   --token "${OSF_TOKEN}" \
-  --target "${TARGETS}" \
-  --preload-dir /preload \
-  --out-images-root-dir /out-image
+  --targets "${TARGETS}" \
+  --cred-arch /secrets/credentials.zip \
+  --fetch-dir /work-dir/fetch-dir \
+  --treehub-repo /work-dir/treehub-repo \
+  --repo-dir /work-dir/repo-dir \
+  --ostree-repo-archive-dir /nfs/
 

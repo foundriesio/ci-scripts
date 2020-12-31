@@ -14,10 +14,11 @@ FACTORY=$1
 OSF_TOKEN=$2
 OUT_IMAGE_DIR=$3
 TARGET_VERSION=$4
-TARGETS=${5-""}
-APP_SHORTLIST=${6-""}
+APPS_OSTREE_REPO_ARCHIVE_DIR=$5
+TARGETS=${6-""}
+APP_SHORTLIST=${7-""}
 
-WORK_DIR="${7-$(mktemp -d -t asseble-image-XXXXXXXXXX)}"
+WORK_DIR="${8-$(mktemp -d -t asseble-image-XXXXXXXXXX)}"
 echo ">> Work dir: ${WORK_DIR}"
 
 SECRETS=$WORK_DIR/secrets # directory to store secrets,
@@ -43,16 +44,16 @@ docker run -v -it --rm --privileged \
   -e FACTORY="$FACTORY" \
   -e HOME=/home/test \
   -e FETCH_DIR=/fetch-dir \
-  -e APP_IMAGES_ROOT_DIR=/app-images \
+  -e APPS_OSTREE_REPO_ARCHIVE_DIR=/apps-ostree-repo-archive-dir \
   -e OUT_IMAGE_DIR=/out-image-dir \
   -e TARGET_VERSION="${TARGET_VERSION}" \
   -e TARGETS="${TARGETS}" \
   -e APP_SHORTLIST="${APP_SHORTLIST}" \
   -v "$PWD":/ci-scripts \
   -v "$SECRETS":/secrets \
-  -v "$APP_IMAGES_ROOT_DIR":/app-images \
+  -v "$APPS_OSTREE_REPO_ARCHIVE_DIR":/apps-ostree-repo-archive-dir \
   -v "$OUT_IMAGE_DIR":/out-image-dir \
-  -v $FETCH_DIR:/fetch-dir \
+  -v "$FETCH_DIR":/fetch-dir \
   -w /ci-scripts \
   -u "$(id -u ${USER})":"$(id -g ${USER})" \
   foundries/lmp-image-tools "${CMD}"

@@ -17,14 +17,13 @@ TARGETS="${TARGETS}"
 TARGET_VERSION="${TARGET_VERSION-${H_BUILD}}"
 # destination for a resultant system image
 OUT_IMAGE_DIR="${OUT_IMAGE_DIR-/archive}"
-# a dir where snapshotted/dumped images (archive/tar) are supposed to be located
-# if not found there assemble.py will dump images, archive them and put into the given location
-APP_IMAGES_ROOT_DIR="${APP_IMAGES_ROOT_DIR-/var/cache/bitbake/app-images}"
+APPS_OSTREE_REPO_ARCHIVE_DIR="${APPS_OSTREE_REPO_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
 APP_SHORTLIST="${APP_SHORTLIST-""}"
+OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d)}"
 # directory to preload/dump/snapshot apps images to
 FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
 
-require_params FACTORY APP_IMAGES_ROOT_DIR OUT_IMAGE_DIR
+require_params FACTORY APPS_OSTREE_REPO_ARCHIVE_DIR OUT_IMAGE_DIR
 if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then
   echo "Neither Target name list (TARGETS) nor Target version (aka H_BUILD) are specified !!!"
   exit 1
@@ -38,7 +37,8 @@ status Running: Assemble System Image script
   --token "$(cat "${SECRETS}/osftok")" \
   --target-version "${TARGET_VERSION}" \
   --out-image-dir "${OUT_IMAGE_DIR}" \
-  --app-image-dir "${APP_IMAGES_ROOT_DIR}" \
+  --ostree-repo-archive-dir "${APPS_OSTREE_REPO_ARCHIVE_DIR}" \
+  --repo-dir "${OSTREE_REPO_DIR}" \
   --fetch-dir "${FETCH_DIR}" \
   --targets "${TARGETS}" \
   --app-shortlist="${APP_SHORTLIST}"

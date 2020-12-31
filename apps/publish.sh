@@ -36,8 +36,9 @@ MACHINES=${MACHINES-""}
 PLATFORMS=${MANIFEST_PLATFORMS_DEFAULT-""}
 
 APP_IMAGES_ROOT_DIR="${APP_IMAGES_ROOT_DIR-/var/cache/bitbake/app-images}"
-#OSTREE_REPO_DIR="${APP_IMAGES_ROOT_DIR}/ostree-repo"
+APPS_OSTREE_REPO_ARCHIVE_DIR="${APPS_OSTREE_REPO_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
 OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d -p ${HOME})}"
+TREEHUB_REPO_DIR="${TREEHUB_REPO_DIR-$(mktemp -d -p ${HOME})}"
 FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
 
 require_params FACTORY ARCHIVE TARGET_TAG
@@ -110,7 +111,8 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
   --targets-to-publish "${ARCHIVE}/targets-created.json" \
   --fetch-dir "${FETCH_DIR}" \
   --repo-dir "${OSTREE_REPO_DIR}" \
-  --archive-root-dir "${APP_IMAGES_ROOT_DIR}"
+  --treehub-repo-dir "${TREEHUB_REPO_DIR}" \
+  --ostree-repo-archive-dir "${APPS_OSTREE_REPO_ARCHIVE_DIR}"
 
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
 
