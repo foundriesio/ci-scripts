@@ -79,7 +79,7 @@ class OSTreeTargetAppsStoreTest(unittest.TestCase):
             with open(os.path.join(tree_dir, test_file_name), 'w') as test_file:
                 test_file.write(test_file_content)
 
-            self._target.apps_uri = self._app_tree_store.store(self._target, tree_dir, push_to_treehub=False)
+            self._target.apps_uri = self._app_tree_store.store(self._target, tree_dir)
 
         self.assertTrue(self._app_tree_store.exist(self._target))
 

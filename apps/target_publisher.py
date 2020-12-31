@@ -2,32 +2,43 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+import subprocess
 
 from apps.target_apps_fetcher import TargetAppsFetcher
-from apps.target_apps_store import ArchiveTargetAppsStore
-from apps.ostree_store import OSTreeTargetAppsStore
+from apps.ostree_store import OSTreeRepo
+
+
+logger = logging.getLogger("Target Publisher")
 
 
 class TargetPublisher:
-    def __init__(self, factory, token, creds, fetch_root_dir, ostree_repo_dir, archive_store_root_dir=None):
-        self._fetch_root_dir = fetch_root_dir
-        self._ostree_repo_dir = ostree_repo_dir
+    def __init__(self, factory, token, creds, targets, arch_ostree_store, fetch_root_dir, treehub_repo_dir):
 
-        self._apps_fetcher = TargetAppsFetcher(token, self._fetch_root_dir)
-        self._app_tree_store = OSTreeTargetAppsStore(self._ostree_repo_dir, create=True,
-                                                     factory=factory, creds_arch=creds)
-        self._app_archive_store = ArchiveTargetAppsStore(archive_store_root_dir) if archive_store_root_dir else None
+        self._creds = creds
+        self._arch_ostree_store = arch_ostree_store
+        self._fetcher = TargetAppsFetcher(token, fetch_root_dir, factory=factory)
+        self._treehub_repo = OSTreeRepo(treehub_repo_dir, create=True)
+        self._targets = targets
+        self._fetched_targets = []
 
-    def publish(self, targets):
-        self.fetch_targets_apps_and_images(targets)
-        logging.info('Caching and Publishing Targets\' Apps...')
-        for target, _ in self._apps_fetcher.target_apps.items():
-            targets[target.name]['custom']['compose-apps-uri'] = \
-                self._app_tree_store.store(target, self._apps_fetcher.target_dir(target.name))
-            if self._app_archive_store:
-                self._app_archive_store.store(target, self._apps_fetcher.images_dir(target.name))
+    def fetch_targets(self):
+        logging.info('Fetching Targets\' Apps ...')
+        for target in self._targets:
+            # make use of the existing apps' images stored in the ostree repo to minimize downloads
+            # from docker registries, both the foundries' and hub.docker.io or any other
+            if self._arch_ostree_store.exist_branch(target):
+                self._arch_ostree_store.checkout(target, self._fetcher.target_dir(target.name))
 
-    def fetch_targets_apps_and_images(self, targets):
-        logging.info('Fetching Targets\' Apps...')
-        self._apps_fetcher.fetch_apps(targets)
-        self._apps_fetcher.fetch_apps_images()
+            self._fetcher.fetch_target(target, force=True)
+            target.apps_uri = self._arch_ostree_store.store(target, self._fetcher.target_dir(target.name))
+            self._fetched_targets.append(target)
+
+    def publish_targets(self):
+        logging.info('Publishing Targets\' Apps ...')
+        for target in self._fetched_targets:
+            self._treehub_repo.pull_local(self._arch_ostree_store.dir, self._arch_ostree_store.branch(target))
+            logger.info('Pushing Compose Apps to Treehub, ref: {}, uri: {} ...'
+                        .format(self._arch_ostree_store.branch(target), target.apps_uri))
+            subprocess.check_call(['garage-push', '--repo', self._treehub_repo.dir,
+                                   '--credentials', self._creds, '--ref', target.apps_commit_hash, '--jobs', '60'],
+                                  timeout=6000)

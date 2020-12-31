@@ -9,9 +9,11 @@ import logging
 import json
 import os
 
+from tempfile import TemporaryDirectory
+
 from factory_client import FactoryClient
 from apps.target_apps_store import ArchiveTargetAppsStore
-from apps.ostree_store import OSTreeTargetAppsStore, OSTreeRepo
+from apps.ostree_store import ArchOSTreeTargetAppsStore, OSTreeRepo
 
 
 logger = logging.getLogger(__name__)
@@ -25,9 +27,12 @@ def get_args():
 
     # TODO: remove it from here one the corresponding change in meta-lmp is used on all devices
     parser.add_argument('arch', nargs='?', default='none')
-
+    # TODO: to support preload from the tgz archive, to be removed
     parser.add_argument('--images-root-dir', default='/var/cache/bitbake/app-images/',
                         help='A root directory that contains stored Compose Apps and their images')
+    parser.add_argument('-ar', '--ostree-repo-archive-dir', default='/var/cache/bitbake/app-images/',
+                        help='Path to a dir that has an archive that contains an ostree repo with apps')
+    parser.add_argument('-rd', '--repo-dir', default=None, help='Directory to extract an apps ostree repo to')
     parser.add_argument('--apps-tree-dir', default=None,
                         help='A path in the scope of a rootfs to an ostree repo that contains'
                              ' Compose Apps and their images')
@@ -52,8 +57,8 @@ def get_args():
     return args
 
 
-def preload_app_images(target_json_file_filepath, app_shortlist, src_app_images_root_dir,
-                       dst_apps_tree_dir, dst_apps_root_dir, dst_docker_data_root_dir, factory):
+def preload_app_images(target_json_file_filepath, app_shortlist, src_app_images_root_dir, ostree_repo_archive_dir,
+                       app_repo_dir, dst_apps_tree_dir, dst_apps_root_dir, dst_docker_data_root_dir, factory):
     with open(target_json_file_filepath) as target_json_file:
         target_json = json.load(target_json_file)
 
@@ -67,12 +72,9 @@ def preload_app_images(target_json_file_filepath, app_shortlist, src_app_images_
     preloaded = False
 
     try:
-        # TODO: avoid hardcoding of `ostree-repo` path
-        src_apps_tree_dir = os.path.join(src_app_images_root_dir, 'ostree-repo')
-        if os.path.exists(src_apps_tree_dir):
-            _preload_app_images_from_ostree(target, src_apps_tree_dir, dst_apps_tree_dir,
-                                            dst_apps_root_dir, dst_docker_data_root_dir,
-                                            factory)
+        _preload_app_images_from_ostree(target, ostree_repo_archive_dir, app_repo_dir, dst_apps_tree_dir,
+                                        dst_apps_root_dir, dst_docker_data_root_dir,
+                                        factory)
         preloaded = True
     except Exception as exc:
         logger.warning('Failed to preload Apps from an ostree repo,'
@@ -80,16 +82,25 @@ def preload_app_images(target_json_file_filepath, app_shortlist, src_app_images_
 
     if not preloaded:
         # Fallback to preloading from an archive
-        _preload_app_images_from_archive(target, src_app_images_root_dir,
-                                         dst_apps_root_dir, dst_docker_data_root_dir)
+        _preload_app_images_from_archive(target, src_app_images_root_dir, dst_apps_root_dir, dst_docker_data_root_dir)
 
 
-def _preload_app_images_from_ostree(target, src_apps_tree_dir, dst_apps_tree_dir,
-                                    dst_apps_root_dir, dst_docker_data_root_dir,
-                                    factory):
-    logger.info('Preloading Apps from an ostree repo; src={}, dst={}'.format(src_apps_tree_dir, dst_apps_tree_dir))
-    src_store = OSTreeTargetAppsStore(src_apps_tree_dir, create=False, factory=factory)
-    src_store.copy_and_checkout(target, dst_apps_tree_dir, dst_apps_root_dir, dst_docker_data_root_dir)
+def _preload_app_images_from_ostree(target, ostree_repo_archive_dir, app_repo_dir, dst_apps_tree_dir,
+                                    dst_apps_root_dir, dst_docker_data_root_dir, factory):
+    repo_dir = app_repo_dir if app_repo_dir else TemporaryDirectory(dir=os.getenv('HOME', '/root')).name
+    os.makedirs(repo_dir, exist_ok=True)
+    os.makedirs(dst_apps_tree_dir, exist_ok=True)
+    os.makedirs(dst_apps_root_dir, exist_ok=True)
+    os.makedirs(dst_docker_data_root_dir, exist_ok=True)
+    target_app_store = ArchOSTreeTargetAppsStore(factory, ostree_repo_archive_dir, repo_dir, create=False)
+    if not target_app_store.exist(target):
+        raise Exception('The Target\'s apps have not been found in the repo; apps-uri: {}, repo-ath: {}'
+                        .format(target.apps_uri, target_app_store.archive_path))
+
+    logger.info('Preloading Apps from an archived ostree repo; src: {}, dst: {}, apps-uri: {}'
+                .format(target_app_store.archive_path, dst_apps_tree_dir, target.apps_uri))
+    target_app_store.copy_and_checkout(target, dst_apps_tree_dir, dst_apps_root_dir, dst_docker_data_root_dir)
+    logger.info('Apps {} have been successfully preloaded'.format(target.apps_uri))
 
 
 def _preload_app_images_from_archive(target, app_images_root_dir, dst_apps_root_dir, dst_docker_data_root_dir):
@@ -118,6 +129,8 @@ if __name__ == '__main__':
         preload_app_images(args.installed_versions,
                            args.app_shortlist,
                            args.images_root_dir,
+                           args.ostree_repo_archive_dir,
+                           args.repo_dir,
                            args.apps_tree_dir,
                            args.apps_root_dir,
                            args.docker_data_root_dir, args.factory)

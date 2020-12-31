@@ -2,6 +2,9 @@ import subprocess
 import os
 import stat
 import logging
+import shutil
+from tempfile import TemporaryDirectory
+from uuid import uuid4
 
 from apps.target_apps_store import TargetAppsStore
 from factory_client import FactoryClient
@@ -36,6 +39,7 @@ class OSTreeRepo:
     def commit(self, dir_to_commit, branch):
         logger.info('Committing directory `{}` to `{}` branch...'.format(dir_to_commit, branch))
         commit_hash = self._cmd('commit --tree=dir={} --branch {} --generate-sizes'
+                                ' --link-checkout-speedup --skip-if-unchanged'
                                 .format(dir_to_commit, branch))
         return commit_hash
 
@@ -92,8 +96,12 @@ class OSTreeTargetAppsStore(TargetAppsStore):
     ContainerImagesDir = 'images'
     AppsDir = 'apps'
 
-    def __init__(self, repo_dir, create=False, factory=None, creds_arch=None):
-        self._repo = OSTreeRepo(repo_dir, create=create, raise_exception=False)
+    @property
+    def dir(self):
+        return self._repo.dir
+
+    def __init__(self, repo_dir, create=False, factory=None, creds_arch=None, mode='archive'):
+        self._repo = OSTreeRepo(repo_dir, create=create, raise_exception=False, mode=mode)
         self._factory = factory
         self._creds_arch = creds_arch
 
@@ -104,25 +112,23 @@ class OSTreeTargetAppsStore(TargetAppsStore):
     def initialized(self):
         return self._repo.initialized()
 
-    def store(self, target: FactoryClient.Target, target_dir: str, push_to_treehub: bool = True):
+    def store(self, target: FactoryClient.Target, target_dir: str):
         if not self._repo.initialized():
             self._repo.create()
         self._remove_and_record_non_regular_files(os.path.join(target_dir, self.ContainerImagesDir),
                                                   os.path.join(target_dir, self.WhiteoutsFile))
         branch = self.branch(target)
         hash = self._repo.commit(target_dir, branch)
-        if push_to_treehub:
-            self._push_to_treehub(branch)
 
         return '{}@{}'.format(branch, hash)
 
     def copy(self, target: FactoryClient.Target, dst_repo: OSTreeRepo):
-        dst_repo.pull_local(self._repo.dir, self.branch(target))
+        return dst_repo.pull_local(self._repo.dir, target.apps_commit_hash)
 
     def copy_and_checkout(self, target: FactoryClient.Target, dst_repo_dir, dst_apps_dir, dst_images_dir):
         logger.info('Copying Target\'s ostree repo; dst: {}'.format(dst_repo_dir))
-        dst_repo = OSTreeRepo(dst_repo_dir, 'bare-user', create=True)
-        dst_repo.pull_local(self._repo.dir, self.branch(target))
+        dst_repo = OSTreeRepo(dst_repo_dir, 'bare', create=True)
+        dst_repo.pull_local(self._repo.dir, target.apps_commit_hash)
 
         logger.info('Checking out Apps from an ostree repo; src={}, dst={}'.format(dst_repo_dir, dst_apps_dir))
         dst_repo.checkout(target.apps_commit_hash, self.AppsDir, dst_apps_dir)
@@ -133,6 +139,14 @@ class OSTreeTargetAppsStore(TargetAppsStore):
 
         logger.info('Applying non-regular files if any...')
         self._apply_whiteouts(target.apps_commit_hash, dst_images_dir)
+
+    def checkout(self, target: FactoryClient.Target, dst_target_dir):
+        logger.info('Checking out Target from an ostree repo; src={}, dst={}'.format(self._repo.dir, dst_target_dir))
+        os.makedirs(dst_target_dir, exist_ok=True)
+        # TODO: support of checkout with hardlinks
+        #self._repo._cmd('checkout --require-hardlinks --union {} {}'.format(self.branch(target), dst_target_dir))
+        self._repo._cmd('checkout --union {} {}'.format(self.branch(target), dst_target_dir))
+        self._apply_whiteouts(self.branch(target), dst_target_dir + '/images')
 
     def exist(self, target: FactoryClient.Target):
         if not self._repo.initialized():
@@ -207,24 +221,50 @@ class OSTreeTargetAppsStore(TargetAppsStore):
                 if not os.path.exists(filename):
                     raise Exception('Failed to create a non-regular file: {}, error: {}'.format(filename, exc))
 
-    def _push_to_treehub(self, ref):
-        exit_code = 1
-        push_process = None
-        logger.info('Pushing Compose Apps to Treehub, ref: {} ...'.format(ref))
-        try:
-            push_process = subprocess.Popen(['garage-push', '--repo', self._repo.dir,
-                                             '--credentials', self._creds_arch, '--ref', ref,
-                                             '-v'], universal_newlines=True)
-            push_process_output, _ = push_process.communicate(timeout=2000)
-            exit_code = push_process.returncode
-            error_msg = push_process_output
-        except subprocess.TimeoutExpired as timeout_exc:
-            error_msg = str(timeout_exc)
-            push_process.kill()
-            push_process.communicate(timeout=10)
-        except Exception as exc:
-            error_msg = str(exc)
 
-        if exit_code != 0:
-            raise Exception('Failed to push Apps ostree repo to Treehub; exit code: {}, error: {}'
-                            .format(exit_code, error_msg))
+class ArchOSTreeTargetAppsStore(OSTreeTargetAppsStore):
+    def __init__(self, factory, archive_dir, repo_dir, create=True):
+        super(ArchOSTreeTargetAppsStore, self).__init__(repo_dir, create=create, factory=factory, mode='bare')
+        self._archive_path = os.path.join(archive_dir, self._archive_name(factory))
+        if not os.path.exists(self._archive_path):
+            logger.info('An archived ostree repo doesn\'t exist: {}'.format(self._archive_path))
+            self._new_repo = True
+        else:
+            self._copy_and_extract_repo()
+            self._new_repo = False
+
+    @property
+    def archive_path(self):
+        return self._archive_path
+
+    def store_archive(self):
+        with TemporaryDirectory() as tmp_archive_dir:
+            tmp_archive_file = os.path.join(tmp_archive_dir, str(uuid4()))
+            subprocess.check_call(['tar', '-cf', tmp_archive_file, '-C', self.dir, '.'])
+            logger.info('Copy an archived ostree repo; src: {}, dst: {}'.format(tmp_archive_file, self._archive_path))
+            shutil.copy(tmp_archive_file, self._archive_path)
+
+    def exist_branch(self, target: FactoryClient.Target):
+        if not self._repo.initialized():
+            # ostree repo is not present at all
+            return False
+
+        if not target.apps_uri:
+            # there is no apps' commit hash in the given Target at all
+            return False
+
+        target_ref_info = self._repo.show(self.branch(target))
+        return target_ref_info is not None
+
+    @staticmethod
+    def _archive_name(factory):
+        return '{}_apps_ostree_repo.tar'.format(factory)
+
+    def _copy_and_extract_repo(self):
+        with TemporaryDirectory() as tmp_archive_dir:
+            tmp_archive_file = os.path.join(tmp_archive_dir, str(uuid4()))
+            logger.info('Copy an archived ostree repo; src: {}, dst: {}'.format(self._archive_path, tmp_archive_file))
+            shutil.copy(self._archive_path, tmp_archive_file)
+            subprocess.check_call(['tar', '-xf', tmp_archive_file, '-C', self.dir])
+
+

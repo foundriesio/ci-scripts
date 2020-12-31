@@ -34,8 +34,9 @@ class TargetAppsFetcher:
     def images_dir(self, target_name):
         return os.path.join(self.target_dir(target_name), self.ImagesDir)
 
-    def fetch_target(self, target: FactoryClient.Target, apps_shortlist=None, force=False):
-        self.fetch_target_apps(target, apps_shortlist=apps_shortlist, force=force)
+    def fetch_target(self, target: FactoryClient.Target, force=False):
+        self.target_apps.clear()
+        self.fetch_target_apps(target, apps_shortlist=target.shortlist, force=force)
         self.fetch_apps_images(force=force)
 
     def fetch_target_apps(self, target: FactoryClient.Target, apps_shortlist=None, force=False):
