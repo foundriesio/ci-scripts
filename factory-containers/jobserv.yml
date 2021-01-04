@@ -21,7 +21,7 @@ triggers:
         privileged: true
         loop-on:
           - param: host-tag
-            values: [aarch64, armhf, amd64]
+            values: [aarch64, armhf-exp, amd64]
         script-repo:
           name: fio
           path: factory-containers/build.sh
@@ -74,7 +74,7 @@ triggers:
           DOCKER_COMPOSE_APP: "1"
         loop-on:
           - param: host-tag
-            values: [aarch64, armhf, amd64]
+            values: [aarch64, armhf-exp, amd64]
         script-repo:
           name: fio
           path: factory-containers/build.sh
