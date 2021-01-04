@@ -146,7 +146,10 @@ def _can_apps_run_on_target_machine(target, factory_containers_platforms):
     # and create the given Target
     if machine_arch and factory_containers_platforms:
         # get a list of container platforms that are compatible with the given Target's architecture
-        target_platforms = OEArchToAppPlatformsMap[machine_arch]
+        try:
+            target_platforms = OEArchToAppPlatformsMap[machine_arch]
+        except KeyError:
+            return False
 
         # get an intersection of container platforms that are compatible with the given Target's architecture and
         # the platforms enabled/configured in factory_config.yml:containers.platforms
