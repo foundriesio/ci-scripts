@@ -17,7 +17,7 @@ triggers:
       DOCKER_COMPOSE_APP: "1"
     runs:
       - name: build-{loop}
-        container: docker:dind
+        container: foundries/dind:19.03.9
         privileged: true
         loop-on:
           - param: host-tag
@@ -67,7 +67,7 @@ triggers:
     type: github_pr
     runs:
       - name: build-{loop}
-        container: docker:dind
+        container: foundries/dind:19.03.9
         privileged: true
         params:
           OTA_LITE_TAG: premerge:postmerge,premerge-ptest:postmerge-ptest
