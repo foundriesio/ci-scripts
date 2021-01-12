@@ -49,7 +49,7 @@ def preload_app_images(target_json_file_filepath, compose_apps_dir, dst_dir, app
     target = FactoryClient.Target(target_name, target_json[target_name])
 
     target_apps_store = ArchiveTargetAppsStore(app_images_root_dir)
-    logging.info('Preloading app images for ' + target.name)
+    logging.info('Preloading app images for %s shortlist=%s', target.name, target.shortlist)
     _, app_image_tar, _ = target_apps_store.apps_location(target)
 
     if not target_apps_store.exist(target):
@@ -71,7 +71,8 @@ if __name__ == '__main__':
     try:
         preload_app_images(args.installed_versions, args.compose_apps_dir, args.dst_dir, args.images_root_dir)
     except Exception as exc:
-        logger.warning('Failed to preload Apps images: {}'.format(exc))
+        logger.exception('Failed to preload Apps images: {}'.format(exc))
+        exit(1)
 
     # we return 0/successful exit code regardless of the preloading status to make sure
     # that the LmP/bitbake job, that invoked the given preloading script, proceeds further (is not interrupted)
