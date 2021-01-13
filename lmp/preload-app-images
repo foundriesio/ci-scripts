@@ -28,10 +28,14 @@ def get_args():
     parser.add_argument('--apps-root-dir', default=None, help='A path to Compose Apps root dir')
     parser.add_argument('-s', '--app-shortlist', help='A coma separated list of Target Apps'
                                                       ' to include into a system image', default=None)
+    parser.add_argument('--fail-on-error', action='store_true',
+                        help='Fail OE build if an error occurs')
     args = parser.parse_args()
 
     if args.app_shortlist:
         args.app_shortlist = args.app_shortlist.split(',')
+        if not args.apps_root_dir:
+            args.apps_root_dir = args.dst_dir.replace("var/lib/docker", "var/sota/compose-apps")
 
     return args
 
@@ -46,7 +50,7 @@ def preload_app_images(target_json_file_filepath, app_shortlist, app_images_root
         target.shortlist = app_shortlist
 
     target_apps_store = ArchiveTargetAppsStore(app_images_root_dir)
-    logging.info('Preloading app images for ' + target.name)
+    logging.info('Preloading app images for %s - %s', target.name, target.shortlist)
     _, app_image_tar, _ = target_apps_store.apps_location(target)
 
     if not target_apps_store.exist(target) and not target_apps_store.exist(target, just_images=True):
@@ -68,7 +72,9 @@ if __name__ == '__main__':
     try:
         preload_app_images(args.installed_versions, args.app_shortlist, args.images_root_dir, args.apps_root_dir, args.dst_dir)
     except Exception as exc:
-        logger.warning('Failed to preload Apps images: {}'.format(exc))
+        logger.exception('Failed to preload Apps images: {}'.format(exc))
+        if args.fail_on_error:
+            exit(1)
 
     # we return 0/successful exit code regardless of the preloading status to make sure
     # that the LmP/bitbake job, that invoked the given preloading script, proceeds further (is not interrupted)
