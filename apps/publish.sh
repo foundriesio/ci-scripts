@@ -21,6 +21,9 @@ TUF_REPO="${TUF_REPO-$(mktemp -u -d -p ${HOME})}"
 # that are created by a given build
 TARGET_TAG=${OTA_LITE_TAG}
 
+DOCKER_COMPOSE_APP_PRELOAD=${DOCKER_COMPOSE_APP_PRELOAD-""}
+COMPOSE_APP_USE_OSTREE=${COMPOSE_APP_USE_OSTREE-""}
+
 APPS_ROOT_DIR=${APPS_ROOT_DIR-${PWD}}
 PUBLISH_TOOL=${PUBLISH_TOOL-""}
 
@@ -98,21 +101,41 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
     --target-version="${TARGET_VERSION}" \
     --new-targets-file="${ARCHIVE}/targets-created.json"
 
+if [ "${COMPOSE_APP_USE_OSTREE}" = "1" ]; then
+  # If OSTree usage is enabled then apps have to be fetched regardless of DOCKER_COMPOSE_APP_PRELOAD is on or off
+  # because apps data/files have to be put into an ostree repo and pushed to Treehub so aklite can fetch them and update
+  # apps on a device. Also, the resultant apps ostree repo can used during LmP build for preloading.
+  #
+  # 1. Copy and untar the archive containing an ostree repo with apps and their images, if exists
+  # 2. Dump Targets' Apps and their images (it pulls just apps' diff)
+  # 3. Commit Targets' Apps and their images to the ostree repo
+  # 4. Push the Target's commit to Treehub
+  # 5. Archive and copy the updates apps' ostree repo to NFS/shared storage
+  /usr/local/bin/dind "${HERE}/publish_apps_to_ostree.py" \
+    --factory "${FACTORY}" \
+    --token "$(cat "${SECRETS}/osftok")" \
+    --cred-arch "${CREDS_ARCH_UPDATED}" \
+    --targets-file "${TUF_REPO}/roles/unsigned/targets.json" \
+    --targets-to-publish "${ARCHIVE}/targets-created.json" \
+    --fetch-dir "${FETCH_DIR}" \
+    --repo-dir "${OSTREE_REPO_DIR}" \
+    --treehub-repo-dir "${TREEHUB_REPO_DIR}" \
+    --ostree-repo-archive-dir "${APPS_OSTREE_REPO_ARCHIVE_DIR}"
+else
+  if [ "${DOCKER_COMPOSE_APP_PRELOAD}" = "1" ]; then
+    # if OSTree usage is turned off and apps preloading is enabled then apps have to be fetched and stored on
+    # the shared storage for further preloading into a system image
 
-# 1. Dump new Targets' Apps and their images
-# 2. Store them on a shared storage, so can be reused by subsequent container builds
-#    - store as an archive (backward compatibility) and as a commit in an ostree repo
-# 3. Push to Treehub
-/usr/local/bin/dind "${HERE}/publish_apps_to_ostree.py" \
-  --factory "${FACTORY}" \
-  --token "$(cat "${SECRETS}/osftok")" \
-  --cred-arch "${CREDS_ARCH_UPDATED}" \
-  --targets-file "${TUF_REPO}/roles/unsigned/targets.json" \
-  --targets-to-publish "${ARCHIVE}/targets-created.json" \
-  --fetch-dir "${FETCH_DIR}" \
-  --repo-dir "${OSTREE_REPO_DIR}" \
-  --treehub-repo-dir "${TREEHUB_REPO_DIR}" \
-  --ostree-repo-archive-dir "${APPS_OSTREE_REPO_ARCHIVE_DIR}"
+    status "Dumping apps and their images; version: ${APPS_VERSION}"
+    /usr/local/bin/dind "${HERE}/apps_fetcher.py" \
+      --factory "${FACTORY}" \
+      --targets "${ARCHIVE}/targets-created.json" \
+      --token "$(cat "${SECRETS}/osftok")" \
+      --preload-dir "${FETCH_DIR}" \
+      --out-images-root-dir "${APP_IMAGES_ROOT_DIR}" \
+      2>&1 | indent
+  fi
+fi
 
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
 

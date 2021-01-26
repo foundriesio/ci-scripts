@@ -14,6 +14,7 @@ from tempfile import TemporaryDirectory
 
 from helpers import cmd, Progress
 from apps.target_apps_fetcher import TargetAppsFetcher
+from apps.target_apps_store import ArchiveTargetAppsStore
 from apps.ostree_store import ArchOSTreeTargetAppsStore, OSTreeRepo
 from factory_client import FactoryClient
 
@@ -132,6 +133,28 @@ def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, ost
     p.tick()
 
 
+def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_image_dir: str, app_preload_dir: str,
+                                              wic_image: str, token: str, apps_shortlist: list, progress: Progress):
+
+    p = Progress(2, progress)
+    target_app_store = ArchiveTargetAppsStore(app_image_dir)
+    target.shortlist = apps_shortlist
+    if not target_app_store.exist(target):
+        logger.info('Container images have not been found, trying to obtain them...')
+        apps_fetcher = TargetAppsFetcher(token, app_preload_dir)
+        apps_fetcher.fetch_target_apps(target, apps_shortlist)
+        apps_fetcher.fetch_apps_images()
+        target_app_store.store(target, apps_fetcher.target_dir(target.name))
+    p.tick()
+
+    # in kilobytes
+    image_data_size = target_app_store.images_size(target)
+    with WicImage(wic_image, image_data_size * 1024) as wic_image:
+        target_app_store.copy(target, wic_image.docker_data_root, wic_image.compose_apps_root)
+        wic_image.update_target(target)
+    p.tick()
+
+
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
     logger.info('Gzip and move resultant WIC image to the specified destination folder: {}'.format(out_image_dir))
     os.makedirs(out_image_dir, exist_ok=True)
@@ -153,7 +176,7 @@ def get_args():
     parser.add_argument('-T', '--targets', help='A coma separated list of Targets to assemble system image for')
     parser.add_argument('-s', '--app-shortlist', help='A coma separated list of Target Apps'
                                                       ' to include into a system image', default=None)
-
+    parser.add_argument('-u', '--use-ostree', help='Enables an ostree repo usage for compose apps', default=None)
     args = parser.parse_args()
 
     if args.targets:
@@ -193,8 +216,14 @@ if __name__ == '__main__':
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
             subprog = Progress(3, p)
             image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
-            copy_container_images_to_wic(target, args.factory, args.ostree_repo_archive_dir, args.repo_dir,
-                                         args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
+
+            if args.use_ostree and args.use_ostree == '1':
+                copy_container_images_to_wic(target, args.factory, args.ostree_repo_archive_dir, args.repo_dir,
+                                             args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
+            else:
+                copy_container_images_from_archive_to_wic(target, args.ostree_repo_archive_dir, args.fetch_dir,
+                                                          image_file_path, args.token, args.app_shortlist, subprog)
+
             archive_and_output_assembled_wic(image_file_path, args.out_image_dir)
             subprog.tick(complete=True)
 

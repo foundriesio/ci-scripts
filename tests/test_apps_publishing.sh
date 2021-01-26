@@ -100,6 +100,7 @@ docker run -v -it --rm --privileged \
   -e CREDS_ARCH_UPDATED=/secrets/credentials-updated.zip \
   -e TUF_REPO="/tuf-repo/$FACTORY" \
   -e OTA_LITE_TAG=$OTA_LITE_TAG \
+  -e COMPOSE_APP_USE_OSTREE="1" \
   -e APPS_ROOT_DIR=/apps \
   -e PUBLISH_TOOL=/usr/local/bin/compose-publish \
   -e PUSH_TARGETS=$PUSH_TARGET \
