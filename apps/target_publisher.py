@@ -41,4 +41,4 @@ class TargetPublisher:
                         .format(self._arch_ostree_store.branch(target), target.apps_uri))
             subprocess.check_call(['garage-push', '--repo', self._treehub_repo.dir,
                                    '--credentials', self._creds, '--ref', target.apps_commit_hash, '--jobs', '60'],
-                                  timeout=6000)
+                                  timeout=12000)

@@ -6,8 +6,8 @@ set -euo pipefail
 # Examples
 # Container build's assemble-system-image use-case: ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN $OUT_IMAGE_DIR $BUILD_NUMB
 # API/fioctl use-cases:
-# all apps: ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN /home/mike/work/foundries/projects/ci-scripts/out-image/ "" raspberrypi3-64-lmp-41
-# apps shortlisting: ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN /home/mike/work/foundries/projects/ci-scripts/out-image/ "" raspberrypi3-64-lmp-41 app-05
+# all apps: sudo ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN $PWD/out-image/ "" $PWD/repo-archive intel-corei7-64-lmp-306 "" $PWD/work-dir
+# apps shortlisting: sudo ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN $PWD/out-image/ "" $PWD/repo-archive intel-corei7-64-lmp-306 app-07 $PWD/work-dir
 
 # Input params
 FACTORY=$1

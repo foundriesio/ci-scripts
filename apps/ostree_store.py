@@ -43,9 +43,11 @@ class OSTreeRepo:
                                 .format(dir_to_commit, branch))
         return commit_hash
 
-    def checkout(self, ref, src_dir, dst_dir, user_mode=True):
-        user_mode_flag = '--user-mode' if user_mode else ''
-        return self._cmd('checkout {} --union --subpath={} {} {}'.format(user_mode_flag, src_dir, ref, dst_dir))
+    def checkout(self, ref, src_dir, dst_dir, require_hardlinks=False):
+        if require_hardlinks:
+            return self._cmd('checkout --require-hardlinks --union --subpath={} {} {}'.format(src_dir, ref, dst_dir))
+        else:
+            return self._cmd('checkout --user-mode --union --subpath={} {} {}'.format(src_dir, ref, dst_dir))
 
     def refs(self):
         return self._cmd('refs')
@@ -128,14 +130,17 @@ class OSTreeTargetAppsStore(TargetAppsStore):
     def copy_and_checkout(self, target: FactoryClient.Target, dst_repo_dir, dst_apps_dir, dst_images_dir):
         logger.info('Copying Target\'s ostree repo; dst: {}'.format(dst_repo_dir))
         dst_repo = OSTreeRepo(dst_repo_dir, 'bare', create=True)
+        # ostree pull-local does not support pulling both ref/branch and commit by specifying a single composite uri
+        # like <ref/branch>@<commit>, thus two calls have to be made
         dst_repo.pull_local(self._repo.dir, target.apps_commit_hash)
+        dst_repo.pull_local(self._repo.dir, self.branch(target))
 
         logger.info('Checking out Apps from an ostree repo; src={}, dst={}'.format(dst_repo_dir, dst_apps_dir))
-        dst_repo.checkout(target.apps_commit_hash, self.AppsDir, dst_apps_dir)
+        dst_repo.checkout(target.apps_commit_hash, self.AppsDir, dst_apps_dir, require_hardlinks=True)
 
         logger.info('Checking out Apps\' container images from an ostree repo; src={}, dst={}'.
                     format(dst_repo_dir, dst_images_dir))
-        dst_repo.checkout(target.apps_commit_hash, self.ContainerImagesDir, dst_images_dir)
+        dst_repo.checkout(target.apps_commit_hash, self.ContainerImagesDir, dst_images_dir, require_hardlinks=True)
 
         logger.info('Applying non-regular files if any...')
         self._apply_whiteouts(target.apps_commit_hash, dst_images_dir)
