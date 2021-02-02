@@ -44,7 +44,7 @@ def get_args():
     parser.add_argument('--fail-on-error', action='store_true',
                         help='Fail OE build if an error occurs')
 
-    parser.add_argument('--log-file', default='/archive/preload-app-images.log',
+    parser.add_argument('--log-file', default='/archive/app-images-preload.log',
                         help='A file to output logs to')
 
     args = parser.parse_args()
