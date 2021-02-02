@@ -13,9 +13,10 @@ class FactoryClient:
     class Target:
         OEArchToAppPlatformMap = {'aarch64': 'arm64', 'x86_64': 'amd64', 'arm': 'arm'}
 
-        def __init__(self, target_name, target_json):
+        def __init__(self, target_name, target_json, shortlist=None):
             self.name = target_name
             self.json = target_json
+            self.shortlist = shortlist
             self._set_apps_commit_hash()
 
         @property

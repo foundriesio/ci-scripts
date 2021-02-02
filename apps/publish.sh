@@ -43,6 +43,7 @@ APPS_OSTREE_REPO_ARCHIVE_DIR="${APPS_OSTREE_REPO_ARCHIVE_DIR-/var/cache/bitbake/
 OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d -p ${HOME})}"
 TREEHUB_REPO_DIR="${TREEHUB_REPO_DIR-$(mktemp -d -p ${HOME})}"
 FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
+APP_SHORTLIST="${APP_SHORTLIST-""}"
 
 require_params FACTORY ARCHIVE TARGET_TAG
 #-- END: Input params
@@ -133,6 +134,7 @@ else
       --token "$(cat "${SECRETS}/osftok")" \
       --preload-dir "${FETCH_DIR}" \
       --out-images-root-dir "${APP_IMAGES_ROOT_DIR}" \
+      --app-shortlist "${APP_SHORTLIST}" \
       2>&1 | indent
   fi
 fi
