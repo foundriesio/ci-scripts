@@ -147,7 +147,14 @@ class FactoryClient:
 
     def _get_targets(self):
         target_resp = http_get(self.targets_endpoint, headers=self._auth_headers)
-        return target_resp.json()['signed']['targets']
+        resp = target_resp.json()
+        # A temporary workaround to switch from old format (a TUF compliant signed targets) to a new
+        # format (a simple dictionary of targets).  Will be removed after an ota-lite change.
+        targets = resp.get('signed', {}).get('targets', None)
+        if targets is None:
+            targets = resp
+        # end of workaround
+        return targets
 
     def _get_target(self, target_name):
         target_resp = http_get(self.targets_endpoint + target_name + '/', headers=self._auth_headers)
