@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 class AppsPublisher:
     def __init__(self, factory, publish_tool: str, registry_host=DockerRegistryClient.DefaultRegistryHost):
-        self._publish_tool = publish_tool
         self._factory = factory
+        self._publish_tool = publish_tool
+        self._registry_host = registry_host
 
         self._image_base_url = '{}/{}'.format(registry_host, self._factory)
         self._allowed_tags = ['${TAG}', 'latest']
@@ -50,9 +51,12 @@ class AppsPublisher:
                                 .format(app.name, service_name))
             image_url = expandvars(image_url_template)
             logger.info('Service image url: %s', image_url)
-            if not image_url.startswith(self._image_base_url):
-                # TODO: verify if URL points to some other factory
+            if not image_url.startswith(self._registry_host) or image_url.startswith(self._registry_host + "/lmp/"):
+                # image url points to non-Foundries docker registry or to Foundries public Factory (aka lmp)
                 continue
+            if not image_url.startswith(self._image_base_url):
+                raise Exception('Image url refers to an image that does not belong to the given Factory;'
+                                ' url: {}, factory: {}'.format(image_url, self._factory))
 
             parts = image_url.split(':')
             if len(parts) == 1:
