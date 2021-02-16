@@ -43,8 +43,12 @@ class AppsPublisher:
 
     def __tag(self, app: ComposeApps.App, tag: str):
         changed = False
-        for _, service_cfg in app.services():
-            image_url = expandvars(service_cfg['image'])
+        for service_name, service_cfg in app.services():
+            image_url_template = service_cfg.get('image')
+            if not image_url_template:
+                raise Exception('Mandatory element `image:` is missing in the app service config; app: {}, service: {}'
+                                .format(app.name, service_name))
+            image_url = expandvars(image_url_template)
             logger.info('Service image url: %s', image_url)
             if not image_url.startswith(self._image_base_url):
                 # TODO: verify if URL points to some other factory
