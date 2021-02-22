@@ -210,6 +210,26 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+      - name: build-lmp-base-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - raspberrypi3-64
+              - raspberrypi4-64
+              - apalis-imx6
+              - apalis-imx8
+              - imx8mmevk
+        params:
+          DISTRO: lmp-base
+          IMAGE: lmp-base-console-image
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
       # mfgtool / uuu related build files
       - name: build-mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
