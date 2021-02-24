@@ -32,7 +32,18 @@ function repo_sync {
 		git config --global http.https://${domain}.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
 	run repo init --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
-	run repo sync
+	for i in $(seq 4); do
+		run timeout 4m repo sync && break
+		if [ $? -eq 124 ] ; then
+			msg="Command timed out"
+			if [ $i -ne 4 ] ; then
+				msg="${msg}, trying again"
+			fi
+			status ${msg}
+		else
+			exit $?
+		fi
+	done
 	if [ -d "$archive" ] ; then
 		status "Generating pinned manifest"
 		repo manifest -r -o $archive/manifest.pinned.xml
