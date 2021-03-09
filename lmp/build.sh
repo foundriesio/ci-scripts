@@ -134,6 +134,9 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/es_*.bin ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/*-board-firmware*.tar.gz ${archive}/other/ || true
 
+	## Targets that support iMX redundant boot
+	cp ${DEPLOY_DIR_IMAGE}/sit-${MACHINE}.bin ${archive}/other/ || true
+
 	# mfgtool-files (iMX targets)
 	if [ "${DISTRO}" = "lmp-mfgtool" ]; then
 		cp ${DEPLOY_DIR_IMAGE}/mfgtool-files-${MACHINE}.tar.gz ${archive}/ || true
@@ -160,6 +163,10 @@ if [ -d "${archive}" ] ; then
 		## iMX targets with imx-boot
 		mv ${archive}/other/imx-boot ${archive}/ || true
 		mv ${archive}/other/imx-boot-${MACHINE} ${archive}/ || true
+		## HDMI firmware for iMX8MQ
+		mv ${archive}/other/imx-boot-tools/signed_hdmi_imx8m.bin ${archive}/ || true
+		## Targets that support iMX redundant boot
+		mv ${archive}/other/sit-${MACHINE}.bin ${archive}/ || true
 	fi
 	## ARM custom targets
 	mv ${archive}/other/se_romfw.bin ${archive}/ || true
