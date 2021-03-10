@@ -37,6 +37,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - am64xx-sk
               - apalis-imx6
               - apalis-imx8
               - beaglebone-yocto
@@ -104,6 +105,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - am64xx-sk
               - apalis-imx6
               - apalis-imx8
               - beaglebone-yocto
@@ -184,6 +186,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - am64xx-sk
               - apalis-imx6
               - apalis-imx8
               - beaglebone-yocto
