@@ -51,7 +51,8 @@ class AppsPublisher:
                                 .format(app.name, service_name))
             image_url = expandvars(image_url_template)
             logger.info('Service image url: %s', image_url)
-            if not image_url.startswith(self._registry_host) or image_url.startswith(self._registry_host + "/lmp/"):
+            if not image_url.startswith(self._registry_host) or \
+                    (self._factory != 'lmp' and image_url.startswith(self._registry_host + "/lmp/")):
                 # image url points to non-Foundries docker registry or to Foundries public Factory (aka lmp)
                 continue
             if not image_url.startswith(self._image_base_url):
