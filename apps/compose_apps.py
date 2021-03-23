@@ -21,7 +21,11 @@ class ComposeApps:
 
         @staticmethod
         def is_compose_app_dir(app_dir):
-            return os.path.exists(os.path.join(app_dir, ComposeApps.App.ComposeFile))
+            typo_file = os.path.join(app_dir, 'docker-compose.yaml')
+            exists = os.path.exists(os.path.join(app_dir, ComposeApps.App.ComposeFile))
+            if not exists and os.path.exists(typo_file):
+                raise ValueError('docker-compose.yaml file found. This must be named docker-compose.yml')
+            return exists
 
         def __init__(self, name, app_dir, validate=False, image_downloader_cls=DockerDownloader):
             if not self.is_compose_app_dir(app_dir):
