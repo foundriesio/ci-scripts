@@ -6,6 +6,7 @@
 import argparse
 import logging
 import json
+import traceback
 
 from apps.target_apps_fetcher import TargetAppsFetcher
 from apps.target_apps_store import ArchiveTargetAppsStore
@@ -42,7 +43,9 @@ if __name__ == '__main__':
         for target, _ in apps_fetcher.target_apps.items():
             store.store(target, apps_fetcher.target_dir(target.name))
     except Exception as exc:
-        logging.error('Failed to fetch Target apps and images: {}'.format(exc))
-        exit_code = 1
+        # since preloading/fetching of App container images are not really mandatory
+        # we return successful exit code and just output an error message along with s stack trace
+        logging.error('Failed to fetch Target apps and images: {}\n{}'.format(exc, traceback.format_exc()))
+        exit_code = 0
 
     exit(exit_code)
