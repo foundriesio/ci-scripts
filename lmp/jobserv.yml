@@ -55,6 +55,7 @@ triggers:
               - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
+              - stm32mp1-disco
               - uz3eg-iocc
         params:
           IMAGE: lmp-base-console-image
@@ -124,6 +125,7 @@ triggers:
               - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
+              - stm32mp1-disco
               - uz3eg-iocc
         params:
           IMAGE: lmp-base-console-image
@@ -204,6 +206,7 @@ triggers:
               - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
+              - stm32mp1-disco
               - uz3eg-iocc
         params:
           IMAGE: lmp-base-console-image
