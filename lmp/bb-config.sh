@@ -40,6 +40,9 @@ cat << EOFEOF >> conf/local.conf
 CONNECTIVITY_CHECK_URIS = "https://www.google.com/"
 
 ACCEPT_FSL_EULA = "1"
+ACCEPT_EULA_stm32mp1-disco = "1"
+ACCEPT_EULA_stm32mp1-eval = "1"
+
 BB_GENERATE_MIRROR_TARBALLS = "1"
 
 UBOOT_SIGN_ENABLE = "${UBOOT_SIGN_ENABLE}"
