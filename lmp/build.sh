@@ -135,6 +135,8 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/*-board-firmware*.tar.gz ${archive}/other/ || true
 	# Copy boot.itb (signed boot script) if available
 	cp ${DEPLOY_DIR_IMAGE}/boot.itb ${archive}/other/ || true
+	# Flash layout for STM32 devices
+	cp ${DEPLOY_DIR_IMAGE}/flashlayouts*.tar.gz ${archive}/other/ || true
 
 	## Targets that support iMX redundant boot
 	cp ${DEPLOY_DIR_IMAGE}/sit-${MACHINE}.bin ${archive}/other/ || true
