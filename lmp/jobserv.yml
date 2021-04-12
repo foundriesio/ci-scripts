@@ -4,6 +4,10 @@ triggers:
     type: git_poller
     email:
       users: 'ci-notifications@foundries.io'
+    webhooks:
+      - url: https://conductor.infra.foundries.io/api/lmp/
+        failures_only: false
+        secret_name: lava
     params:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
