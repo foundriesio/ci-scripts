@@ -6,7 +6,7 @@ triggers:
       users: 'ci-notifications@foundries.io'
     webhooks:
       - url: https://conductor.infra.foundries.io/api/lmp/
-        failures_only: false
+        only_failures: false
         secret_name: lava
     params:
       GIT_URL: |
