@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 from zipfile import ZipFile
 import json
 import os
@@ -33,10 +34,13 @@ def require_secrets(*secret_names):
         sys.exit('Missing required secrets: %s' % ', '.join(missing))
 
 
-def status(msg, prefix='== '):
+def status(msg, prefix='== ', with_ts=False):
     '''Print a commonly formatted status message to the build output'''
     sys.stdout.buffer.write(prefix.encode())
     sys.stdout.buffer.write(b' ')
+    if with_ts:
+        ts = str(datetime.datetime.now()) + ': '
+        sys.stdout.buffer.write(ts.encode())
     sys.stdout.buffer.write(msg.encode())
     sys.stdout.buffer.write(b'\n')
     sys.stdout.buffer.flush()

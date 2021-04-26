@@ -1,0 +1,110 @@
+#!/usr/bin/python3
+from concurrent.futures import ThreadPoolExecutor, wait
+import json
+import os
+from tempfile import TemporaryDirectory, mkstemp
+from shutil import rmtree
+from subprocess import Popen, PIPE
+import sys
+from typing import List, NamedTuple, Optional, Tuple
+
+from helpers import (
+    Progress,
+    cmd,
+    generate_credential_tokens,
+    require_env,
+    require_secrets,
+    secret,
+    secret_get,
+    status,
+)
+
+
+class Delta(NamedTuple):
+    to: List[Tuple[str, str]]
+    froms: List[Tuple[str, str]]
+
+
+class ProgressCb:
+    def __init__(self, total_length: 0):
+        self.total_length = total_length
+        self.total_written = 0
+        self.next_percent = 5
+
+    def cb(self, written: int):
+        self.total_written += written
+        percent = round(self.total_written / self.total_length * 100)
+        if percent >= self.next_percent:
+            status("Downloaded %d%% " % self.next_percent, with_ts=True)
+            self.next_percent += 5
+
+
+def drain(progress: Progress, response, prog_cb: ProgressCb, dst: str):
+    p = Popen(["tar", "-xj"], cwd=dst, stdin=PIPE)
+    for chunk in response.iter_content(chunk_size=1024 * 1024):
+        if chunk:
+            p.stdin.write(chunk)
+            prog_cb(len(chunk))
+    p.stdin.close()
+    p.wait()
+    progress.tick()
+
+
+def _download_extract(progress: Progress, tarurls: List[str], dst: str):
+    status(f"Downloading: {tarurls} -> {dst}")
+
+    total_length = 0
+    responses = []
+    for u in tarurls:
+        r = secret_get(u, "osftok", "OSF-TOKEN", stream=True)
+        total_length += int(r.headers["content-length"])
+        responses.append(r)
+
+    cb = ProgressCb(total_length)
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = []
+        for r in responses:
+            futures.append(executor.submit(drain, progress, r, cb.cb, "./"))
+        for f in futures:
+            f.result()
+
+
+def main(creds_zip_file: str, deltas: List[Delta]):
+    work = 1  # 1 for the fiopush
+    downloads = []
+    for d in deltas:
+        downloads.append(d.to[1])
+        downloads.extend([x[1] for x in d.froms])
+        # 1 for "to" download, 2 for the "from" download and static delta
+        work += 1 + (2 * len(d.froms))
+
+    prog = Progress(work)
+    _download_extract(prog, downloads, "./")
+
+    for d in deltas:
+        for f in d.froms:
+            sha, _ = f
+            status("Generating delta", with_ts=True)
+            cmd("ostree", "static-delta", "generate", "--repo=./ostree_repo", "--from", sha, "--to", d.to[0])
+            prog.tick()
+
+    rmtree("./ostree_repo/objects")  # We just need to sync deltas
+    os.mkdir("./ostree_repo/objects")   # make fiopush happy
+    cmd("fiopush", "-summary", "-repo=./ostree_repo", "-creds", creds_zip_file)
+    prog.tick()
+
+
+if __name__ == "__main__":
+    require_secrets("osftok", "triggered-by", "deltas")
+    creds, = require_env("SOTA_PACKED_CREDENTIALS")
+    _, creds_tmp = mkstemp()
+    generate_credential_tokens(creds, creds_tmp)
+
+    deltas: List[Delta] = []
+    for d in json.loads(secret("deltas")):
+        deltas.append(Delta(**d))
+
+    repo_parent = os.environ.get("OSTREE_REPO_ROOT", "/")
+    os.chdir(repo_parent)
+    main(creds_tmp, deltas)
