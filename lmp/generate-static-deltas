@@ -90,7 +90,6 @@ def main(creds_zip_file: str, deltas: List[Delta]):
             prog.tick()
 
     rmtree("./ostree_repo/objects")  # We just need to sync deltas
-    os.mkdir("./ostree_repo/objects")   # make fiopush happy
     cmd("fiopush", "-summary", "-repo=./ostree_repo", "-creds", creds_zip_file)
     prog.tick()
 
