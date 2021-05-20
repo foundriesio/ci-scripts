@@ -35,6 +35,10 @@ file /bin/busybox | grep -q armhf && ARCH=arm || true
 
 docker_build="docker build"
 if [ -n "$DOCKER_SECRETS" ] ; then
+	# secrets require buildx
+	DOCKER_BUILDX="1"
+fi
+if [ -n "$DOCKER_BUILDX" ] ; then
 	status "Downloading buildx to use for image building"
 	bxarch=$ARCH
 	if [ "$ARCH" = "arm" ] ; then
@@ -69,7 +73,7 @@ for i in `seq 12` ; do
 	fi
 done
 
-if [ -n "$DOCKER_SECRETS" ] ; then
+if [ -n "$DOCKER_BUILDX" ] ; then
 	run docker buildx create --use
 fi
 
@@ -105,7 +109,7 @@ for x in $IMAGES ; do
 	if [ -z "$NOCACHE" ] ; then
 		no_op_tag=0
 		# If we are using buildx, don't try to guess what has changed
-		if [ -z "$DOCKER_SECRETS" ] ; then
+		if [ -z "$DOCKER_BUILDX" ] ; then
 			# If we cannot obtain the diff, force the build
 			CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/${BUILD_CONTEXT} || echo FORCE_BUILD)
 			if [[ ! -z "$CHANGED" ]]; then
@@ -140,7 +144,7 @@ for x in $IMAGES ; do
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
 		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
 		run docker pull ${ct_base}:${LATEST} || no_op_tag=0
-		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ] && [ -z "$DOCKER_SECRETS" ] ; then
+		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ] && [ -z "$DOCKER_BUILDX" ] ; then
 			status "WARNING - no cached image found, forcing a rebuild"
 		fi
 		auth=1
@@ -154,7 +158,7 @@ for x in $IMAGES ; do
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
 			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
-			if [ -n "$DOCKER_SECRETS" ] ; then
+			if [ -n "$DOCKER_BUILDX" ] ; then
 				docker_cmd="${docker_cmd}-${ARCH}_cache"
 			fi
 		else
@@ -191,7 +195,7 @@ for x in $IMAGES ; do
 	echo "Build step $((completed+1)) of $total is complete"
 
 	if [ $auth -eq 1 ] ; then
-		if [[ -z "$DOCKER_SECRETS" ]] || [[ $no_op_tag -eq 1 ]] ; then
+		if [[ -z "$DOCKER_BUILDX" ]] || [[ $no_op_tag -eq 1 ]] ; then
 			# if docker secrets doesn't exist, we aren't using buildx - we need to push
 			# if secrets are defined but no_op_tag is 1, then we didn't build with
 			# buildx and need to push
