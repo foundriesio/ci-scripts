@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os
 import logging
 import subprocess
@@ -18,6 +19,10 @@ class FactoryClient:
             self.json = target_json
             self.shortlist = shortlist
             self._set_apps_commit_hash()
+            self.app_encrypted_key = None
+
+        def copy(self, new_name: str, shortlist=None):
+            return FactoryClient.Target(new_name, deepcopy(self.json), shortlist)
 
         @property
         def platform(self):

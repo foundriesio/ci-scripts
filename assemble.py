@@ -12,7 +12,7 @@ import shutil
 from math import ceil
 from tempfile import TemporaryDirectory
 
-from helpers import cmd, Progress
+from helpers import cmd, require_secrets, secret, Progress
 from apps.target_apps_fetcher import TargetAppsFetcher
 from apps.target_apps_store import ArchiveTargetAppsStore
 from apps.ostree_store import ArchOSTreeTargetAppsStore, OSTreeRepo
@@ -22,6 +22,7 @@ logger = logging.getLogger("System Image Assembler")
 
 
 class WicImage:
+    EncryptedAppsRootDir = 'ostree/deploy/lmp/var/sota/'
     ComposeAppsRootDir = 'ostree/deploy/lmp/var/sota/compose-apps/'
     DockerDataRootDir = 'ostree/deploy/lmp/var/lib/docker/'
     ComposeAppsRoot = 'ostree/deploy/lmp/var/sota/compose-apps'
@@ -35,6 +36,7 @@ class WicImage:
         if increase_bytes:
             self._resize_wic_file(increase_bytes, extra_space)
             self._resized_image = True
+        self.encrypted_apps_root = os.path.join(self._mnt_dir, self.EncryptedAppsRootDir)
         self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRootDir)
         self.docker_data_root = os.path.join(self._mnt_dir, self.DockerDataRootDir)
         self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRoot)
@@ -132,10 +134,14 @@ def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, ost
     p.tick()
 
 
-def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_image_dir: str, app_preload_dir: str,
+def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, encrypted_target: FactoryClient.Target,
+                                              app_image_dir: str, app_preload_dir: str,
                                               wic_image: str, token: str, progress: Progress):
 
-    p = Progress(2, progress)
+    ticks = 2
+    if encrypted_target:
+        ticks += 2
+    p = Progress(ticks, progress)
     target_app_store = ArchiveTargetAppsStore(app_image_dir)
     if not target_app_store.exist(target):
         logger.info('Container images have not been found, trying to obtain them...')
@@ -144,12 +150,31 @@ def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_
         target_app_store.store(target, apps_fetcher.target_dir(target.name))
     p.tick()
 
+    encrypted_app_store = None
+    if encrypted_target:
+        encrypted_app_store = ArchiveTargetAppsStore(app_image_dir)
+        if not encrypted_app_store.exist(encrypted_target):
+            logger.info('Encrypted container images have not been found, trying to obtain them...')
+            apps_fetcher = TargetAppsFetcher(token, app_preload_dir)
+            apps_fetcher.fetch_target(encrypted_target)
+            encrypted_app_store.store(encrypted_target, apps_fetcher.target_dir(encrypted_target.name))
+        p.tick()
+
     # in kilobytes
     image_data_size = target_app_store.images_size(target)
+    logger.info('Image size increasing by %d kb for apps', image_data_size)
+    if encrypted_app_store:
+        size = encrypted_app_store.images_size(encrypted_target)
+        logger.info('Image size increasing by %d kb for encrypted apps', size)
+        image_data_size += size
+
     with WicImage(wic_image, image_data_size * 1024) as wic_image:
         target_app_store.copy(target, wic_image.docker_data_root, wic_image.compose_apps_root)
         wic_image.update_target(target)
-    p.tick()
+        p.tick()
+        if encrypted_app_store:
+            encrypted_app_store.copy(encrypted_target, wic_image.encrypted_apps_root, wic_image.compose_apps_root)
+            p.tick()
 
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
@@ -173,6 +198,10 @@ def get_args():
     parser.add_argument('-T', '--targets', help='A coma separated list of Targets to assemble system image for')
     parser.add_argument('-s', '--app-shortlist', help='A coma separated list of Target Apps'
                                                       ' to include into a system image', default=None)
+    parser.add_argument('-e', '--app-encrypted', help='A coma separated list of Target Apps'
+                                                      ' to encrypt and include in system image', default=None)
+    parser.add_argument('-S', '--app-encrypted-key',
+                        help='A the CI secret name to encrypt apps with', default='app-encrypted-key')
     parser.add_argument('-u', '--use-ostree', help='Enables an ostree repo usage for compose apps', default=None)
     args = parser.parse_args()
 
@@ -181,6 +210,11 @@ def get_args():
 
     if args.app_shortlist:
         args.app_shortlist = args.app_shortlist.split(',')
+
+    if args.app_encrypted:
+        args.app_encrypted = args.app_encrypted.split(',')
+        require_secrets(args.app_encrypted_key)
+        args.app_encrypted_key = secret(args.app_encrypted_key)
 
     return args
 
@@ -210,23 +244,28 @@ if __name__ == '__main__':
         p = Progress(len(targets))
         logger.info('Found {} Targets to assemble image for'.format(found_targets_number))
         for target in targets:
-            logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
+            logger.info('Assembling image for %s, shortlist: %s, encrypted: %s',
+                        target.name, args.app_shortlist, args.app_encrypted)
             subprog = Progress(3, p)
             image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
-            target.shortlist = args.app_short_list
+            target.shortlist = args.app_shortlist
+            encrypted_target = None
+            if args.app_encrypted:
+                encrypted_target = target.copy(target.name + "-enc", args.app_encrypted)
+                encrypted_target.app_encrypted_key = args.app_encrypted_key
 
             if args.use_ostree and args.use_ostree == '1':
                 copy_container_images_to_wic(target, args.factory, args.ostree_repo_archive_dir, args.repo_dir,
                                              args.fetch_dir, image_file_path, args.token, subprog)
             else:
-                copy_container_images_from_archive_to_wic(target, args.ostree_repo_archive_dir, args.fetch_dir,
+                copy_container_images_from_archive_to_wic(target, encrypted_target, args.ostree_repo_archive_dir, args.fetch_dir,
                                                           image_file_path, args.token, subprog)
 
             archive_and_output_assembled_wic(image_file_path, args.out_image_dir)
             subprog.tick(complete=True)
 
-    except Exception as exc:
-        logger.error('Failed to assemble a system image: {}'.format(exc))
+    except Exception:
+        logger.exception('Failed to assemble a system image')
         exit_code = 1
 
     exit(exit_code)

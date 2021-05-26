@@ -19,6 +19,7 @@ TARGET_VERSION="${TARGET_VERSION-${H_BUILD}}"
 OUT_IMAGE_DIR="${OUT_IMAGE_DIR-/archive}"
 APPS_OSTREE_REPO_ARCHIVE_DIR="${APPS_OSTREE_REPO_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
 APP_SHORTLIST="${APP_SHORTLIST-""}"
+APP_ENCRYPTED="${APP_ENCRYPTED-""}"
 COMPOSE_APP_USE_OSTREE=${COMPOSE_APP_USE_OSTREE-""}
 OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d)}"
 # directory to preload/dump/snapshot apps images to
@@ -43,4 +44,5 @@ status Running: Assemble System Image script
   --fetch-dir "${FETCH_DIR}" \
   --targets "${TARGETS}" \
   --app-shortlist="${APP_SHORTLIST}" \
+  --app-encrypted="${APP_ENCRYPTED}" \
   --use-ostree="${COMPOSE_APP_USE_OSTREE}"

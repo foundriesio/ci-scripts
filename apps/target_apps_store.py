@@ -32,6 +32,34 @@ class TargetAppsStore:
     def apps_location(self, target: FactoryClient.Target):
         pass
 
+EXTRACTION_SCRIPT = '''#!/bin/sh
+set -e
+set -o pipefail
+if [ $# -ne 1 ] ; then
+    echo "Usage: $0 <decryption key>"
+    exit 1
+fi
+
+archive=$(grep --text --line-number '# ARCHIVE:$' $0 | cut -d: -f1)
+cp /var/lib/docker/image/overlay2/repositories.json /tmp/orig.json
+echo "Extracting container images"
+tail -n +$((archive + 1)) $0 | openssl enc -pbkdf2 -d -aes256 -k $1 \\
+    | tar -C /var/lib/docker --strip-components=2 -x ./images
+
+python3 -c 'import json; cur = json.load(open("/tmp/orig.json")); new = json.load(open("/var/lib/docker/image/overlay2/repositories.json")); cur["Repositories"].update(new["Repositories"]); json.dump(cur, open("/var/lib/docker/image/overlay2/repositories.json", "w"))'
+
+echo "Extracting compose apps"
+tail -n +$((archive + 1)) $0 | openssl enc -pbkdf2 -d -aes256 -k $1 \\
+    | tar -C /var/sota/compose-apps --strip-components=2 -x ./apps
+
+rm $0
+
+systemctl restart docker
+
+exit 0
+
+# ARCHIVE:
+'''
 
 class ArchiveTargetAppsStore(TargetAppsStore):
     def __init__(self, root_dir):
@@ -70,6 +98,16 @@ class ArchiveTargetAppsStore(TargetAppsStore):
 
         return app_image_size
 
+    def _copy_encrypted(self, app_img: str, dst_images_dir: str, encrypt_apps: str):
+        path = os.path.join(dst_images_dir, 'extract-encrypted-apps')
+        logger.info('Creating self extracting encrypted file: %s', path)
+        with open(path, 'wb') as f:
+            os.fchmod(f.fileno(), 0o755)
+            f.write(EXTRACTION_SCRIPT.encode())
+            f.flush()
+            subprocess.check_call(['openssl', 'enc', '-pbkdf2', '-e', '-aes256',
+                                   '-in', app_img, '-k', encrypt_apps], stdout=f)
+
     def copy(self, target: FactoryClient.Target, dst_images_dir: str, dst_apps_dir: str):
         if not self.exist(target):
             # Try to find an archive file that contains just images
@@ -77,9 +115,11 @@ class ArchiveTargetAppsStore(TargetAppsStore):
                 logger.info('Copying only Apps\' container images...')
                 return self._copy_images(target, dst_images_dir)
             else:
-                raise Exception('Failed to found images of the given Target {}'.format(target.name))
+                raise Exception('Failed to find images of the given Target {}'.format(target.name))
 
         _, app_image_tar, _ = self.apps_location(target)
+        if target.app_encrypted_key:
+            return self._copy_encrypted(app_image_tar, dst_images_dir, target.app_encrypted_key)
 
         if os.path.exists(dst_images_dir):
             # wic image was populated by container images data during LmP build
