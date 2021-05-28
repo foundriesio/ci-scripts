@@ -96,12 +96,11 @@ class WicImage:
 
 
 def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, ostree_repo_archive_dir: str,
-                                 app_repo_dir, app_fetch_dir: str, wic_image: str, token: str, apps_shortlist: list,
+                                 app_repo_dir, app_fetch_dir: str, wic_image: str, token: str,
                                  progress: Progress):
 
     p = Progress(2, progress)
     target_app_store = ArchOSTreeTargetAppsStore(factory, ostree_repo_archive_dir, app_repo_dir)
-    target.shortlist = apps_shortlist
     if not target_app_store.exist(target):
         logger.info('Compose Apps haven\'t been found, fetching them...')
         apps_fetcher = TargetAppsFetcher(token, app_fetch_dir)
@@ -134,15 +133,14 @@ def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, ost
 
 
 def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_image_dir: str, app_preload_dir: str,
-                                              wic_image: str, token: str, apps_shortlist: list, progress: Progress):
+                                              wic_image: str, token: str, progress: Progress):
 
     p = Progress(2, progress)
     target_app_store = ArchiveTargetAppsStore(app_image_dir)
-    target.shortlist = apps_shortlist
     if not target_app_store.exist(target):
         logger.info('Container images have not been found, trying to obtain them...')
         apps_fetcher = TargetAppsFetcher(token, app_preload_dir)
-        apps_fetcher.fetch_target_apps(target, apps_shortlist)
+        apps_fetcher.fetch_target_apps(target, target.shortlist)
         apps_fetcher.fetch_apps_images()
         target_app_store.store(target, apps_fetcher.target_dir(target.name))
     p.tick()
@@ -216,13 +214,14 @@ if __name__ == '__main__':
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
             subprog = Progress(3, p)
             image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
+            target.shortlist = args.app_short_list
 
             if args.use_ostree and args.use_ostree == '1':
                 copy_container_images_to_wic(target, args.factory, args.ostree_repo_archive_dir, args.repo_dir,
-                                             args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
+                                             args.fetch_dir, image_file_path, args.token, subprog)
             else:
                 copy_container_images_from_archive_to_wic(target, args.ostree_repo_archive_dir, args.fetch_dir,
-                                                          image_file_path, args.token, args.app_shortlist, subprog)
+                                                          image_file_path, args.token, subprog)
 
             archive_and_output_assembled_wic(image_file_path, args.out_image_dir)
             subprog.tick(complete=True)
