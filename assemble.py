@@ -140,8 +140,7 @@ def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_
     if not target_app_store.exist(target):
         logger.info('Container images have not been found, trying to obtain them...')
         apps_fetcher = TargetAppsFetcher(token, app_preload_dir)
-        apps_fetcher.fetch_target_apps(target, target.shortlist)
-        apps_fetcher.fetch_apps_images()
+        apps_fetcher.fetch_target(target)
         target_app_store.store(target, apps_fetcher.target_dir(target.name))
     p.tick()
 
