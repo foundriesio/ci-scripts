@@ -166,10 +166,13 @@ for x in $IMAGES ; do
 			docker_cmd="$docker_cmd  --no-cache"
 		fi
 
-		if [ -n "$DOCKER_SECRETS" ] ; then
-			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
+		if [ -n "$DOCKER_BUILDX" ] ; then
 			export DOCKER_BUILDKIT=1
 			docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+		fi
+
+		if [ -n "$DOCKER_SECRETS" ] ; then
+			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
 			for secret in `ls /secrets` ; do
 				docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
 			done
