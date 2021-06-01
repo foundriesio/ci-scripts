@@ -98,7 +98,7 @@ class ArchiveTargetAppsStore(TargetAppsStore):
 
         return app_image_size
 
-    def _copy_encrypted(self, app_img: str, dst_images_dir: str, encrypt_apps: str):
+    def _copy_encrypted(self, app_img: str, dst_images_dir: str, encryption_key: str):
         path = os.path.join(dst_images_dir, 'extract-encrypted-apps')
         logger.info('Creating self extracting encrypted file: %s', path)
         with open(path, 'wb') as f:
@@ -106,7 +106,7 @@ class ArchiveTargetAppsStore(TargetAppsStore):
             f.write(EXTRACTION_SCRIPT.encode())
             f.flush()
             subprocess.check_call(['openssl', 'enc', '-pbkdf2', '-e', '-aes256',
-                                   '-in', app_img, '-k', encrypt_apps], stdout=f)
+                                   '-in', app_img, '-k', encryption_key], stdout=f)
 
     def copy(self, target: FactoryClient.Target, dst_images_dir: str, dst_apps_dir: str):
         if not self.exist(target):
