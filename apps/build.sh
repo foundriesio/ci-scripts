@@ -154,7 +154,7 @@ for x in $IMAGES ; do
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
 	else
-		docker_cmd="$docker_build --label \"jobserv_build=$H_BUILD\" -t ${ct_base}:$TAG-$ARCH --force-rm"
+		docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH --force-rm"
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
 			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
