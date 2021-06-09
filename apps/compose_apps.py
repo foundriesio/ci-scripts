@@ -46,6 +46,9 @@ class ComposeApps:
         def validate(self):
             self._run_cmd('config')
 
+        def pin(self):
+            self._run_cmd('config', '--resolve-image-digests')
+
         def services(self):
             return self['services'].items()
 
@@ -62,8 +65,8 @@ class ComposeApps:
             with open(self.file, 'w') as compose_file:
                 yaml.dump(self._desc, compose_file)
 
-        def _run_cmd(self, cmd):
-            cmd_exe(self.DockerComposeTool, '-f', self.file, cmd)
+        def _run_cmd(self, *args):
+            cmd_exe(self.DockerComposeTool, '-f', self.file, *args)
 
         def __getitem__(self, item):
             return self._desc[item]

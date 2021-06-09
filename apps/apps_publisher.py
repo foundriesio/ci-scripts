@@ -31,6 +31,7 @@ class AppsPublisher:
 
     def publish(self, apps: ComposeApps, version: str):
         self.tag(apps, version)
+        self.pin(apps)
         logger.info('Publishing Apps...')
         published_apps = {}
         [published_apps.update({app.name: {'uri': self.__publish(app, version)}}) for app in apps]
@@ -41,6 +42,10 @@ class AppsPublisher:
         # in this case we won't need the tagging step/changing image URIs in docker-compose.yml of each app
         logger.info('Tagging Apps...')
         [self.__tag(app, version) for app in apps]
+
+    def pin(self, apps: ComposeApps):
+        logger.info('Pinning Apps...')
+        [app.pin() for app in apps]
 
     def __tag(self, app: ComposeApps.App, tag: str):
         changed = False
