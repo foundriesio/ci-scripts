@@ -15,7 +15,7 @@ triggers:
         refs/heads/master
       OTA_LITE_TAG: postmerge
     runs:
-      # images that have OTA and ptest
+      # images that have ptest
       - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-osf
@@ -24,7 +24,6 @@ triggers:
             values:
               - intel-corei7-64
         triggers:
-          - name: ota-{loop}
           - name: ptest-build-{loop}
         params:
           IMAGE: lmp-base-console-image
@@ -186,7 +185,6 @@ triggers:
             values:
               - intel-corei7-64
         triggers:
-          - name: ota-{loop}
           - name: ptest-build-{loop}
         params:
           IMAGE: lmp-base-console-image
@@ -293,20 +291,6 @@ triggers:
           path: lmp/build.sh
         persistent-volumes:
           bitbake: /var/cache/bitbake
-
-  - name: ota-intel-corei7-64
-    type: simple
-    runs:
-      - name: lmp-ota-intel-corei7-64
-        container: hub.foundries.io/ota-runner
-        host-tag: amd64-ota
-        privileged: true
-        test-grepping:
-          test-pattern: "^Starting Test Suite: (?P<name>\\S+)"
-          result-pattern: "^Test Result: (?P<name>\\S+) = (?P<result>(PASSED|FAILED))$"
-        script-repo:
-          name: fio
-          path: lmp/ota.sh
 
 params:
   archive: /archive
