@@ -224,7 +224,11 @@ if __name__ == '__main__':
                 copy_container_images_from_archive_to_wic(target, args.ostree_repo_archive_dir, args.fetch_dir,
                                                           image_file_path, args.token, args.app_shortlist, subprog)
 
-            archive_and_output_assembled_wic(image_file_path, args.out_image_dir)
+            # Don't think its possible to have more than one tag at the time
+            # we assemble, but the first tag will be the primary thing its
+            # known as and also match what's in the target name.
+            archive_dir = os.path.join(args.out_image_dir, target.tags[0])
+            archive_and_output_assembled_wic(image_file_path, archive_dir)
             subprog.tick(complete=True)
 
     except Exception as exc:
