@@ -27,7 +27,7 @@ COMPOSE_APP_USE_OSTREE=${COMPOSE_APP_USE_OSTREE-""}
 APPS_ROOT_DIR=${APPS_ROOT_DIR-${PWD}}
 PUBLISH_TOOL=${PUBLISH_TOOL-""}
 
-APPS_VERSION=${APPS_VERSION-$(git --git-dir="${APPS_ROOT_DIR}/.git" log -1 --format=%h)}
+APPS_VERSION=${H_BUILD}_${APPS_VERSION-$(git --git-dir="${APPS_ROOT_DIR}/.git" log -1 --format=%h)}
 GIT_SHA=${GIT_SHA-$(git --git-dir="${APPS_ROOT_DIR}/.git" log -1 --format=%H)}
 TARGET_VERSION=${H_BUILD-""}
 

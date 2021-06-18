@@ -221,9 +221,9 @@ for x in $IMAGES ; do
 		for arch in `echo $MANIFEST_PLATFORMS | sed -e 's/linux\///g' -e 's/,/ /g'` ; do
 			manifest_args="${manifest_args} ${ct_base}:$TAG-$arch"
 		done
-		run docker manifest create ${ct_base}:$TAG $manifest_args && \
+		run docker manifest create ${ct_base}:${H_BUILD}_$TAG $manifest_args && \
 			run docker manifest create ${ct_base}:$LATEST $manifest_args && \
-			run docker manifest push ${ct_base}:$TAG && \
+			run docker manifest push ${ct_base}:${H_BUILD}_$TAG && \
 			run docker manifest push ${ct_base}:$LATEST || true
 	else
 		echo "osftoken not provided, skipping publishing step"
