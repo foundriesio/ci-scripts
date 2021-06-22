@@ -27,6 +27,7 @@ class WicImage:
     ComposeAppsRoot = 'ostree/deploy/lmp/var/sota/compose-apps'
     ComposeAppsTree = 'ostree/deploy/lmp/var/sota/compose-apps-tree'
     InstalledTargetFile = 'ostree/deploy/lmp/var/sota/import/installed_versions'
+    SotaOverridesDir = 'ostree/deploy/lmp/etc/sota/conf.d/'
 
     def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
         self._path = wic_image_path
@@ -40,6 +41,7 @@ class WicImage:
         self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRoot)
         self.compose_apps_tree = os.path.join(self._mnt_dir, self.ComposeAppsTree)
         self.installed_target_filepath = os.path.join(self._mnt_dir, self.InstalledTargetFile)
+        self.sota_overrides_dir = os.path.join(self._mnt_dir, self.SotaOverridesDir)
 
     def __enter__(self):
         cmd('losetup', '-P', '-f', self._path)
@@ -152,6 +154,12 @@ def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_
     with WicImage(wic_image, image_data_size * 1024) as wic_image:
         target_app_store.copy(target, wic_image.docker_data_root, wic_image.compose_apps_root)
         wic_image.update_target(target)
+        overrides_dir = wic_image.sota_overrides_dir
+        os.makedirs(overrides_dir, exist_ok=True)
+        logger.info("Add z99-docker-no-prune.toml to %s", overrides_dir)
+        with open(os.path.join(overrides_dir, 'z99-docker-no-prune.toml'), 'w') as f:
+            f.write('[pacman]\n')
+            f.write('docker_prune = "0"\n')
     p.tick()
 
 
