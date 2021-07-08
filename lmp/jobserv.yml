@@ -40,7 +40,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - am64xx-sk
+              - am64xx-evm
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
@@ -202,7 +202,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - am64xx-sk
+              - am64xx-evm
               - apalis-imx6
               - apalis-imx8
               - beaglebone-yocto
