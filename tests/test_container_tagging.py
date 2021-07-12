@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+import os
 import unittest
 
 from contextlib import contextmanager
@@ -104,6 +105,9 @@ def create_target(tag, version, targets_file, apps, machines=None, platforms=Non
 
 
 class TestTagging(unittest.TestCase):
+    def setUp(self):
+        os.environ['H_PROJECT'] = 'ci-test'
+        os.environ['H_BUILD'] = '42'
 
     def test_one_to_one(self):
         """Make sure the most basic one-to-one tagging method works."""

@@ -1,7 +1,8 @@
 # Copyright (c) 2020 Foundries.io
 # SPDX-License-Identifier: Apache-2.0
-
+import datetime
 import logging
+import os
 import json
 from copy import deepcopy
 
@@ -104,6 +105,16 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines, p
             target = deepcopy(target)
             tgt_name = tagmgr.create_target_name(target, version, tag)
             data['targets'][tgt_name] = target
+
+            now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+            target['custom']['createdAt'] = now
+            target['custom']['updatedAt'] = now
+            uri = target['custom'].get('uri')
+            if uri:
+                target['custom']['origUri'] = uri
+            proj = os.environ['H_PROJECT']
+            build = os.environ['H_BUILD']
+            target['custom']['uri'] = f'https://ci.foundries.io/projects/{proj}/builds/{build}'
 
             target['custom']['version'] = version
             if tag:
