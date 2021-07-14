@@ -115,7 +115,7 @@ class FactoryClient:
     def get_target_system_image(self, target: Target, out_dir: str, progress: Progress):
         # https://api.foundries.io/projects/<factory>/lmp/builds/<build-numb>/runs/<machine>/<image-name>-<machine>.wic.gz
 
-        image_base_url = target['custom']['uri']
+        image_base_url = target['custom']['origUri'] if 'origUri' in target['custom'] else target['custom']['uri']
         image_machine = target['custom']['hardwareIds'][0]
         image_filename = target['custom']['image-file']
 
