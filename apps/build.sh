@@ -74,7 +74,7 @@ for i in `seq 12` ; do
 done
 
 if [ -n "$DOCKER_BUILDX" ] ; then
-	run docker buildx create --use
+	run docker buildx create --driver-opt image=moby/buildkit:v0.8.3 --use
 fi
 
 TAG=$(git log -1 --format=%h)
