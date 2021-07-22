@@ -7,7 +7,7 @@ triggers:
     webhooks:
       - url: https://conductor.infra.foundries.io/api/lmp/
         only_failures: false
-        secret_name: webhook-key
+        secret_name: lava-webhook-key
     params:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
