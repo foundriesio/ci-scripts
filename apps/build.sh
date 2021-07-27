@@ -241,5 +241,7 @@ for x in $IMAGES ; do
 		fi
 		echo "</testcase>" >> /archive/junit.xml
 	fi
+	# Publish a list of md5sum checksums for the source code of each image build
+	find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
 	echo "Build step $((completed+3)) of $total is complete"
 done
