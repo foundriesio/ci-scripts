@@ -52,6 +52,7 @@ triggers:
               - imx7ulpea-ucom
               - imx8mmevk
               - imx8mqevk
+              - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
               - qemuarm64
@@ -213,6 +214,7 @@ triggers:
               - imx7ulpea-ucom
               - imx8mmevk
               - imx8mqevk
+              - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
               - qemuarm64
