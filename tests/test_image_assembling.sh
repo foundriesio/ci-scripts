@@ -44,7 +44,7 @@ docker run -v -it --rm --privileged \
   -e FACTORY="$FACTORY" \
   -e HOME=/home/test \
   -e FETCH_DIR=/fetch-dir \
-  -e COMPOSE_APP_USE_OSTREE="1" \
+  -e COMPOSE_APP_USE_OSTREE="0" \
   -e APPS_OSTREE_REPO_ARCHIVE_DIR=/apps-ostree-repo-archive-dir \
   -e OUT_IMAGE_DIR=/out-image-dir \
   -e TARGET_VERSION="${TARGET_VERSION}" \
