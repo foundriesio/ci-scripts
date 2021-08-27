@@ -33,6 +33,18 @@ ARCH=amd64
 file /bin/busybox | grep -q aarch64 && ARCH=arm64 || true
 file /bin/busybox | grep -q armhf && ARCH=arm || true
 
+status Launching dockerd
+unset DOCKER_HOST
+DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
+for i in `seq 12` ; do
+	sleep 1
+	docker info >/dev/null 2>&1 && break
+	if [ $i = 12 ] ; then
+		status Timed out trying to connect to internal docker host
+		exit 1
+	fi
+done
+
 docker_build="docker build"
 if [ -n "$DOCKER_SECRETS" ] ; then
 	# secrets require buildx
@@ -48,6 +60,7 @@ if [ -n "$DOCKER_BUILDX" ] ; then
 	wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-${bxarch}
 	chmod +x ~/.docker/cli-plugins/docker-buildx
 	docker_build="docker buildx build"
+	run docker buildx create --driver-opt image=moby/buildkit:v0.8.3 --use
 fi
 
 pbc=pre-build.conf
@@ -61,21 +74,6 @@ if [ -z "$IMAGES" ] ; then
 	IMAGES=$(find ./ -mindepth 2 -maxdepth 2 -name Dockerfile | cut -d / -f2)
 fi
 
-status Launching dockerd
-unset DOCKER_HOST
-DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
-for i in `seq 12` ; do
-	sleep 1
-	docker info >/dev/null 2>&1 && break
-	if [ $i = 12 ] ; then
-		status Timed out trying to connect to internal docker host
-		exit 1
-	fi
-done
-
-if [ -n "$DOCKER_BUILDX" ] ; then
-	run docker buildx create --driver-opt image=moby/buildkit:v0.8.3 --use
-fi
 
 TAG=$(git log -1 --format=%h)
 LATEST=${OTA_LITE_TAG-"latest"}
