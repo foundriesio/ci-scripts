@@ -47,6 +47,7 @@ triggers:
               - beaglebone-yocto
               - corstone700-mps3
               - freedom-u540
+              - generic-arm64
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
@@ -211,6 +212,7 @@ triggers:
               - beaglebone-yocto
               - corstone700-mps3
               - freedom-u540
+              - generic-arm64
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
