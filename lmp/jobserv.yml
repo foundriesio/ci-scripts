@@ -51,6 +51,7 @@ triggers:
               - imx6ullevk-sec
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mm-lpddr4-evk-sec
               - imx8mqevk
               - jetson-agx-xavier-devkit
               - n1sdp
@@ -88,6 +89,7 @@ triggers:
               - imx6ullevk-sec
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mm-lpddr4-evk-sec
               - imx8mqevk
         params:
           DISTRO: lmp-mfgtool
@@ -213,6 +215,7 @@ triggers:
               - imx6ullevk-sec
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mm-lpddr4-evk-sec
               - imx8mqevk
               - jetson-agx-xavier-devkit
               - n1sdp
@@ -269,6 +272,7 @@ triggers:
               - imx6ullevk-sec
               - imx7ulpea-ucom
               - imx8mmevk
+              - imx8mm-lpddr4-evk-sec
               - imx8mqevk
         params:
           DISTRO: lmp-mfgtool
