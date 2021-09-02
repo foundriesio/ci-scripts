@@ -122,21 +122,6 @@ if [ "${COMPOSE_APP_USE_OSTREE}" = "1" ]; then
     --repo-dir "${OSTREE_REPO_DIR}" \
     --treehub-repo-dir "${TREEHUB_REPO_DIR}" \
     --ostree-repo-archive-dir "${APPS_OSTREE_REPO_ARCHIVE_DIR}"
-else
-  if [ "${DOCKER_COMPOSE_APP_PRELOAD}" = "1" ]; then
-    # if OSTree usage is turned off and apps preloading is enabled then apps have to be fetched and stored on
-    # the shared storage for further preloading into a system image
-
-    status "Dumping apps and their images; version: ${APPS_VERSION}"
-    /usr/local/bin/dind "${HERE}/apps_fetcher.py" \
-      --factory "${FACTORY}" \
-      --targets "${ARCHIVE}/targets-created.json" \
-      --token "$(cat "${SECRETS}/osftok")" \
-      --preload-dir "${FETCH_DIR}" \
-      --out-images-root-dir "${APP_IMAGES_ROOT_DIR}" \
-      --app-shortlist "${APP_SHORTLIST}" \
-      2>&1 | indent
-  fi
 fi
 
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
