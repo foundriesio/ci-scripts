@@ -154,6 +154,8 @@ if [ -d "${archive}" ] ; then
 
 	# Make the main img.gz be in the root of the archive
 	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
+	# NVIDIA targets use a tegraflash tarball
+	mv ${archive}/other/lmp-*.tegraflash.tar.gz ${archive}/ || true
 
 	# Move bootloader / boot firmware to the root of the archive
 	## Intel (used by Qemu)
