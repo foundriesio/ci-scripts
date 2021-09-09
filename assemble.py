@@ -30,7 +30,7 @@ class WicImage:
 
     def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
         self._path = wic_image_path
-        self._mnt_dir = os.path.join('/mnt', 'wic_image_p2')
+        self._mnt_dir = os.path.join('/mnt', 'wic_image_rootfs')
         self._resized_image = False
         if increase_bytes:
             self._resize_wic_file(increase_bytes, extra_space)
