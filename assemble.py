@@ -31,6 +31,7 @@ class WicImage:
     def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
         self._path = wic_image_path
         self._mnt_dir = os.path.join('/mnt', 'wic_image_rootfs')
+        self._last_part = 2
         self._resized_image = False
         if increase_bytes:
             self._resize_wic_file(increase_bytes, extra_space)
@@ -47,7 +48,7 @@ class WicImage:
         for line in out.splitlines():
             if self._path in line:
                 self._loop_device = line.split(':', 1)[0]
-                self._wic_device = line.split(':', 1)[0] + 'p2'
+                self._wic_device = line.split(':', 1)[0] + 'p' + str(self._last_part)
                 break
         else:
             raise RuntimeError('Unable to find loop device for wic image')
@@ -89,10 +90,18 @@ class WicImage:
             'conv=notrunc', 'oflag=append', 'count=' + str(increase_k),
             'seek=' + str(wic_k))
 
-        parted_out = str(subprocess.check_output(['parted', self._path, 'print']))
-        if parted_out.find('Partition Table: gpt') != -1:
+        parted_out = subprocess.check_output(['parted', self._path, 'print'])
+        if parted_out.find(b'Partition Table: gpt') != -1:
             subprocess.check_call(['sgdisk', '-e', self._path])
-        subprocess.check_call(['parted', self._path, 'resizepart', '2', '100%'])
+        # save last partition # for resizing.  Example line for GPT:
+        #  5      33.6MB  1459MB  1425MB  ext4         primary
+        # and like this for msdos:
+        #  2      50.3MB  688MB   638MB   primary  ext4
+        # either way we can capture the first column as the last partition #
+        # NOTE: use -3 index as parted_out will have 2x b'' items at the end
+        self._last_part = int(parted_out.split(b'\n')[-3].split()[0])
+        logger.info('last partition: %d' % self._last_part)
+        subprocess.check_call(['parted', self._path, 'resizepart', str(self._last_part), '100%'])
 
 
 def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, ostree_repo_archive_dir: str,
