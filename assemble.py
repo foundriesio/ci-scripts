@@ -89,8 +89,8 @@ class WicImage:
             'conv=notrunc', 'oflag=append', 'count=' + str(increase_k),
             'seek=' + str(wic_k))
 
-        fdsik_out = str(subprocess.check_output(['fdisk', '-l', self._path]))
-        if fdsik_out.find('using GPT') != -1:
+        parted_out = str(subprocess.check_output(['parted', self._path, 'print']))
+        if parted_out.find('Partition Table: gpt') != -1:
             subprocess.check_call(['sgdisk', '-e', self._path])
         subprocess.check_call(['parted', self._path, 'resizepart', '2', '100%'])
 
