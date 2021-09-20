@@ -51,9 +51,9 @@ triggers:
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
-              - imx8mmevk
+              - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
-              - imx8mqevk
+              - imx8mq-evk
               - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
@@ -89,9 +89,9 @@ triggers:
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
-              - imx8mmevk
+              - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
-              - imx8mqevk
+              - imx8mq-evk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -216,9 +216,9 @@ triggers:
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
-              - imx8mmevk
+              - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
-              - imx8mqevk
+              - imx8mq-evk
               - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
@@ -251,7 +251,7 @@ triggers:
               - raspberrypi4-64
               - apalis-imx6
               - apalis-imx8
-              - imx8mmevk
+              - imx8mm-lpddr4-evk
         params:
           DISTRO: lmp-base
           IMAGE: lmp-base-console-image
@@ -273,9 +273,9 @@ triggers:
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
-              - imx8mmevk
+              - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
-              - imx8mqevk
+              - imx8mq-evk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
