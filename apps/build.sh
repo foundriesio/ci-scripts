@@ -192,6 +192,9 @@ for x in $IMAGES ; do
 		# we have to use eval because the some parts of docker_cmd are
 		# variables quotes with spaces: --build-arg "foo=bar blah"
 		run eval "$docker_cmd -f $DOCKERFILE $BUILD_CONTEXT"
+
+	        # Publish a list of md5sum checksums for the source code of each image build
+	        find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
 	fi
 	echo "Build step $((completed+1)) of $total is complete"
 
@@ -239,7 +242,5 @@ for x in $IMAGES ; do
 		fi
 		echo "</testcase>" >> /archive/junit.xml
 	fi
-	# Publish a list of md5sum checksums for the source code of each image build
-	find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
 	echo "Build step $((completed+3)) of $total is complete"
 done
