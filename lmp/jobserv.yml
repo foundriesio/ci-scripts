@@ -57,7 +57,7 @@ triggers:
               - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
-              - qemuarm64
+              - qemuarm64-secureboot
               - qemuriscv64
               - raspberrypi3
               - raspberrypi3-64
@@ -222,7 +222,7 @@ triggers:
               - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
-              - qemuarm64
+              - qemuarm64-secureboot
               - qemuriscv64
               - raspberrypi3
               - raspberrypi3-64
