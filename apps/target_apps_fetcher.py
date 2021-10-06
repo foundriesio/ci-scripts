@@ -1,6 +1,9 @@
 import os
 import json
 import logging
+import tarfile
+import subprocess
+from io import BytesIO as BIO
 
 from factory_client import FactoryClient
 from apps.docker_registry_client import DockerRegistryClient
@@ -76,3 +79,66 @@ class TargetAppsFetcher:
             else:
                 logger.info('App has been already fetched; Target: {}, App: {}'.format(target.name, app_name))
         return ComposeApps(self.apps_dir(target.name))
+
+
+class SkopeAppFetcher(TargetAppsFetcher):
+    ManifestFile = 'manifest.json'
+    ArchiveFileExt = '.tgz'
+    BlobsDir = 'blobs'
+
+    def __init__(self, token, work_dir, factory=None):
+        super().__init__(token, work_dir, factory)
+
+    def blobs_dir(self, target_name):
+        return os.path.join(self.target_dir(target_name), self.BlobsDir)
+
+    def _fetch_apps(self, target, apps_shortlist=None, force=False):
+        fetched_apps = []
+        for app_name, app_uri in target.apps():
+            if apps_shortlist and app_name not in apps_shortlist:
+                logger.info('{} is not in the shortlist, skipping it'.format(app_name))
+                continue
+
+            uri = DockerRegistryClient.parse_image_uri(app_uri)
+            app_dir = os.path.join(self.apps_dir(target.name), app_name, uri.hash)
+            if os.path.exists(app_dir) and not force:
+                logger.info('App has been already fetched; Target: {}, App: {}'.format(target.name, app_name))
+                continue
+
+            os.makedirs(app_dir, exist_ok=True)
+            manifest_data = self._registry_client.pull_manifest(uri)
+            with open(os.path.join(app_dir, self.ManifestFile), 'wb') as f:
+                f.write(manifest_data)
+
+            manifest = json.loads(manifest_data)
+            app_blob_digest = manifest["layers"][0]["digest"]
+            app_blob_hash = app_blob_digest[len('sha256:'):]
+            app_blob = self._registry_client.pull_layer(uri, app_blob_digest)
+            app_blob_file = os.path.join(app_dir, app_blob_hash + self.ArchiveFileExt)
+            with open(app_blob_file, 'wb') as f:
+                f.write(app_blob)
+
+            with tarfile.open(fileobj=BIO(app_blob)) as t:
+                t.extract('docker-compose.yml', app_dir)
+
+            fetched_apps.append(ComposeApps.App(app_name, app_dir, validate=True))
+        return fetched_apps
+
+    def fetch_apps_images(self, graphdriver='overlay2', force=False):
+        self._registry_client.login()
+        for target, apps in self.target_apps.items():
+            logger.info('Pulling images of {} apps'.format(target.name))
+            for app in apps:
+                logger.info('Pulling {} images'.format(app.name))
+                images_dir = os.path.join(app.dir, self.ImagesDir)
+                os.makedirs(images_dir, exist_ok=True)
+                for image in app.images():
+                    self.fetch_image(target.name, target.platform, image, images_dir)
+
+    def fetch_image(self, target_name: str, arch: str, image: str, dst_root_dir: str):
+        logger.info('Pulling image: {}'.format(image))
+        uri = self._registry_client.parse_image_uri(image)
+        image_dir = os.path.join(dst_root_dir, uri.host, uri.repo, uri.app, uri.hash)
+        os.makedirs(image_dir, exist_ok=True)
+        subprocess.check_call(['skopeo', '--override-arch', arch, 'copy', '--format', 'v2s2', '--dest-shared-blob-dir',
+                               self.blobs_dir(target_name), 'docker://' + image, 'oci:' + image_dir])

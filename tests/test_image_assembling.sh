@@ -6,7 +6,7 @@ set -euo pipefail
 # Examples
 # Container build's assemble-system-image use-case: ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN $OUT_IMAGE_DIR $BUILD_NUMB
 # API/fioctl use-cases:
-# all apps: sudo ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN $PWD/out-image/ "" $PWD/repo-archive intel-corei7-64-lmp-306 "" $PWD/work-dir
+# all apps: sudo ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN $PWD/out-image/ "" $PWD/repo-archive intel-corei7-64-lmp-306 "" "regular" $PWD/work-dir
 # apps shortlisting: sudo ./tests/test_image_assembling.sh $FACTORY $OSF_TOKEN $PWD/out-image/ "" $PWD/repo-archive intel-corei7-64-lmp-306 app-07 $PWD/work-dir
 
 # Input params
@@ -17,8 +17,9 @@ TARGET_VERSION=$4
 APPS_OSTREE_REPO_ARCHIVE_DIR=$5
 TARGETS=${6-""}
 APP_SHORTLIST=${7-""}
+COMPOSE_APP_TYPE=${8="default"}
 
-WORK_DIR="${8-$(mktemp -d -t asseble-image-XXXXXXXXXX)}"
+WORK_DIR="${9-$(mktemp -d -t asseble-image-XXXXXXXXXX)}"
 echo ">> Work dir: ${WORK_DIR}"
 
 SECRETS=$WORK_DIR/secrets # directory to store secrets,
@@ -50,6 +51,7 @@ docker run -v -it --rm --privileged \
   -e TARGET_VERSION="${TARGET_VERSION}" \
   -e TARGETS="${TARGETS}" \
   -e APP_SHORTLIST="${APP_SHORTLIST}" \
+  -e COMPOSE_APP_TYPE="${COMPOSE_APP_TYPE}" \
   -v "$PWD":/ci-scripts \
   -v "$SECRETS":/secrets \
   -v "$APPS_OSTREE_REPO_ARCHIVE_DIR":/apps-ostree-repo-archive-dir \

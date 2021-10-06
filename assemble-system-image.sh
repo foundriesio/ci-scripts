@@ -20,6 +20,7 @@ OUT_IMAGE_DIR="${OUT_IMAGE_DIR-/archive}"
 APPS_OSTREE_REPO_ARCHIVE_DIR="${APPS_OSTREE_REPO_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
 APP_SHORTLIST="${APP_SHORTLIST-""}"
 COMPOSE_APP_USE_OSTREE=${COMPOSE_APP_USE_OSTREE-""}
+COMPOSE_APP_TYPE=${COMPOSE_APP_TYPE-"default"}
 OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d)}"
 # directory to preload/dump/snapshot apps images to
 FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
@@ -28,6 +29,11 @@ require_params FACTORY APPS_OSTREE_REPO_ARCHIVE_DIR OUT_IMAGE_DIR
 if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then
   echo "Neither Target name list (TARGETS) nor Target version (aka H_BUILD) are specified !!!"
   exit 1
+fi
+
+OPTIONS=""
+if [ "${COMPOSE_APP_TYPE}" = "restorable" ]; then
+  OPTIONS="--restorable-apps"
 fi
 
 export PYTHONPATH=${HERE}
@@ -43,4 +49,4 @@ status Running: Assemble System Image script
   --fetch-dir "${FETCH_DIR}" \
   --targets "${TARGETS}" \
   --app-shortlist="${APP_SHORTLIST}" \
-  --use-ostree="${COMPOSE_APP_USE_OSTREE}"
+  --use-ostree="${COMPOSE_APP_USE_OSTREE}" ${OPTIONS:+"$OPTIONS"}
