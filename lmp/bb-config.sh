@@ -38,12 +38,25 @@ fi
 
 source setup-environment build
 
+CONF_VERSION=$(grep  ^CONF_VERSION conf/local.conf | cut -d'"' -f 2)
+
+
+if [ "$CONF_VERSION" == "1" ]; then
+	cat << EOFEOF >> conf/local.conf
+ACCEPT_EULA_stm32mp1-disco = "1"
+ACCEPT_EULA_stm32mp1-eval = "1"
+EOFEOF
+else
+	cat << EOFEOF >> conf/local.conf
+ACCEPT_EULA:stm32mp1-disco = "1"
+ACCEPT_EULA:stm32mp1-eval = "1"
+EOFEOF
+fi
+
 cat << EOFEOF >> conf/local.conf
 CONNECTIVITY_CHECK_URIS = "https://www.google.com/"
 
 ACCEPT_FSL_EULA = "1"
-ACCEPT_EULA_stm32mp1-disco = "1"
-ACCEPT_EULA_stm32mp1-eval = "1"
 
 BB_GENERATE_MIRROR_TARBALLS = "1"
 
@@ -74,9 +87,6 @@ LMP_VERSION = "${LMP_VERSION}"
 # Default AKLITE tag
 AKLITE_TAG = "${AKLITE_TAG}"
 
-# Additional packages based on the CI job used
-IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
-
 # dockerd params
 DOCKER_MAX_CONCURRENT_DOWNLOADS = "${DOCKER_MAX_CONCURRENT_DOWNLOADS}"
 DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
@@ -87,6 +97,17 @@ MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
 # Bitbake custom logconfig
 BB_LOGCONFIG = "${HERE}/bb_logconfig.json"
 EOFEOF
+
+# Additional packages based on the CI job used
+if [ "$CONF_VERSION" == "1" ]; then
+	cat << EOFEOF >> conf/local.conf
+IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
+EOFEOF
+else
+	cat << EOFEOF >> conf/local.conf
+IMAGE_INSTALL:append = " ${EXTRA_IMAGE_INSTALL}"
+EOFEOF
+fi
 
 # Ptest-based builds require the same build settings and variables,
 # but the final image needs to be tagged differently, such as
@@ -143,9 +164,17 @@ EOFEOF
 fi
 
 # Add build id H_BUILD to output files names
-cat << EOFEOF >> conf/auto.conf
+if [ "$CONF_VERSION" == "1" ]; then
+	cat << EOFEOF >> conf/local.conf
 DISTRO_VERSION_append = "-${H_BUILD}-${LMP_VERSION}"
+EOFEOF
+else
+	cat << EOFEOF >> conf/local.conf
+DISTRO_VERSION:append = "-${H_BUILD}-${LMP_VERSION}"
+EOFEOF
+fi
 
+cat << EOFEOF >> conf/auto.conf
 # get build stats to make sure that we use sstate properly
 INHERIT += "buildstats buildstats-summary"
 
