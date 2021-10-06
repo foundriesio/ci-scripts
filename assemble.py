@@ -13,7 +13,7 @@ from math import ceil
 from tempfile import TemporaryDirectory
 
 from helpers import cmd, Progress
-from apps.target_apps_fetcher import TargetAppsFetcher
+from apps.target_apps_fetcher import TargetAppsFetcher, SkopeAppFetcher
 from apps.target_apps_store import ArchiveTargetAppsStore
 from apps.ostree_store import ArchOSTreeTargetAppsStore, OSTreeRepo
 from factory_client import FactoryClient
@@ -26,6 +26,7 @@ class WicImage:
     DockerDataRootDir = 'ostree/deploy/lmp/var/lib/docker/'
     ComposeAppsRoot = 'ostree/deploy/lmp/var/sota/compose-apps'
     ComposeAppsTree = 'ostree/deploy/lmp/var/sota/compose-apps-tree'
+    RestorableAppsRoot = 'ostree/deploy/lmp/var/sota/reset-apps'
     InstalledTargetFile = 'ostree/deploy/lmp/var/sota/import/installed_versions'
 
     def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
@@ -39,6 +40,7 @@ class WicImage:
         self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRootDir)
         self.docker_data_root = os.path.join(self._mnt_dir, self.DockerDataRootDir)
         self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRoot)
+        self.restorable_apps_root = os.path.join(self._mnt_dir, self.RestorableAppsRoot)
         self.compose_apps_tree = os.path.join(self._mnt_dir, self.ComposeAppsTree)
         self.installed_target_filepath = os.path.join(self._mnt_dir, self.InstalledTargetFile)
 
@@ -164,6 +166,42 @@ def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_
     p.tick()
 
 
+def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, token: str, apps_shortlist: list,
+                                fetch_dir: str, progress: Progress):
+    p = Progress(3, progress)
+    apps_fetcher = SkopeAppFetcher(token, fetch_dir)
+    target.shortlist = apps_shortlist
+    apps_fetcher.fetch_target(target, force=True)
+    p.tick()
+
+    apps_size_str = subprocess.check_output(['du', '-sk', apps_fetcher.target_dir(target.name)]).split()[0].decode('utf-8')
+    apps_size_b = int(apps_size_str) * 1024
+    logger.info('Restorable Apps require extra {} bytes of storage'.format(apps_size_b))
+    with WicImage(wic_image, apps_size_b) as wic_image:
+        if os.path.exists(wic_image.docker_data_root):
+            # wic image was populated by container images data during LmP build (/var/lib/docker)
+            # let's remove it and populate with the given images data
+            logger.info('Removing existing preloaded app images from the system image')
+            shutil.rmtree(wic_image.docker_data_root)
+
+        if os.path.exists(wic_image.compose_apps_root):
+            # wic image was populated by container images data during LmP build (/var/sota/compose-apps)
+            # let's remove it and populate with the given images data
+            logger.info('Removing existing preloaded compose apps from the system image')
+            shutil.rmtree(wic_image.compose_apps_root)
+
+        if os.path.exists(wic_image.restorable_apps_root):
+            # wic image was populated by container images data during LmP build (/var/sota/reset-apps)
+            # let's remove it and populate with the given images data
+            logger.info('Removing existing preloaded app images from the system image')
+            shutil.rmtree(wic_image.restorable_apps_root)
+
+        subprocess.check_call(['cp', '-r', apps_fetcher.target_dir(target.name), wic_image.restorable_apps_root])
+        p.tick()
+        wic_image.update_target(target)
+    p.tick()
+
+
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
     logger.info('Gzip and move resultant WIC image to the specified destination folder: {}'.format(out_image_dir))
     os.makedirs(out_image_dir, exist_ok=True)
@@ -186,6 +224,7 @@ def get_args():
     parser.add_argument('-s', '--app-shortlist', help='A coma separated list of Target Apps'
                                                       ' to include into a system image', default=None)
     parser.add_argument('-u', '--use-ostree', help='Enables an ostree repo usage for compose apps', default=None)
+    parser.add_argument('-ra', '--restorable-apps', help='Pull and preload restorable Apps', action='store_true')
     args = parser.parse_args()
 
     if args.targets:
@@ -226,7 +265,9 @@ if __name__ == '__main__':
             subprog = Progress(3, p)
             image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
 
-            if args.use_ostree and args.use_ostree == '1':
+            if args.restorable_apps:
+                copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist, args.fetch_dir, subprog)
+            elif args.use_ostree and args.use_ostree == '1':
                 copy_container_images_to_wic(target, args.factory, args.ostree_repo_archive_dir, args.repo_dir,
                                              args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
             else:
