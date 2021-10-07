@@ -6,6 +6,6 @@ require_params IMAGE
 
 source setup-environment build
 
-bitbake -e | grep "^DEPLOY_DIR="| cut -d'=' -f2 | tr -d '"' > deploy_dir
-
 bitbake -D ${IMAGE}
+
+bitbake -e | grep "^DEPLOY_DIR="| cut -d'=' -f2 | tr -d '"' > deploy_dir
