@@ -24,6 +24,7 @@ COMPOSE_APP_TYPE=${COMPOSE_APP_TYPE-"default"}
 OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d)}"
 # directory to preload/dump/snapshot apps images to
 FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
+PRE_BUILD_SCRIPT="${PRE_BUILD_SCRIPT-""}"
 
 require_params FACTORY APPS_OSTREE_REPO_ARCHIVE_DIR OUT_IMAGE_DIR
 if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then
@@ -34,6 +35,17 @@ fi
 OPTIONS=""
 if [ "${COMPOSE_APP_TYPE}" = "restorable" ]; then
   OPTIONS="--restorable-apps"
+fi
+
+pbc=pre-build.conf
+if [ -n "${PRE_BUILD_SCRIPT}" ]; then
+  echo -e "${PRE_BUILD_SCRIPT}" > "${pbc}"
+fi
+
+# ??? A location of `pre-build.conf` file differ for container and LmP jobs???
+if [ -f "${pbc}" ] ; then
+  echo "Sourcing pre-build.conf."
+  . "${pbc}"
 fi
 
 export PYTHONPATH=${HERE}
