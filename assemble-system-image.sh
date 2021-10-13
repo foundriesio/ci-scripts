@@ -40,6 +40,13 @@ if [ "${COMPOSE_APP_TYPE}" = "restorable" ]; then
   OPTIONS="--restorable-apps"
 fi
 
+# ??? A location of `pre-build.conf` file differ for container and LmP jobs???
+pbc=pre-build.conf
+if [ -f $pbc ] ; then
+  echo "Sourcing pre-build.conf."
+  . $pbc
+fi
+
 export PYTHONPATH=${HERE}
 status Running: Assemble System Image script
 
