@@ -16,12 +16,6 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
-# temp while we move to foundries/dind-ci image
-run apk --no-cache add file git || true
-
-# required for "docker manifest"
-export  DOCKER_CLI_EXPERIMENTAL=enabled
-
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
@@ -36,7 +30,7 @@ file /bin/busybox | grep -q armhf && ARCH=arm || true
 
 status Launching dockerd
 unset DOCKER_HOST
-DOCKER_TLS_CERTDIR= /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
+/usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12` ; do
 	sleep 1
 	docker info >/dev/null 2>&1 && break
@@ -52,22 +46,17 @@ if [ -n "$DOCKER_SECRETS" ] ; then
 	DOCKER_BUILDX="1"
 fi
 if [ -n "$DOCKER_BUILDX" ] ; then
-	status "Downloading buildx to use for image building"
-	bxarch=$ARCH
-	if [ "$ARCH" = "arm" ] ; then
-		bxarch="arm-v7"
-	fi
-	mkdir -p ~/.docker/cli-plugins
-	wget -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-${bxarch}
-	chmod +x ~/.docker/cli-plugins/docker-buildx
 	docker_build="docker buildx build"
-	run docker buildx create --driver-opt image=moby/buildkit:v0.8.3 --use
 fi
 
 pbc=pre-build.conf
 if [ -f $pbc ] ; then
   echo "Sourcing pre-build.conf."
   . $pbc
+fi
+
+if [ -f /secrets/container-registries ] ; then
+	PYTHONPATH=$HERE/.. $HERE/login_registries /secrets/container-registries
 fi
 
 if [ -z "$IMAGES" ] ; then

@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+from helpers import status
+
+
+if len(sys.argv) != 2:
+    sys.exit("Usage: %s <registry data file>" % sys.argv[0])
+
+with open(sys.argv[1]) as f:
+    registries = json.load(f)
+
+for reg in registries:
+    status("Configuring registry %s - %s" % (reg["type"], reg["url"]))
+    if reg["type"] == "aws":
+        creds_file = Path.home() / ".aws/credentials"
+        creds_file.parent.mkdir()
+        secrets_file = Path("/secrets") / reg["aws_creds_secret_name"]
+        creds_file.write_text(secrets_file.read_text())
+
+        try:
+            cmd = ["aws", "ecr", "get-login-password", "--region", reg["region"]]
+            token = subprocess.check_output(cmd)
+            cmd = ["docker", "login", "--password-stdin", "-u", "AWS", reg["url"]]
+            subprocess.run(cmd, check=True, input=token)
+        except subprocess.CalledProcessError as e:
+            sys.exit(e.returncode)
+    else:
+        sys.exit("Unsupported registry type")

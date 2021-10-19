@@ -31,6 +31,10 @@ if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then
   exit 1
 fi
 
+if [ -f /secrets/container-registries ] ; then
+	PYTHONPATH=$HERE $HERE/apps/login_registries /secrets/container-registries
+fi
+
 OPTIONS=""
 if [ "${COMPOSE_APP_TYPE}" = "restorable" ]; then
   OPTIONS="--restorable-apps"
