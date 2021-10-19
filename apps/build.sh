@@ -16,7 +16,8 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
-run apk --no-cache add file git
+# temp while we move to foundries/dind-ci image
+run apk --no-cache add file git || true
 
 # required for "docker manifest"
 export  DOCKER_CLI_EXPERIMENTAL=enabled
