@@ -55,6 +55,7 @@ triggers:
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
               - imx8mq-evk
+              - imx8qm-mek
               - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
@@ -94,6 +95,7 @@ triggers:
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
               - imx8mq-evk
+              - imx8qm-mek
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -222,6 +224,7 @@ triggers:
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
               - imx8mq-evk
+              - imx8qm-mek
               - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
@@ -280,6 +283,7 @@ triggers:
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
               - imx8mq-evk
+              - imx8qm-mek
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
