@@ -67,6 +67,7 @@ triggers:
               - raspberrypi4-64
               - stm32mp1-disco
               - uz3eg-iocc
+              - uz3eg-iocc-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
@@ -236,6 +237,7 @@ triggers:
               - raspberrypi4-64
               - stm32mp1-disco
               - uz3eg-iocc
+              - uz3eg-iocc-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
