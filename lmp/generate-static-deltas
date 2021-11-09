@@ -95,10 +95,9 @@ def main(creds_zip_file: str, deltas: List[Delta]):
 
 
 if __name__ == "__main__":
-    require_secrets("osftok", "triggered-by", "deltas")
-    creds, = require_env("SOTA_PACKED_CREDENTIALS")
+    require_secrets("osftok", "triggered-by", "deltas", "targets.sec")
     _, creds_tmp = mkstemp()
-    generate_credential_tokens(creds, creds_tmp)
+    generate_credential_tokens(creds_tmp)
 
     deltas: List[Delta] = []
     for d in json.loads(secret("deltas")):

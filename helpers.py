@@ -153,20 +153,29 @@ def http_get(url, params=None, **kwargs):
     return response
 
 
-def generate_credential_tokens(creds_zip_in: str, creds_zip_out: str):
-    """Creates an updated creds.zip file that has populated osf
-       tokens with the dynamic scoped tokens set in the run's secrets."""
+def generate_credential_tokens(creds_zip_out: str):
+    """Creates a creds.zip file that is populated with the osf online targets
+       signing key and dynamic scoped tokens set in the run's secrets."""
 
+    factory, _ = os.environ['H_PROJECT'].split('/')
+    treehub = {
+      "oauth2" : {
+        "server" : "https://api.foundries.io/faux-auth2",
+        "client_id" : secret('triggered-by'),
+        "client_secret" : secret('osftok'),
+        "scope" : "none"
+      },
+      "no_auth" : False,
+      "ostree" : {
+        "server" : f"https://api.foundries.io/ota/treehub/{factory}/api/v3/"
+      }
+    }
     with ZipFile(creds_zip_out, mode='w') as zout:
-        with ZipFile(creds_zip_in) as zin:
-            for name in zin.namelist():
-                buf = zin.read(name)
-                if name == 'treehub.json':
-                    data = json.loads(buf.decode())
-                    data['oauth2']['client_id'] = secret('triggered-by')
-                    data['oauth2']['client_secret'] = secret('osftok')
-                    buf = json.dumps(data).encode()
-                zout.writestr(name, buf)
+        zout.writestr('root.json', secret("root.json"))
+        zout.writestr('targets.pub', secret("targets.pub"))
+        zout.writestr('targets.sec', secret("targets.sec"))
+        zout.writestr('treehub.json', json.dumps(treehub))
+        zout.writestr('tufrepo.url', f'https://api.foundries.io/ota/repo/{factory}')
 
 
 class Progress:

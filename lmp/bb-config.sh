@@ -29,10 +29,10 @@ if [ "$ENABLE_PTEST" = "1" ] ; then
     OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME}-ptest"
 fi
 
-if [ -n "$SOTA_PACKED_CREDENTIALS" ] && [ -f $SOTA_PACKED_CREDENTIALS ] ; then
+if [ -f "/secrets/targets.sec" ] ; then
 	status "Generating credentials.zip"
 	dynamic=$(mktemp --suffix=.zip)
-	$HERE/../create-creds $SOTA_PACKED_CREDENTIALS $dynamic
+	$HERE/../create-creds $dynamic
 	SOTA_PACKED_CREDENTIALS=$dynamic
 fi
 

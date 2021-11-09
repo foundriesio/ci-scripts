@@ -31,7 +31,6 @@ APPS_VERSION=${H_BUILD}_${APPS_VERSION-$(git --git-dir="${APPS_ROOT_DIR}/.git" l
 GIT_SHA=${GIT_SHA-$(git --git-dir="${APPS_ROOT_DIR}/.git" log -1 --format=%H)}
 TARGET_VERSION=${H_BUILD-""}
 
-CREDS_ARCH=${CREDS_ARCH-/var/cache/bitbake/credentials.zip}
 CREDS_ARCH_UPDATED=${CREDS_ARCH_UPDATED-$(mktemp -p ${HOME})}
 PUSH_TARGETS=${PUSH_TARGETS-true}
 
@@ -70,7 +69,7 @@ fi
 
 export PYTHONPATH=${HERE}/../
 
-"$HERE"/../create-creds "${CREDS_ARCH}" "${CREDS_ARCH_UPDATED}"
+"$HERE"/../create-creds "${CREDS_ARCH_UPDATED}"
 export TAG=$(git log -1 --format=%h)
 
 if [ ! -f "${TUF_REPO}/credentials.zip" ]; then

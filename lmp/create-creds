@@ -13,7 +13,7 @@ cat /secrets/credentials_zip_b64 \
 sha=$(sha256sum /var/cache/bitbake/credentials.zip | cut -f1 -d\  )
 
 CREDENTIALS=$(mktemp)
-$HERE/../create-creds /var/cache/bitbake/credentials.zip $CREDENTIALS
+$HERE/../create-creds $CREDENTIALS
 
 status "Extracting credentials"
 garage-sign init --repo ./tufrepo --credentials $CREDENTIALS
