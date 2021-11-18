@@ -157,7 +157,13 @@ def generate_credential_tokens(creds_zip_out: str):
     """Creates a creds.zip file that is populated with the osf online targets
        signing key and dynamic scoped tokens set in the run's secrets."""
 
-    factory, _ = os.environ['H_PROJECT'].split('/')
+    parts = os.environ['H_PROJECT'].split('/')
+    if len(parts) == 2:
+        factory = parts[0]
+    elif parts[0] == 'lmp':
+        factory = 'lmp'
+    else:
+        raise ValueError('Unexpected CI project: ' + os.environ['H_PROJECT'])
     treehub = {
       "oauth2" : {
         "server" : "https://api.foundries.io/faux-auth2",
