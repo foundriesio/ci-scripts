@@ -5,7 +5,7 @@ from helpers import generate_credential_tokens, require_secrets
 
 
 def main(creds_out):
-    require_secrets('osftok', 'triggered-by', 'targets.sec')
+    require_secrets('osftok', 'root.json', 'triggered-by', 'targets.pub', 'targets.sec')
     generate_credential_tokens(creds_out)
 
 
