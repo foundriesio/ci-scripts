@@ -168,7 +168,7 @@ if [ -d "${archive}" ] ; then
 		mv ${archive}/other/u-boot-${MACHINE}.itb ${archive}/ || true
 		## iMX targets with imx-boot
 		mv ${archive}/other/imx-boot ${archive}/ || true
-		mv ${archive}/other/imx-boot-${MACHINE} ${archive}/ || true
+		mv ${archive}/other/imx-boot-${MACHINE}* ${archive}/ || true
 		## HDMI firmware for iMX8MQ
 		mv ${archive}/other/imx-boot-tools/signed_hdmi_imx8m.bin ${archive}/ || true
 		## Targets that support iMX redundant boot
