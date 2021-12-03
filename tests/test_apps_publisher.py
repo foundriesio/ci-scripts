@@ -46,7 +46,7 @@ class ComposeAppsPublisherTest(unittest.TestCase):
             yaml.dump(yaml_data, compose_file)
 
         self.apps = ComposeApps(self.apps_root_dir)
-        self.publisher = AppsPublisher(self.factory, self.publish_tool)
+        self.publisher = AppsPublisher(self.factory, self.publish_tool, "")
 
     def tearDown(self):
         shutil.rmtree(self.apps_root_dir)
