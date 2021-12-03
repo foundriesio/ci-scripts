@@ -63,7 +63,7 @@ docker login hub.foundries.io --username=doesntmatter --password="$(cat "${SECRE
 if [ ! -f "${PUBLISH_TOOL}" ]; then
   status Dowloading "compose-ref (aka compose-publish)" for publishing apps
   PUBLISH_TOOL="/tmp/compose-publish"
-  run wget -O ${PUBLISH_TOOL} https://storage.googleapis.com/subscriber_registry/compose-publish
+  run wget -O ${PUBLISH_TOOL} https://storage.googleapis.com/subscriber_registry/compose-publish-with-layers
   chmod +x ${PUBLISH_TOOL}
 fi
 
