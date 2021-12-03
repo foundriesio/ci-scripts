@@ -28,7 +28,7 @@ def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [],
     apps.validate()
     status('Compose Apps has been validated: {}'.format(apps.str))
 
-    apps_to_add_to_target = AppsPublisher(factory, publish_tool).publish(apps, apps_version)
+    apps_to_add_to_target = AppsPublisher(factory, publish_tool, ','.join(platforms)).publish(apps, apps_version)
 
     status('Creating Targets that refer to the published Apps; tag: {}, version: {}, machines: {}, platforms: {} '
            .format(target_tag, target_version, ','.join(machines) if machines else '[]',
