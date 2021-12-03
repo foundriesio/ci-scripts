@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class AppsPublisher:
-    def __init__(self, factory, publish_tool: str, registry_host=DockerRegistryClient.DefaultRegistryHost):
+    def __init__(self, factory, publish_tool: str, archs: [], registry_host=DockerRegistryClient.DefaultRegistryHost):
         self._factory = factory
         self._publish_tool = publish_tool
+        self._archs = archs
         self._registry_host = registry_host
 
         self._image_base_url = '{}/{}'.format(registry_host, self._factory)
@@ -82,5 +83,5 @@ class AppsPublisher:
         self._app_tagged_url = app_base_url + ':app-' + tag
         # TODO: Consider implementation of the "publish tool" in DockerRegistryClient
         with NamedTemporaryFile(mode="w+") as f:
-            cmd_exe(self._publish_tool, '-d', f.name, self._app_tagged_url, cwd=app.dir)
+            cmd_exe(self._publish_tool, '-d', f.name, self._app_tagged_url, self._archs, cwd=app.dir)
             return app_base_url + '@' + f.read().strip()
