@@ -8,7 +8,7 @@ OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME-lmp-localdev}"
 SOTA_CLIENT="${SOTA_CLIENT-aktualizr}"
 AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
-LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags 2>/dev/null || echo unknown)
+export LMP_VERSION=$(git --git-dir=.repo/manifests/.git describe --tags 2>/dev/null || echo unknown)
 FACTORY="${FACTORY-lmp}"
 LMP_DEVICE_API="${LMP_DEVICE_API-https://api.foundries.io/ota/devices/}"
 UBOOT_SIGN_ENABLE="${UBOOT_SIGN_ENABLE-0}"

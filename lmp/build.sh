@@ -94,6 +94,7 @@ if [ -d ${DEPLOY_DIR}/sources ]; then
 fi
 
 if [ -d "${archive}" ] ; then
+	echo "${LMP_VERSION}" > "${archive}/lmp-version"
 	mkdir ${archive}/other
 
 	# Compress and publish bitbake's debug build output
