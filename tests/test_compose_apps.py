@@ -42,24 +42,23 @@ class ComposeAppsTest(unittest.TestCase):
             yaml_data = yaml.safe_load(self.ComposeAppDesc)
             yaml.dump(yaml_data, compose_file)
 
-        self.apps = ComposeApps(self.apps_root_dir)
-
     def tearDown(self):
         shutil.rmtree(self.apps_root_dir)
 
     def test_compose_apps_init(self):
-        self.assertEqual(len(self.apps), 1)
-        self.apps.validate()
-        self.assertEqual(self.apps.str, self.app_name)
-        self.assertEqual(len(self.apps), 1)
+        apps = ComposeApps(self.apps_root_dir)
+        self.assertEqual(len(apps), 1)
+        apps.validate()
+        self.assertEqual(apps.str, self.app_name)
+        self.assertEqual(len(apps), 1)
 
     def test_compose_apps_app_init(self):
-        app = self.apps[0]
+        app = ComposeApps(self.apps_root_dir)[0]
         app.validate()
         self.assertEqual(len(app.services()), 3)
 
     def test_compose_apps_app_images(self):
-        app = self.apps[0]
+        app = ComposeApps(self.apps_root_dir)[0]
         expected_images = ['hub.foundries.io/test_factory/nginx',
                            'nginx:1.19.2-alpine',
                            'hub.foundries.io/test_factory/app-07:latest']
