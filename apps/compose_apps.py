@@ -37,7 +37,13 @@ class ComposeApps:
 
             self._image_downloader_cls = image_downloader_cls
 
-            args = [self.DockerComposeTool, '-f', self.ComposeFile, 'config']
+            compose_files_str = os.environ.get('COMPOSE_FILES', self.ComposeFile)
+            compose_files = [x.strip() for x in compose_files_str.split()]
+            args = [self.DockerComposeTool]
+            for compose_file in compose_files:
+                if os.path.exists(os.path.join(self.dir, compose_file)):
+                    args.extend(['-f', compose_file])
+            args.append('config')
             out = cmd_exe(*args, cwd=self.dir, capture=True)
             self._desc = yaml.safe_load(out.decode())
 
