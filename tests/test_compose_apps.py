@@ -48,13 +48,11 @@ class ComposeAppsTest(unittest.TestCase):
     def test_compose_apps_init(self):
         apps = ComposeApps(self.apps_root_dir)
         self.assertEqual(len(apps), 1)
-        apps.validate()
         self.assertEqual(apps.str, self.app_name)
         self.assertEqual(len(apps), 1)
 
     def test_compose_apps_app_init(self):
         app = ComposeApps(self.apps_root_dir)[0]
-        app.validate()
         self.assertEqual(len(app.services()), 3)
 
     def test_compose_apps_app_images(self):

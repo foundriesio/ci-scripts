@@ -27,7 +27,7 @@ class ComposeApps:
                 raise ValueError('docker-compose.yaml file found. This must be named docker-compose.yml')
             return exists
 
-        def __init__(self, name, app_dir, validate=False, image_downloader_cls=DockerDownloader):
+        def __init__(self, name, app_dir, image_downloader_cls=DockerDownloader):
             if not self.is_compose_app_dir(app_dir):
                 raise Exception('Compose App dir {} does not contain a compose file {}'
                                 .format(app_dir, self.ComposeFile))
@@ -35,16 +35,11 @@ class ComposeApps:
             self.dir = app_dir
             self.file = os.path.join(self.dir, self.ComposeFile)
 
-            if validate:
-                self.validate()
-
             self._image_downloader_cls = image_downloader_cls
 
-            with open(self.file) as compose_file:
-                self._desc = yaml.safe_load(compose_file)
-
-        def validate(self):
-            self._run_cmd('config')
+            args = [self.DockerComposeTool, '-f', self.ComposeFile, 'config']
+            out = cmd_exe(*args, cwd=self.dir, capture=True)
+            self._desc = yaml.safe_load(out.decode())
 
         def services(self):
             return self['services'].items()
@@ -61,9 +56,6 @@ class ComposeApps:
         def save(self):
             with open(self.file, 'w') as compose_file:
                 yaml.dump(self._desc, compose_file)
-
-        def _run_cmd(self, cmd):
-            cmd_exe(self.DockerComposeTool, '-f', self.file, cmd)
 
         def __getitem__(self, item):
             return self._desc[item]
@@ -100,7 +92,3 @@ class ComposeApps:
 
     def __len__(self):
         return len(self._apps)
-
-    def validate(self):
-        # throws exception on first invalid app
-        [app.validate() for app in self]
