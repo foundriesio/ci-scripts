@@ -95,7 +95,7 @@ def main(creds_zip_file: str, deltas: List[Delta]):
 
 
 if __name__ == "__main__":
-    require_secrets("osftok", "triggered-by", "deltas", "targets.sec")
+    require_secrets("osftok", "triggered-by", "deltas", "targets.sec", 'root.json', 'targets.pub')
     _, creds_tmp = mkstemp()
     generate_credential_tokens(creds_tmp)
 
