@@ -48,6 +48,7 @@ triggers:
               - corstone700-mps3
               - freedom-u540
               - generic-arm64
+              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
@@ -89,6 +90,7 @@ triggers:
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
+              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
@@ -218,6 +220,7 @@ triggers:
               - corstone700-mps3
               - freedom-u540
               - generic-arm64
+              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
@@ -278,6 +281,7 @@ triggers:
             values:
               - apalis-imx6
               - apalis-imx8
+              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
