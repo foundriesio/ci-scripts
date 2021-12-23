@@ -1,9 +1,10 @@
 import os
 import logging
+import requests
 import subprocess
-from typing import Optional
 
 from helpers import Progress, http_get
+from typing import NamedTuple
 
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,20 @@ class FactoryClient:
         def __getitem__(self, item):
             return self.json[item]
 
+    class Release(NamedTuple):
+        lmp_version: int
+        yocto_version: str
+
+        @classmethod
+        def parse(cls, release_info: dict) -> 'Release':
+            # VERSION="3.3.4-1147-84-270-gd10167f",
+            # <yocto-version>-<commit-numb-after-tag>-<lmp-version>-<commit-numb-after-tag>-<abbreviated commit hash>
+            version = release_info['VERSION']
+            version_data = version.split('-')
+            lmp_version = int(version_data[2]) if len(version_data) > 2 else 0
+            yocto_version = version_data[0] if len(version_data) >= 1 else None
+            return cls(lmp_version, yocto_version)
+
     def __init__(self, factory: str, token: str,
                  factory_api_base_url='https://api.foundries.io'):
         factory_resource = 'ota/factories/'
@@ -121,6 +136,7 @@ class FactoryClient:
 
         base_url = image_base_url.replace('https://ci.foundries.io', self.api_base_url)
         image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
+        os_release_url = os.path.join(base_url, 'runs', image_machine, 'os-release')
 
         image_file_path = os.path.join(out_dir, image_filename)
         extracted_image_file_path = image_file_path.rstrip('.gz')
@@ -143,7 +159,18 @@ class FactoryClient:
         else:
             logger.info('Target system image has been already downloaded: {}'.format(extracted_image_file_path))
 
-        return extracted_image_file_path
+        release_resp = requests.get(os_release_url, headers=self._auth_headers)
+        if release_resp.ok:
+            try:
+                release_info = self.Release.parse(dict([line.split('=') for line in release_resp.content.decode().splitlines()]))
+            except Exception as exc:
+                logger.error('Failed to parse a received information about LmP release: ' + str(exc))
+                release_info = self.Release(0, '') # or just `raise` ???
+        else:
+            release_info = self.Release(0, '')
+            logger.info('Missing info about LmP release.')
+
+        return extracted_image_file_path, release_info
 
     def _get_targets(self):
         target_resp = http_get(self.targets_endpoint, headers=self._auth_headers)

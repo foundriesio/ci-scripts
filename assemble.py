@@ -224,7 +224,7 @@ def get_args():
     parser.add_argument('-s', '--app-shortlist', help='A coma separated list of Target Apps'
                                                       ' to include into a system image', default=None)
     parser.add_argument('-u', '--use-ostree', help='Enables an ostree repo usage for compose apps', default=None)
-    parser.add_argument('-ra', '--restorable-apps', help='Pull and preload restorable Apps', action='store_true')
+    parser.add_argument('-at', '--app-type', help='Type of App to preload', default=None)
     args = parser.parse_args()
 
     if args.targets:
@@ -263,14 +263,16 @@ if __name__ == '__main__':
         for target in targets:
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
             subprog = Progress(3, p)
-            image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
+            image_file_path, release_info = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
 
-            if args.restorable_apps:
+            if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
+                logger.info('Preloading Restorable Apps...')
                 copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist, args.fetch_dir, subprog)
             elif args.use_ostree and args.use_ostree == '1':
                 copy_container_images_to_wic(target, args.factory, args.ostree_repo_archive_dir, args.repo_dir,
                                              args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
             else:
+                logger.info('Preloading Compose Apps...')
                 copy_container_images_from_archive_to_wic(target, args.ostree_repo_archive_dir, args.fetch_dir,
                                                           image_file_path, args.token, args.app_shortlist, subprog)
 

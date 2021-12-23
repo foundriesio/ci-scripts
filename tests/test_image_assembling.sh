@@ -17,7 +17,7 @@ TARGET_VERSION=$4
 APPS_OSTREE_REPO_ARCHIVE_DIR=$5
 TARGETS=${6-""}
 APP_SHORTLIST=${7-""}
-COMPOSE_APP_TYPE=${8="default"}
+COMPOSE_APP_TYPE=${8=""}
 
 WORK_DIR="${9-$(mktemp -d -t asseble-image-XXXXXXXXXX)}"
 echo ">> Work dir: ${WORK_DIR}"
