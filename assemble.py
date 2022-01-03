@@ -10,12 +10,10 @@ import argparse
 import logging
 import shutil
 from math import ceil
-from tempfile import TemporaryDirectory
 
 from helpers import cmd, Progress
 from apps.target_apps_fetcher import TargetAppsFetcher, SkopeAppFetcher
 from apps.target_apps_store import ArchiveTargetAppsStore
-from apps.ostree_store import ArchOSTreeTargetAppsStore, OSTreeRepo
 from factory_client import FactoryClient
 
 logger = logging.getLogger("System Image Assembler")
@@ -24,8 +22,6 @@ logger = logging.getLogger("System Image Assembler")
 class WicImage:
     ComposeAppsRootDir = 'ostree/deploy/lmp/var/sota/compose-apps/'
     DockerDataRootDir = 'ostree/deploy/lmp/var/lib/docker/'
-    ComposeAppsRoot = 'ostree/deploy/lmp/var/sota/compose-apps'
-    ComposeAppsTree = 'ostree/deploy/lmp/var/sota/compose-apps-tree'
     RestorableAppsRoot = 'ostree/deploy/lmp/var/sota/reset-apps'
     InstalledTargetFile = 'ostree/deploy/lmp/var/sota/import/installed_versions'
 
@@ -39,9 +35,7 @@ class WicImage:
             self._resized_image = True
         self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRootDir)
         self.docker_data_root = os.path.join(self._mnt_dir, self.DockerDataRootDir)
-        self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRoot)
         self.restorable_apps_root = os.path.join(self._mnt_dir, self.RestorableAppsRoot)
-        self.compose_apps_tree = os.path.join(self._mnt_dir, self.ComposeAppsTree)
         self.installed_target_filepath = os.path.join(self._mnt_dir, self.InstalledTargetFile)
 
     def __enter__(self):
@@ -106,49 +100,11 @@ class WicImage:
         subprocess.check_call(['parted', self._path, 'resizepart', str(self._last_part), '100%'])
 
 
-def copy_container_images_to_wic(target: FactoryClient.Target, factory: str, ostree_repo_archive_dir: str,
-                                 app_repo_dir, app_fetch_dir: str, wic_image: str, token: str, apps_shortlist: list,
-                                 progress: Progress):
-
-    p = Progress(2, progress)
-    target_app_store = ArchOSTreeTargetAppsStore(factory, ostree_repo_archive_dir, app_repo_dir)
-    target.shortlist = apps_shortlist
-    if not target_app_store.exist(target):
-        logger.info('Compose Apps haven\'t been found, fetching them...')
-        apps_fetcher = TargetAppsFetcher(token, app_fetch_dir)
-        if target_app_store.exist_branch(target):
-            target_app_store.checkout(target, apps_fetcher.target_dir(target.name))
-        apps_fetcher.fetch_target(target, force=True)
-        target.apps_uri = target_app_store.store(target, apps_fetcher.target_dir(target.name))
-    p.tick()
-
-    with TemporaryDirectory(dir=os.getenv('HOME', '/root')) as tmp_tree_dir:
-        # TODO: make use of the commit size generation functionality to determine a size to extend a wic image for
-        logger.info('Building an ostree repo for the given Target...')
-        os.makedirs(tmp_tree_dir, exist_ok=True)
-        tmp_tree_repo = OSTreeRepo(tmp_tree_dir, 'bare', create=True)
-        p.tick()
-        target_app_store.copy(target, tmp_tree_repo)
-        p.tick()
-
-        with WicImage(wic_image, tmp_tree_repo.size_in_kbs() * 1024) as wic_image:
-            logger.info('Removing previously preloaded Apps if any...')
-
-            shutil.rmtree(wic_image.docker_data_root, ignore_errors=True)
-            shutil.rmtree(wic_image.compose_apps_root, ignore_errors=True)
-            shutil.rmtree(wic_image.compose_apps_tree, ignore_errors=True)
-            p.tick()
-            target_app_store.copy_and_checkout(target, wic_image.compose_apps_tree,
-                                               wic_image.compose_apps_root, wic_image.docker_data_root)
-            wic_image.update_target(target)
-    p.tick()
-
-
-def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, app_image_dir: str, app_preload_dir: str,
+def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, apps_archive_dir: str, app_preload_dir: str,
                                               wic_image: str, token: str, apps_shortlist: list, progress: Progress):
 
     p = Progress(2, progress)
-    target_app_store = ArchiveTargetAppsStore(app_image_dir)
+    target_app_store = ArchiveTargetAppsStore(apps_archive_dir)
     target.shortlist = apps_shortlist
     if not target_app_store.exist(target):
         logger.info('Container images have not been found, trying to obtain them...')
@@ -215,15 +171,12 @@ def get_args():
     parser.add_argument('-f', '--factory', help='Factory')
     parser.add_argument('-v', '--target-version', help='Target(s) version, aka build number')
     parser.add_argument('-t', '--token', help='A token')
-    parser.add_argument('-ar', '--ostree-repo-archive-dir',
-                        help='Path to a dir that contains an ostree repo archive with apps')
+    parser.add_argument('-ar', '--apps-archive-dir', help='Path to a dir that contains apps archives')
     parser.add_argument('-o', '--out-image-dir', help='A path to directory to put a resultant image to')
-    parser.add_argument('-rd', '--repo-dir', help='Directory to extract an apps ostree repo to')
     parser.add_argument('-d', '--fetch-dir', help='Directory to fetch/preload/output apps and images')
     parser.add_argument('-T', '--targets', help='A coma separated list of Targets to assemble system image for')
     parser.add_argument('-s', '--app-shortlist', help='A coma separated list of Target Apps'
                                                       ' to include into a system image', default=None)
-    parser.add_argument('-u', '--use-ostree', help='Enables an ostree repo usage for compose apps', default=None)
     parser.add_argument('-at', '--app-type', help='Type of App to preload', default=None)
     args = parser.parse_args()
 
@@ -268,12 +221,9 @@ if __name__ == '__main__':
             if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
                 logger.info('Preloading Restorable Apps...')
                 copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist, args.fetch_dir, subprog)
-            elif args.use_ostree and args.use_ostree == '1':
-                copy_container_images_to_wic(target, args.factory, args.ostree_repo_archive_dir, args.repo_dir,
-                                             args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
             else:
                 logger.info('Preloading Compose Apps...')
-                copy_container_images_from_archive_to_wic(target, args.ostree_repo_archive_dir, args.fetch_dir,
+                copy_container_images_from_archive_to_wic(target, args.apps_archive_dir, args.fetch_dir,
                                                           image_file_path, args.token, args.app_shortlist, subprog)
 
             # Don't think its possible to have more than one tag at the time
