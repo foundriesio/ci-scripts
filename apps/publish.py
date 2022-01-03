@@ -28,7 +28,7 @@ def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [],
     apps.validate()
     status('Compose Apps has been validated: {}'.format(apps.str))
 
-    apps_to_add_to_target = AppsPublisher(factory, publish_tool, ','.join(platforms)).publish(apps, apps_version)
+    apps_to_add_to_target = AppsPublisher(factory, publish_tool, ','.join(platforms) if platforms else '').publish(apps, apps_version)
 
     status('Creating Targets that refer to the published Apps; tag: {}, version: {}, machines: {}, platforms: {} '
            .format(target_tag, target_version, ','.join(machines) if machines else '[]',
@@ -71,6 +71,7 @@ if __name__ == '__main__':
         machines = args.machines.split(',') if args.machines else None
         platforms = None
         if args.platforms:
+            # linux/amd64,linux/arm64  (list of archs/platforms defined in the old format)
             platforms = []
             platforms_old_format = args.platforms.split(',')
             for platform in platforms_old_format:

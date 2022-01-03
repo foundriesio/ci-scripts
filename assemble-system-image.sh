@@ -17,15 +17,13 @@ TARGETS="${TARGETS}"
 TARGET_VERSION="${TARGET_VERSION-${H_BUILD}}"
 # destination for a resultant system image
 OUT_IMAGE_DIR="${OUT_IMAGE_DIR-/archive}"
-APPS_OSTREE_REPO_ARCHIVE_DIR="${APPS_OSTREE_REPO_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
+APPS_ARCHIVE_DIR="${APPS_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
 APP_SHORTLIST="${APP_SHORTLIST-""}"
-COMPOSE_APP_USE_OSTREE=${COMPOSE_APP_USE_OSTREE-""}
 COMPOSE_APP_TYPE=${COMPOSE_APP_TYPE-""}
-OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d)}"
 # directory to preload/dump/snapshot apps images to
 FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
 
-require_params FACTORY APPS_OSTREE_REPO_ARCHIVE_DIR OUT_IMAGE_DIR
+require_params FACTORY APPS_ARCHIVE_DIR OUT_IMAGE_DIR
 if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then
   echo "Neither Target name list (TARGETS) nor Target version (aka H_BUILD) are specified !!!"
   exit 1
@@ -43,10 +41,8 @@ status Running: Assemble System Image script
   --token "$(cat "${SECRETS}/osftok")" \
   --target-version "${TARGET_VERSION}" \
   --out-image-dir "${OUT_IMAGE_DIR}" \
-  --ostree-repo-archive-dir "${APPS_OSTREE_REPO_ARCHIVE_DIR}" \
-  --repo-dir "${OSTREE_REPO_DIR}" \
+  --apps-archive-dir "${APPS_ARCHIVE_DIR}" \
   --fetch-dir "${FETCH_DIR}" \
   --targets "${TARGETS}" \
   --app-shortlist="${APP_SHORTLIST}" \
-  --app-type="${COMPOSE_APP_TYPE}" \
-  --use-ostree="${COMPOSE_APP_USE_OSTREE}"
+  --app-type="${COMPOSE_APP_TYPE}"

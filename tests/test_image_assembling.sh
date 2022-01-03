@@ -14,7 +14,7 @@ FACTORY=$1
 OSF_TOKEN=$2
 OUT_IMAGE_DIR=$3
 TARGET_VERSION=$4
-APPS_OSTREE_REPO_ARCHIVE_DIR=$5
+APPS_ARCHIVE_DIR=$5
 TARGETS=${6-""}
 APP_SHORTLIST=${7-""}
 COMPOSE_APP_TYPE=${8=""}
@@ -45,8 +45,7 @@ docker run -v -it --rm --privileged \
   -e FACTORY="$FACTORY" \
   -e HOME=/home/test \
   -e FETCH_DIR=/fetch-dir \
-  -e COMPOSE_APP_USE_OSTREE="0" \
-  -e APPS_OSTREE_REPO_ARCHIVE_DIR=/apps-ostree-repo-archive-dir \
+  -e APPS_ARCHIVE_DIR=/apps-ostree-repo-archive-dir \
   -e OUT_IMAGE_DIR=/out-image-dir \
   -e TARGET_VERSION="${TARGET_VERSION}" \
   -e TARGETS="${TARGETS}" \
@@ -54,7 +53,7 @@ docker run -v -it --rm --privileged \
   -e COMPOSE_APP_TYPE="${COMPOSE_APP_TYPE}" \
   -v "$PWD":/ci-scripts \
   -v "$SECRETS":/secrets \
-  -v "$APPS_OSTREE_REPO_ARCHIVE_DIR":/apps-ostree-repo-archive-dir \
+  -v "$APPS_ARCHIVE_DIR":/apps-ostree-repo-archive-dir \
   -v "$OUT_IMAGE_DIR":/out-image-dir \
   -v "$FETCH_DIR":/fetch-dir \
   -w /ci-scripts \

@@ -11,18 +11,12 @@ HERE=$(dirname $(readlink -f $0))
 #-- BEGIN: Input params
 ARCHIVE=${ARCHIVE-/archive}
 SECRETS=${SECRETS-/secrets}
-# if the container is started with `-u $(id -u ${USER}):$(id -g ${USER})` then HOME='/'
-if [ "${HOME}" = "/" ]; then
-  HOME="/root"
-fi
+
 # Do not store TUF_REPO in /tmp since it's remounted by dind and the repo/targets.json is removed otherwise
 TUF_REPO="${TUF_REPO-$(mktemp -u -d -p ${HOME})}"
 # OTA_LITE_TAG and TARGET_TAG is the same tag, effectively this is a tag to apply to new Target(s)
 # that are created by a given build
 TARGET_TAG=${OTA_LITE_TAG}
-
-DOCKER_COMPOSE_APP_PRELOAD=${DOCKER_COMPOSE_APP_PRELOAD-""}
-COMPOSE_APP_USE_OSTREE=${COMPOSE_APP_USE_OSTREE-""}
 
 APPS_ROOT_DIR=${APPS_ROOT_DIR-${PWD}}
 PUBLISH_TOOL=${PUBLISH_TOOL-""}
@@ -36,13 +30,6 @@ PUSH_TARGETS=${PUSH_TARGETS-true}
 
 MACHINES=${MACHINES-""}
 PLATFORMS=${MANIFEST_PLATFORMS_DEFAULT-""}
-
-APP_IMAGES_ROOT_DIR="${APP_IMAGES_ROOT_DIR-/var/cache/bitbake/app-images}"
-APPS_OSTREE_REPO_ARCHIVE_DIR="${APPS_OSTREE_REPO_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
-OSTREE_REPO_DIR="${OSTREE_REPO_DIR-$(mktemp -d -p ${HOME})}"
-TREEHUB_REPO_DIR="${TREEHUB_REPO_DIR-$(mktemp -d -p ${HOME})}"
-FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
-APP_SHORTLIST="${APP_SHORTLIST-""}"
 
 require_params FACTORY ARCHIVE TARGET_TAG
 #-- END: Input params
@@ -104,28 +91,6 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
     --git-sha "${GIT_SHA}" \
     --target-version="${TARGET_VERSION}" \
     --new-targets-file="${ARCHIVE}/targets-created.json"
-
-if [ "${COMPOSE_APP_USE_OSTREE}" = "1" ]; then
-  # If OSTree usage is enabled then apps have to be fetched regardless of DOCKER_COMPOSE_APP_PRELOAD is on or off
-  # because apps data/files have to be put into an ostree repo and pushed to Treehub so aklite can fetch them and update
-  # apps on a device. Also, the resultant apps ostree repo can used during LmP build for preloading.
-  #
-  # 1. Copy and untar the archive containing an ostree repo with apps and their images, if exists
-  # 2. Dump Targets' Apps and their images (it pulls just apps' diff)
-  # 3. Commit Targets' Apps and their images to the ostree repo
-  # 4. Push the Target's commit to Treehub
-  # 5. Archive and copy the updates apps' ostree repo to NFS/shared storage
-  /usr/local/bin/dind "${HERE}/publish_apps_to_ostree.py" \
-    --factory "${FACTORY}" \
-    --token "$(cat "${SECRETS}/osftok")" \
-    --cred-arch "${CREDS_ARCH_UPDATED}" \
-    --targets-file "${TUF_REPO}/roles/unsigned/targets.json" \
-    --targets-to-publish "${ARCHIVE}/targets-created.json" \
-    --fetch-dir "${FETCH_DIR}" \
-    --repo-dir "${OSTREE_REPO_DIR}" \
-    --treehub-repo-dir "${TREEHUB_REPO_DIR}" \
-    --ostree-repo-archive-dir "${APPS_OSTREE_REPO_ARCHIVE_DIR}"
-fi
 
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
 

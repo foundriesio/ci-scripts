@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
-import os
 from tempfile import NamedTemporaryFile
 
 from expandvars import expandvars
