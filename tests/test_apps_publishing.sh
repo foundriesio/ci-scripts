@@ -85,26 +85,6 @@ if [[ ! -d ${TUF_REPO} ]]; then
   mkdir "${TUF_REPO}"
 fi
 
-APP_IMAGES_ROOT_DIR="${WORK_DIR}/app-images"
-if [[ ! -d ${APP_IMAGES_ROOT_DIR} ]]; then
-  mkdir "${APP_IMAGES_ROOT_DIR}"
-fi
-
-FETCH_DIR="${APP_IMAGES_ROOT_DIR}/fetch-dir"
-if [[ ! -d ${FETCH_DIR} ]]; then
-  mkdir "${FETCH_DIR}"
-fi
-
-OSTREE_REPO_DIR="${APP_IMAGES_ROOT_DIR}/ostree-repo-dir"
-if [[ ! -d ${OSTREE_REPO_DIR} ]]; then
-  mkdir "${OSTREE_REPO_DIR}"
-fi
-
-TREEHUB_REPO_DIR="${APP_IMAGES_ROOT_DIR}/treehub-repo-dir"
-if [[ ! -d ${TREEHUB_REPO_DIR} ]]; then
-  mkdir "${TREEHUB_REPO_DIR}"
-fi
-
 CMD=./apps/publish.sh
 
 docker run -v -it --rm \
