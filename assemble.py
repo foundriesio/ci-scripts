@@ -241,7 +241,7 @@ if __name__ == '__main__':
             subprog.tick(complete=True)
 
     except Exception as exc:
-        logger.error('Failed to assemble a system image: {}'.format(exc))
+        logger.exception('Failed to assemble a system image')
         exit_code = 1
 
     exit(exit_code)
