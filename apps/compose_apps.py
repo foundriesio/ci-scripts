@@ -44,6 +44,7 @@ class ComposeApps:
                 if os.path.exists(os.path.join(self.dir, compose_file)):
                     args.extend(['-f', compose_file])
             args.append('config')
+            args.append('--no-interpolate')
             out = cmd_exe(*args, cwd=self.dir, capture=True)
             self._desc = yaml.safe_load(out.decode())
 
