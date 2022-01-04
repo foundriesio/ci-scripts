@@ -13,7 +13,6 @@ from math import ceil
 
 from helpers import cmd, Progress
 from apps.target_apps_fetcher import TargetAppsFetcher, SkopeAppFetcher
-from apps.target_apps_store import ArchiveTargetAppsStore
 from factory_client import FactoryClient
 
 logger = logging.getLogger("System Image Assembler")
@@ -100,38 +99,48 @@ class WicImage:
         subprocess.check_call(['parted', self._path, 'resizepart', str(self._last_part), '100%'])
 
 
-def copy_container_images_from_archive_to_wic(target: FactoryClient.Target, apps_archive_dir: str, app_preload_dir: str,
-                                              wic_image: str, token: str, apps_shortlist: list, progress: Progress):
-
-    p = Progress(2, progress)
-    target_app_store = ArchiveTargetAppsStore(apps_archive_dir)
-    target.shortlist = apps_shortlist
-    if not target_app_store.exist(target):
-        logger.info('Container images have not been found, trying to obtain them...')
-        apps_fetcher = TargetAppsFetcher(token, app_preload_dir)
-        apps_fetcher.fetch_target_apps(target, apps_shortlist)
-        apps_fetcher.fetch_apps_images()
-        target_app_store.store(target, apps_fetcher.target_dir(target.name))
+def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_image: str, token: str,
+                             apps_shortlist: list, progress: Progress):
+    p = Progress(4, progress)
+    apps_fetcher = TargetAppsFetcher(token, fetch_dir)
+    apps_fetcher.fetch_target(target, shortlist=apps_shortlist, force=True)
+    p.tick()
+    apps_size_b = apps_fetcher.get_target_apps_size(target)
     p.tick()
 
-    # in kilobytes
-    image_data_size = target_app_store.images_size(target)
-    with WicImage(wic_image, image_data_size * 1024) as wic_image:
-        target_app_store.copy(target, wic_image.docker_data_root, wic_image.compose_apps_root)
+    logger.info('Compose Apps require extra {} bytes of storage'.format(apps_size_b))
+    with WicImage(wic_image, apps_size_b) as wic_image:
+        if os.path.exists(wic_image.docker_data_root):
+            # wic image was populated by container images data during LmP build (/var/lib/docker)
+            # let's remove it and populate with the given images data
+            logger.info('Removing existing preloaded app images from the system image')
+            shutil.rmtree(wic_image.docker_data_root)
+
+        if os.path.exists(wic_image.compose_apps_root):
+            # wic image was populated by container images data during LmP build (/var/sota/compose-apps)
+            # let's remove it and populate with the given images data
+            logger.info('Removing existing preloaded compose apps from the system image')
+            shutil.rmtree(wic_image.compose_apps_root)
+
+        # copy <fetch-dir>/<target-name>/apps/* to /var/sota/compose-apps/
+        subprocess.check_call(['cp', '-r', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root])
+        # copy <fetch-dir>/<target-name>/images/* to /var/lib/docker/
+        subprocess.check_call(['cp', '-r', apps_fetcher.images_dir(target.name), wic_image.docker_data_root])
+
+        p.tick()
         wic_image.update_target(target)
     p.tick()
 
 
 def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, token: str, apps_shortlist: list,
                                 fetch_dir: str, progress: Progress):
-    p = Progress(3, progress)
+    p = Progress(4, progress)
     apps_fetcher = SkopeAppFetcher(token, fetch_dir)
-    target.shortlist = apps_shortlist
-    apps_fetcher.fetch_target(target, force=True)
+    apps_fetcher.fetch_target(target, shortlist=apps_shortlist, force=True)
+    p.tick()
+    apps_size_b = apps_fetcher.get_target_apps_size(target)
     p.tick()
 
-    apps_size_str = subprocess.check_output(['du', '-sk', apps_fetcher.target_dir(target.name)]).split()[0].decode('utf-8')
-    apps_size_b = int(apps_size_str) * 1024
     logger.info('Restorable Apps require extra {} bytes of storage'.format(apps_size_b))
     with WicImage(wic_image, apps_size_b) as wic_image:
         if os.path.exists(wic_image.docker_data_root):
@@ -171,7 +180,6 @@ def get_args():
     parser.add_argument('-f', '--factory', help='Factory')
     parser.add_argument('-v', '--target-version', help='Target(s) version, aka build number')
     parser.add_argument('-t', '--token', help='A token')
-    parser.add_argument('-ar', '--apps-archive-dir', help='Path to a dir that contains apps archives')
     parser.add_argument('-o', '--out-image-dir', help='A path to directory to put a resultant image to')
     parser.add_argument('-d', '--fetch-dir', help='Directory to fetch/preload/output apps and images')
     parser.add_argument('-T', '--targets', help='A coma separated list of Targets to assemble system image for')
@@ -223,8 +231,7 @@ if __name__ == '__main__':
                 copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist, args.fetch_dir, subprog)
             else:
                 logger.info('Preloading Compose Apps...')
-                copy_container_images_from_archive_to_wic(target, args.apps_archive_dir, args.fetch_dir,
-                                                          image_file_path, args.token, args.app_shortlist, subprog)
+                copy_compose_apps_to_wic(target, args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
 
             # Don't think its possible to have more than one tag at the time
             # we assemble, but the first tag will be the primary thing its
