@@ -37,9 +37,9 @@ class TargetAppsFetcher:
     def images_dir(self, target_name):
         return os.path.join(self.target_dir(target_name), self.ImagesDir)
 
-    def fetch_target(self, target: FactoryClient.Target, force=False):
+    def fetch_target(self, target: FactoryClient.Target, shortlist=None, force=False):
         self.target_apps.clear()
-        self.fetch_target_apps(target, apps_shortlist=target.shortlist, force=force)
+        self.fetch_target_apps(target, apps_shortlist=target.shortlist or shortlist, force=force)
         self.fetch_apps_images(force=force)
 
     def fetch_target_apps(self, target: FactoryClient.Target, apps_shortlist=None, force=False):
@@ -57,6 +57,13 @@ class TargetAppsFetcher:
                 self._download_apps_images(apps, self.images_dir(target.name), target.platform, graphdriver)
             else:
                 logger.info('Target Apps\' images have been already fetched; Target: {}'.format(target.name))
+
+    def get_target_apps_size(self, target: FactoryClient.Target) -> int:
+        # in kilobytes (`du -sb` returns so called "apparent size", hence we use `du -sk` - get usage in kilobytes)
+        apps_size_str = subprocess.check_output(['du', '-sk', self.target_dir(target.name)]).split()[0].decode(
+            'utf-8')
+        apps_size_b = int(apps_size_str) * 1024
+        return apps_size_b
 
     @staticmethod
     def _download_apps_images(apps: ComposeApps, app_images_dir, platform, graphdriver='overlay2'):

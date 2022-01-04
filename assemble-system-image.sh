@@ -17,13 +17,12 @@ TARGETS="${TARGETS}"
 TARGET_VERSION="${TARGET_VERSION-${H_BUILD}}"
 # destination for a resultant system image
 OUT_IMAGE_DIR="${OUT_IMAGE_DIR-/archive}"
-APPS_ARCHIVE_DIR="${APPS_ARCHIVE_DIR-/var/cache/bitbake/app-images/}"
 APP_SHORTLIST="${APP_SHORTLIST-""}"
 COMPOSE_APP_TYPE=${COMPOSE_APP_TYPE-""}
 # directory to preload/dump/snapshot apps images to
 FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
 
-require_params FACTORY APPS_ARCHIVE_DIR OUT_IMAGE_DIR
+require_params FACTORY OUT_IMAGE_DIR
 if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then
   echo "Neither Target name list (TARGETS) nor Target version (aka H_BUILD) are specified !!!"
   exit 1
@@ -41,7 +40,6 @@ status Running: Assemble System Image script
   --token "$(cat "${SECRETS}/osftok")" \
   --target-version "${TARGET_VERSION}" \
   --out-image-dir "${OUT_IMAGE_DIR}" \
-  --apps-archive-dir "${APPS_ARCHIVE_DIR}" \
   --fetch-dir "${FETCH_DIR}" \
   --targets "${TARGETS}" \
   --app-shortlist="${APP_SHORTLIST}" \
