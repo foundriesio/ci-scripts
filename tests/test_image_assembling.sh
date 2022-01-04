@@ -27,12 +27,7 @@ if [[ ! -d ${SECRETS} ]]; then
 fi
 echo -n "${OSF_TOKEN}" > "${WORK_DIR}/secrets/osftok"
 
-APP_IMAGES_ROOT_DIR="${WORK_DIR}/app-images"
-if [[ ! -d ${APP_IMAGES_ROOT_DIR} ]]; then
-  mkdir "${APP_IMAGES_ROOT_DIR}"
-fi
-
-FETCH_DIR="${APP_IMAGES_ROOT_DIR}/fetch-dir"
+FETCH_DIR="${WORK_DIR}/fetch-dir"
 if [[ ! -d ${FETCH_DIR} ]]; then
   mkdir "${FETCH_DIR}"
 fi
