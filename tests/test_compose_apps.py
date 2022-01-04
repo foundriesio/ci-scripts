@@ -35,6 +35,8 @@ class ComposeAppsTest(unittest.TestCase):
     '''
 
     def setUp(self):
+        if 'COMPOSE_FILES' in os.environ:
+            del os.environ['COMPOSE_FILES']
         self.apps_root_dir = tempfile.mkdtemp()
         self.app_name = 'app1'
         os.mkdir(os.path.join(self.apps_root_dir, self.app_name))
@@ -42,24 +44,43 @@ class ComposeAppsTest(unittest.TestCase):
             yaml_data = yaml.safe_load(self.ComposeAppDesc)
             yaml.dump(yaml_data, compose_file)
 
-        self.apps = ComposeApps(self.apps_root_dir)
-
     def tearDown(self):
         shutil.rmtree(self.apps_root_dir)
 
     def test_compose_apps_init(self):
-        self.assertEqual(len(self.apps), 1)
-        self.apps.validate()
-        self.assertEqual(self.apps.str, self.app_name)
-        self.assertEqual(len(self.apps), 1)
+        apps = ComposeApps(self.apps_root_dir)
+        self.assertEqual(len(apps), 1)
+        self.assertEqual(apps.str, self.app_name)
+        self.assertEqual(len(apps), 1)
 
     def test_compose_apps_app_init(self):
-        app = self.apps[0]
-        app.validate()
+        app = ComposeApps(self.apps_root_dir)[0]
         self.assertEqual(len(app.services()), 3)
 
+    def test_compose_apps_app_init_multi(self):
+        override = {
+            'version': '3.2',
+            'services': {
+                'nginx-02': {
+                    'image': 'hub.foundries.io/test_factory/NGINX',
+                }
+            }
+        }
+        with open(os.path.join(self.apps_root_dir, self.app_name, 'override.yml'), 'w') as f:
+            yaml.dump(override, f)
+
+        os.environ['COMPOSE_FILES'] = 'docker-compose.yml override.yml'
+        app = ComposeApps(self.apps_root_dir)[0]
+        self.assertEqual(len(app.services()), 3)
+
+        expected_images = ['hub.foundries.io/test_factory/nginx',
+                           'hub.foundries.io/test_factory/NGINX',
+                           'hub.foundries.io/test_factory/app-07:latest']
+        for image in app.images():
+            self.assertIn(image, expected_images)
+
     def test_compose_apps_app_images(self):
-        app = self.apps[0]
+        app = ComposeApps(self.apps_root_dir)[0]
         expected_images = ['hub.foundries.io/test_factory/nginx',
                            'nginx:1.19.2-alpine',
                            'hub.foundries.io/test_factory/app-07:latest']

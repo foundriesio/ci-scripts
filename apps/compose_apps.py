@@ -27,7 +27,7 @@ class ComposeApps:
                 raise ValueError('docker-compose.yaml file found. This must be named docker-compose.yml')
             return exists
 
-        def __init__(self, name, app_dir, validate=False, image_downloader_cls=DockerDownloader):
+        def __init__(self, name, app_dir, image_downloader_cls=DockerDownloader):
             if not self.is_compose_app_dir(app_dir):
                 raise Exception('Compose App dir {} does not contain a compose file {}'
                                 .format(app_dir, self.ComposeFile))
@@ -35,16 +35,17 @@ class ComposeApps:
             self.dir = app_dir
             self.file = os.path.join(self.dir, self.ComposeFile)
 
-            if validate:
-                self.validate()
-
             self._image_downloader_cls = image_downloader_cls
 
-            with open(self.file) as compose_file:
-                self._desc = yaml.safe_load(compose_file)
-
-        def validate(self):
-            self._run_cmd('config')
+            compose_files_str = os.environ.get('COMPOSE_FILES', self.ComposeFile)
+            compose_files = [x.strip() for x in compose_files_str.split()]
+            args = [self.DockerComposeTool]
+            for compose_file in compose_files:
+                if os.path.exists(os.path.join(self.dir, compose_file)):
+                    args.extend(['-f', compose_file])
+            args.append('config')
+            out = cmd_exe(*args, cwd=self.dir, capture=True)
+            self._desc = yaml.safe_load(out.decode())
 
         def services(self):
             return self['services'].items()
@@ -61,9 +62,6 @@ class ComposeApps:
         def save(self):
             with open(self.file, 'w') as compose_file:
                 yaml.dump(self._desc, compose_file)
-
-        def _run_cmd(self, cmd):
-            cmd_exe(self.DockerComposeTool, '-f', self.file, cmd)
 
         def __getitem__(self, item):
             return self._desc[item]
@@ -100,7 +98,3 @@ class ComposeApps:
 
     def __len__(self):
         return len(self._apps)
-
-    def validate(self):
-        # throws exception on first invalid app
-        [app.validate() for app in self]

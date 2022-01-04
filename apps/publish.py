@@ -24,8 +24,6 @@ def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [],
     apps = ComposeApps(app_root_dir)
     status('Found Compose Apps: {}'.format(apps.str))
 
-    status('Validating Compose Apps')
-    apps.validate()
     status('Compose Apps has been validated: {}'.format(apps.str))
 
     apps_to_add_to_target = AppsPublisher(factory, publish_tool, ','.join(platforms) if platforms else '').publish(apps, apps_version)

@@ -128,7 +128,7 @@ class SkopeAppFetcher(TargetAppsFetcher):
             with tarfile.open(fileobj=BIO(app_blob)) as t:
                 t.extract('docker-compose.yml', app_dir)
 
-            fetched_apps.append(ComposeApps.App(app_name, app_dir, validate=True))
+            fetched_apps.append(ComposeApps.App(app_name, app_dir))
         return fetched_apps
 
     def fetch_apps_images(self, graphdriver='overlay2', force=False):
