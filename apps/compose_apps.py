@@ -38,8 +38,10 @@ class ComposeApps:
             self._image_downloader_cls = image_downloader_cls
 
             args = [self.DockerComposeTool, '-f', self.ComposeFile, 'config']
-            out = cmd_exe(*args, cwd=self.dir, capture=True)
-            self._desc = yaml.safe_load(out.decode())
+            cmd_exe(*args, cwd=self.dir)
+
+            with open(self.file) as compose_file:
+                self._desc = yaml.safe_load(compose_file)
 
         def services(self):
             return self['services'].items()
