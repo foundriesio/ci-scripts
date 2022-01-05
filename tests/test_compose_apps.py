@@ -35,8 +35,6 @@ class ComposeAppsTest(unittest.TestCase):
     '''
 
     def setUp(self):
-        if 'COMPOSE_FILES' in os.environ:
-            del os.environ['COMPOSE_FILES']
         self.apps_root_dir = tempfile.mkdtemp()
         self.app_name = 'app1'
         os.mkdir(os.path.join(self.apps_root_dir, self.app_name))
@@ -56,28 +54,6 @@ class ComposeAppsTest(unittest.TestCase):
     def test_compose_apps_app_init(self):
         app = ComposeApps(self.apps_root_dir)[0]
         self.assertEqual(len(app.services()), 3)
-
-    def test_compose_apps_app_init_multi(self):
-        override = {
-            'version': '3.2',
-            'services': {
-                'nginx-02': {
-                    'image': 'hub.foundries.io/test_factory/NGINX',
-                }
-            }
-        }
-        with open(os.path.join(self.apps_root_dir, self.app_name, 'override.yml'), 'w') as f:
-            yaml.dump(override, f)
-
-        os.environ['COMPOSE_FILES'] = 'docker-compose.yml override.yml'
-        app = ComposeApps(self.apps_root_dir)[0]
-        self.assertEqual(len(app.services()), 3)
-
-        expected_images = ['hub.foundries.io/test_factory/nginx',
-                           'hub.foundries.io/test_factory/NGINX',
-                           'hub.foundries.io/test_factory/app-07:latest']
-        for image in app.images():
-            self.assertIn(image, expected_images)
 
     def test_compose_apps_app_images(self):
         app = ComposeApps(self.apps_root_dir)[0]
