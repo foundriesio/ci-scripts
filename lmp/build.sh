@@ -6,6 +6,8 @@ require_params MACHINE IMAGE GIT_SHA
 
 DISTRO="${DISTRO-lmp}"
 
+start_ssh_agent
+
 if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
 	status "Build triggered by change to lmp-manifest"
 	manifest="file://$(pwd)/.git -b $GIT_SHA"

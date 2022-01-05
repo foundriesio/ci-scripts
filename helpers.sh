@@ -22,6 +22,26 @@ function git_config {
 	git config user.name 2>/dev/null || git config --global user.name "cibot"
 }
 
+function start_ssh_agent {
+	keys=$(ls /secrets/ssh-*.key 2>/dev/null || true)
+	if [ -n "$keys" ] ; then
+		status Found ssh keys, starting an ssh-agent
+		mkdir -p $HOME/.ssh
+		eval `ssh-agent`
+		for x in $keys ; do
+			echo " Adding $x"
+			key=$HOME/.ssh/$(basename $x)
+			cp $x $key
+			chmod 700 $key
+			ssh-add $key
+		done
+		if [ -f /secrets/ssh-known_hosts ] ; then
+			status " Adding known hosts file"
+			ln -s /secrets/ssh-known_hosts $HOME/.ssh/known_hosts
+		fi
+	fi
+}
+
 function repo_sync {
 	status "Repo syncing sources..."
 
