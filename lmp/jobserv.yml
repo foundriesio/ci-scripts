@@ -62,6 +62,8 @@ triggers:
               - qemuarm
               - qemuarm64-secureboot
               - qemuriscv64
+              - nanopi-neo
+              - orange-pi-zero
               - raspberrypi3
               - raspberrypi3-64
               - raspberrypi4
@@ -234,6 +236,8 @@ triggers:
               - qemuarm
               - qemuarm64-secureboot
               - qemuriscv64
+              - nanopi-neo
+              - orange-pi-zero
               - raspberrypi3
               - raspberrypi3-64
               - raspberrypi4
