@@ -44,7 +44,6 @@ chown -R builder .
 
 su builder -c $HERE/bb-config.sh
 touch ${archive}/customize-target.log && chown builder ${archive}/customize-target.log
-touch "${archive}/os-release" && chown builder "${archive}/os-release"
 su builder -c $HERE/bb-build.sh
 
 DEPLOY_DIR="$(cat build/deploy_dir)"
@@ -189,4 +188,5 @@ if [ -d "${archive}" ] ; then
 	mv MD5SUMS.txt ${archive}/other/
 
 	mv ${archive}/manifest* ${archive}/other/
+	cp "${DEPLOY_DIR_IMAGE}/os-release" "${archive}/" || true
 fi
