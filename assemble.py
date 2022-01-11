@@ -99,6 +99,13 @@ class WicImage:
         subprocess.check_call(['parted', self._path, 'resizepart', str(self._last_part), '100%'])
 
 
+def _mk_parent_dir(path: str):
+    if path[-1] == '/':
+        path = path[:-1]
+    path = os.path.dirname(path)
+    os.makedirs(path)
+
+
 def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_image: str, token: str,
                              apps_shortlist: list, progress: Progress):
     p = Progress(4, progress)
@@ -115,12 +122,19 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded app images from the system image')
             shutil.rmtree(wic_image.docker_data_root)
+        else:
+            # intel installer images won't have this directory
+            _mk_parent_dir(wic_image.docker_data_root)
+
 
         if os.path.exists(wic_image.compose_apps_root):
             # wic image was populated by container images data during LmP build (/var/sota/compose-apps)
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded compose apps from the system image')
             shutil.rmtree(wic_image.compose_apps_root)
+        else:
+            # intel installer images won't have this directory
+            _mk_parent_dir(wic_image.compose_apps_root)
 
         # copy <fetch-dir>/<target-name>/apps/* to /var/sota/compose-apps/
         subprocess.check_call(['cp', '-r', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root])
