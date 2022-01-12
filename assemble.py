@@ -103,7 +103,7 @@ def _mk_parent_dir(path: str):
     if path[-1] == '/':
         path = path[:-1]
     path = os.path.dirname(path)
-    os.makedirs(path)
+    os.makedirs(path, exist_ok=True)
 
 
 def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_image: str, token: str,
