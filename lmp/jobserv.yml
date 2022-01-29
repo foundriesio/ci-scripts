@@ -71,6 +71,8 @@ triggers:
               - stm32mp1-disco
               - uz3eg-iocc
               - uz3eg-iocc-sec
+              - uz3eg-iocc-ebbr
+              - uz3eg-iocc-ebbr-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
@@ -245,6 +247,8 @@ triggers:
               - stm32mp1-disco
               - uz3eg-iocc
               - uz3eg-iocc-sec
+              - uz3eg-iocc-ebbr
+              - uz3eg-iocc-ebbr-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
