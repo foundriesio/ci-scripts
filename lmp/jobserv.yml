@@ -69,6 +69,8 @@ triggers:
               - raspberrypi4
               - raspberrypi4-64
               - stm32mp1-disco
+              - kv260
+              - kv260-ebbr
               - uz3eg-iocc
               - uz3eg-iocc-sec
               - uz3eg-iocc-ebbr
@@ -245,6 +247,8 @@ triggers:
               - raspberrypi4
               - raspberrypi4-64
               - stm32mp1-disco
+              - kv260
+              - kv260-ebbr
               - uz3eg-iocc
               - uz3eg-iocc-sec
               - uz3eg-iocc-ebbr
