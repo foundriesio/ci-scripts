@@ -33,11 +33,12 @@ class DockerRegistryClient:
             return compose_app_archive
 
     def pull_manifest(self, uri):
-        registry_jwt_token = self.__get_registry_jwt_token(uri.repo, uri.app)
-        manifest_url = '{}/v2/{}/{}/manifests/{}'.format(self.registry_url, uri.repo, uri.app, uri.digest)
-        manifest_resp = http_get(manifest_url,
-                                 headers={'authorization': 'bearer {}'.format(registry_jwt_token['token']),
-                                          'accept': 'application/vnd.oci.image.manifest.v1+json'})
+        req_headers = {'accept': 'application/vnd.oci.image.manifest.v1+json'}
+        if uri.factory:
+            registry_jwt_token = self.__get_registry_jwt_token(uri.factory, uri.app)
+            req_headers['authorization'] = 'bearer {}'.format(registry_jwt_token['token'])
+        manifest_url = '{}/v2/{}/manifests/{}'.format(self.registry_url, uri.name, uri.digest)
+        manifest_resp = http_get(manifest_url, headers=req_headers)
         rec_hash = hashlib.sha256(manifest_resp.content).hexdigest()
         if rec_hash != uri.hash:
             raise Exception("Incorrect manifest hash; expected: {}, received: {}".format(uri.hash, rec_hash))
@@ -48,11 +49,11 @@ class DockerRegistryClient:
         return json.loads(self.pull_manifest(uri))
 
     def pull_layer(self, image_uri, layer_digest, token=None):
-        if not token:
-            registry_jwt_token = self.__get_registry_jwt_token(image_uri.repo, image_uri.app)
+        if not token and image_uri.factory:
+            registry_jwt_token = self.__get_registry_jwt_token(image_uri.factory, image_uri.app)
             token = registry_jwt_token['token']
 
-        layer_url = '{}/v2/{}/{}/blobs/{}'.format(self.registry_url, image_uri.repo, image_uri.app, layer_digest)
+        layer_url = '{}/v2/{}/blobs/{}'.format(self.registry_url, image_uri.name, layer_digest)
         archive_resp = http_get(layer_url, headers={'authorization': 'bearer {}'.format(token)})
         layer_hash = layer_digest[len('sha256:'):]
         rec_hash = hashlib.sha256(archive_resp.content).hexdigest()
@@ -66,11 +67,14 @@ class DockerRegistryClient:
             manifest = self.download_manifest(image_uri)
 
         uri = self.parse_image_uri(image_uri)
-        registry_jwt_token = self.__get_registry_jwt_token(uri.repo, uri.app)
+        token = None
+        if uri.factory:
+            registry_jwt_token = self.__get_registry_jwt_token(uri.factory, uri.app)
+            token = registry_jwt_token['token']
 
         layer_archives = []
         for layer in manifest['layers']:
-            layer_archives.append(self.pull_layer(uri, layer['digest'], registry_jwt_token['token']))
+            layer_archives.append(self.pull_layer(uri, layer['digest'], token))
         return layer_archives
 
     @staticmethod
@@ -78,13 +82,31 @@ class DockerRegistryClient:
         class URI:
             def __init__(self, uri_str: str):
                 uri_parts = uri_str.split('@')
-                self.host, self.repo, self.app = uri_parts[0].split('/')
+                if len(uri_parts) != 2:
+                    raise ValueError("Invalid image URI, a digest delimiter is not found: ", uri_str)
+
+                host_end_indx = uri_parts[0].find('/')
+                if -1 == host_end_indx:
+                    raise ValueError("Invalid image URI, hostname and path delimiter is not found digest: {}"
+                                    .format(uri_str))
+                self.host = uri_parts[0][:host_end_indx]
+
+                self.name = uri_parts[0][host_end_indx + 1:]
+                if len(self.name) == 0:
+                    raise ValueError("Invalid image URI, an image name/path is empty: {}".format(uri_str))
+
                 uri_digest = uri_parts[1]
                 if not uri_digest.startswith('sha256:'):
-                    raise Exception("Unsupported type of URI digest: {}".format(uri_digest))
-
+                    raise ValueError("Unsupported type of URI digest: {}".format(uri_digest))
                 self.digest = uri_digest
                 self.hash = uri_digest[len('sha256:'):]
+
+                if self.host == DockerRegistryClient.DefaultRegistryHost:
+                    self.factory, self.app = self.name.split('/')
+                else:
+                    self.factory = None
+                    self.app = None
+
         return URI(image_uri)
 
     def __get_registry_jwt_token(self, repo, app):
