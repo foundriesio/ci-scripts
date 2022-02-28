@@ -137,9 +137,9 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
             _mk_parent_dir(wic_image.compose_apps_root)
 
         # copy <fetch-dir>/<target-name>/apps/* to /var/sota/compose-apps/
-        subprocess.check_call(['cp', '-r', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root])
+        cmd('cp', '-r', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root)
         # copy <fetch-dir>/<target-name>/images/* to /var/lib/docker/
-        subprocess.check_call(['cp', '-r', apps_fetcher.images_dir(target.name), wic_image.docker_data_root])
+        cmd('cp', '-r', apps_fetcher.images_dir(target.name), wic_image.docker_data_root)
 
         p.tick()
         wic_image.update_target(target)
@@ -175,7 +175,7 @@ def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, to
             logger.info('Removing existing preloaded app images from the system image')
             shutil.rmtree(wic_image.restorable_apps_root)
 
-        subprocess.check_call(['cp', '-r', apps_fetcher.target_dir(target.name), wic_image.restorable_apps_root])
+        cmd('cp', '-r', apps_fetcher.target_dir(target.name), wic_image.restorable_apps_root)
         p.tick()
         wic_image.update_target(target)
     p.tick()
