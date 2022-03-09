@@ -10,6 +10,7 @@ import argparse
 import logging
 import shutil
 from math import ceil
+from time import sleep
 
 from helpers import cmd, Progress
 from apps.target_apps_fetcher import TargetAppsFetcher, SkopeAppFetcher
@@ -27,10 +28,12 @@ class WicImage:
     def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
         self._path = wic_image_path
         self._mnt_dir = os.path.join('/mnt', 'wic_image_rootfs')
+        self._installer_mount = None
         self._last_part = 2
         self._resized_image = False
         if increase_bytes:
             self._resize_wic_file(increase_bytes, extra_space)
+            self._rootfs_bytes_increase = increase_bytes
             self._resized_image = True
         self.compose_apps_root = os.path.join(self._mnt_dir, self.ComposeAppsRootDir)
         self.docker_data_root = os.path.join(self._mnt_dir, self.DockerDataRootDir)
@@ -60,9 +63,26 @@ class WicImage:
 
         os.mkdir(self._mnt_dir)
         cmd('mount', self._wic_device, self._mnt_dir)
+
+        installer = os.path.join(self._mnt_dir, 'rootfs.img')
+        if os.path.exists(installer):
+            if self._resized_image:
+                self._resize_rootfs_img(installer, self._rootfs_bytes_increase)
+            self._installer_mount = os.path.join('/mnt/installer_rootfs')
+            os.mkdir(self._installer_mount)
+            cmd('mount', '-oloop', installer, self._installer_mount)
+            self.compose_apps_root = os.path.join(self._installer_mount, self.ComposeAppsRootDir)
+            self.docker_data_root = os.path.join(self._installer_mount, self.DockerDataRootDir)
+            self.restorable_apps_root = os.path.join(self._installer_mount, self.RestorableAppsRoot)
+            self.installed_target_filepath = os.path.join(self._installer_mount, self.InstalledTargetFile)
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._installer_mount:
+            cmd('umount', self._installer_mount)
+            sleep(1)
+            os.rmdir(self._installer_mount)
         cmd('umount', self._mnt_dir)
         os.rmdir(self._mnt_dir)
         cmd('umount', '/dev')
@@ -97,6 +117,16 @@ class WicImage:
         self._last_part = int(parted_out.split(b'\n')[-3].split()[0])
         logger.info('last partition: %d' % self._last_part)
         subprocess.check_call(['parted', self._path, 'resizepart', str(self._last_part), '100%'])
+
+    def _resize_rootfs_img(self, path, increase_bytes: int):
+        bs = 1024
+        increase_k = ceil(increase_bytes / bs) + 1
+        wic_k = ceil(os.stat(path).st_size / bs)
+        logger.info('Extending the rootfs image; adding: {} bytes, asked {}'.format(increase_k * bs, increase_bytes))
+        cmd('apk', 'add', 'coreutils')
+        cmd('truncate', path, '-s', f'+{increase_k}K')
+        cmd('e2fsck', '-y', '-f', path)
+        cmd('resize2fs', path)
 
 
 def _mk_parent_dir(path: str):
@@ -137,9 +167,9 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
             _mk_parent_dir(wic_image.compose_apps_root)
 
         # copy <fetch-dir>/<target-name>/apps/* to /var/sota/compose-apps/
-        subprocess.check_call(['cp', '-r', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root])
+        cmd('cp', '-r', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root)
         # copy <fetch-dir>/<target-name>/images/* to /var/lib/docker/
-        subprocess.check_call(['cp', '-r', apps_fetcher.images_dir(target.name), wic_image.docker_data_root])
+        cmd('cp', '-r', apps_fetcher.images_dir(target.name), wic_image.docker_data_root)
 
         p.tick()
         wic_image.update_target(target)
@@ -175,7 +205,7 @@ def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, to
             logger.info('Removing existing preloaded app images from the system image')
             shutil.rmtree(wic_image.restorable_apps_root)
 
-        subprocess.check_call(['cp', '-r', apps_fetcher.target_dir(target.name), wic_image.restorable_apps_root])
+        cmd('cp', '-r', apps_fetcher.target_dir(target.name), wic_image.restorable_apps_root)
         p.tick()
         wic_image.update_target(target)
     p.tick()
