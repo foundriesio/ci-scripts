@@ -156,6 +156,8 @@ if [ -d "${archive}" ] ; then
 	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
 	# NVIDIA targets use a tegraflash tarball
 	mv ${archive}/other/lmp-*.tegraflash.tar.gz ${archive}/ || true
+	# Telechips targets use a fai image
+	mv ${archive}/other/lmp-*.fai ${archive}/ || true
 
 	# Move bootloader / boot firmware to the root of the archive
 	## Intel (used by Qemu)
@@ -181,6 +183,8 @@ if [ -d "${archive}" ] ; then
 	mv ${archive}/other/flash.bin ${archive}/ || true
 	## RISC-V (used by Qemu)
 	mv ${archive}/other/fw_payload.elf ${archive}/ || true
+	## Telechips boot-firmware
+	mv ${archive}/other/boot-firmware-*.tar.gz ${archive}/ || true
 
 	# Create MD5SUMS file
 	find ${archive} -type f | sort | xargs md5sum > MD5SUMS.txt
