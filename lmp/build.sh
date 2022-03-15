@@ -133,6 +133,12 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/se_*.bin ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/es_*.bin ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/*-board-firmware*.tar.gz ${archive}/other/ || true
+	# Additional firmware files
+	cp ${DEPLOY_DIR_IMAGE}/bl*.img ${archive}/other/ || true
+	cp ${DEPLOY_DIR_IMAGE}/fip.bin ${archive}/other/ || true
+	cp ${DEPLOY_DIR_IMAGE}/lk.bin ${archive}/other/ || true
+	# BSP specific files
+	cp ${DEPLOY_DIR_IMAGE}/rity.json ${archive}/other/ || true
 	# Copy boot.itb (signed boot script) if available
 	cp ${DEPLOY_DIR_IMAGE}/boot.itb ${archive}/other/ || true
 	# Flash layout for STM32 devices
