@@ -14,14 +14,14 @@
         "bitbake_debug": {
             "class": "logging.FileHandler",
             "formatter": "debugFormatter",
-            "filename": "bitbake_debug.log",
+            "filename": "@@ARCHIVE@@/bitbake_debug.log",
             "level": "DEBUG",
             "mode": "w"
         },
         "bitbake_warnings": {
             "class": "logging.FileHandler",
             "formatter": "jsonFormatter",
-            "filename": "bitbake_warning.log",
+            "filename": "@@ARCHIVE@@/bitbake_warning.log",
             "level": "WARNING",
             "mode": "w"
         }

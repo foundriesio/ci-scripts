@@ -8,6 +8,11 @@ start_ssh_agent
 
 source setup-environment build
 
-bitbake -D ${IMAGE}
+# Parsing first, to abort in case of parsing issues
+bitbake -p
 
-bitbake -e | grep "^DEPLOY_DIR="| cut -d'=' -f2 | tr -d '"' > deploy_dir
+# Global and image specific envs
+bitbake -e > ${archive}/bitbake_global_env.txt
+bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt
+
+bitbake -D ${IMAGE}
