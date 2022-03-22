@@ -44,9 +44,11 @@ chown -R builder .
 
 su builder -c $HERE/bb-config.sh
 touch ${archive}/customize-target.log && chown builder ${archive}/customize-target.log
+touch ${archive}/bitbake_debug.log ${archive}/bitbake_warning.log && chown builder ${archive}/bitbake_*.log
+touch ${archive}/bitbake_global_env.txt ${archive}/bitbake_image_env.txt && chown builder ${archive}/bitbake_*_env.txt
 su builder -c $HERE/bb-build.sh
 
-DEPLOY_DIR="$(cat build/deploy_dir)"
+DEPLOY_DIR="$(grep "^DEPLOY_DIR=" ${archive}/bitbake_global_env.txt | cut -d'=' -f2 | tr -d '"')"
 DEPLOY_DIR_IMAGE="${DEPLOY_DIR}/images/${MACHINE}"
 
 # Prepare files to publish
@@ -96,12 +98,15 @@ fi
 if [ -d "${archive}" ] ; then
 	mkdir ${archive}/other
 
+	# Bitbake env output
+	gzip -f ${archive}/bitbake_global_env.txt
+	gzip -f ${archive}/bitbake_image_env.txt
+	mv ${archive}/bitbake_*_env.txt.gz ${archive}/other/
+
 	# Compress and publish bitbake's debug build output
-	if [ -f build/bitbake_debug.log ]; then
-		gzip -f build/bitbake_debug.log
-		mv build/bitbake_debug.log.gz ${archive}/other/
-		mv build/bitbake_warning.log ${archive}/other/
-	fi
+	gzip -f ${archive}/bitbake_debug.log
+	mv ${archive}/bitbake_debug.log.gz ${archive}/other/
+	mv ${archive}/bitbake_warning.log ${archive}/other/
 
 	# Compress and publish source tarball (for *GPL* packages)
 	if [ -d ${DEPLOY_DIR_IMAGE}/source-release ]; then

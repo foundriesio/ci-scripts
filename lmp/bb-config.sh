@@ -88,8 +88,11 @@ DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
 MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
 
 # Bitbake custom logconfig
-BB_LOGCONFIG = "${HERE}/bb_logconfig.json"
+BB_LOGCONFIG = "bb_logconfig.json"
 EOFEOF
+
+# Configure path for the debug/warning logs
+sed -e "s|@@ARCHIVE@@|${archive}|" ${HERE}/bb_logconfig.json > bb_logconfig.json
 
 # Additional packages based on the CI job used
 if [ "$CONF_VERSION" == "1" ]; then
