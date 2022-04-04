@@ -20,6 +20,7 @@ MFGTOOL_FLASH_IMAGE="${MFGTOOL_FLASH_IMAGE-lmp-factory-image}"
 SSTATE_CACHE_MIRROR="${SSTATE_CACHE_MIRROR-/sstate-cache-mirror}"
 USE_FIOTOOLS="${USE_FIOTOOLS-1}"
 OSTREE_API_VERSION="${OSTREE_API_VERSION-v2}"
+DEV_MODE="${DEV_MODE-0}"
 
 GARAGE_CUSTOMIZE_TARGET_PARAMS='${MACHINE} ${IMAGE_BASENAME} ${TARGET_ARCH}'
 
@@ -35,6 +36,12 @@ if [ -f "/secrets/targets.sec" ] ; then
 fi
 
 source setup-environment build
+
+if [ "$DEV_MODE" == "1" ]; then
+	cat << EOFEOF >> conf/local.conf
+DEV_MODE = "1"
+EOFEOF
+fi
 
 CONF_VERSION=$(grep  ^CONF_VERSION conf/local.conf | cut -d'"' -f 2)
 
