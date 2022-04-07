@@ -41,7 +41,7 @@ def targets_from_api(factory):
         return {}
 
     req = urllib.request.Request(url, headers={'OSF-TOKEN': token})
-    with urllib.request.urlopen(req) as response:
+    with urllib.request.urlopen(req, timeout=15) as response:
         data = json.load(response)
         return data['signed']['targets']
 
