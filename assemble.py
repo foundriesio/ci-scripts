@@ -167,9 +167,9 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
             _mk_parent_dir(wic_image.compose_apps_root)
 
         # copy <fetch-dir>/<target-name>/apps/* to /var/sota/compose-apps/
-        cmd('cp', '-r', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root)
+        cmd('cp', '-a', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root)
         # copy <fetch-dir>/<target-name>/images/* to /var/lib/docker/
-        cmd('cp', '-r', apps_fetcher.images_dir(target.name), wic_image.docker_data_root)
+        cmd('cp', '-a', apps_fetcher.images_dir(target.name), wic_image.docker_data_root)
 
         p.tick()
         wic_image.update_target(target)
