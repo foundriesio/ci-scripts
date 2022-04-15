@@ -20,6 +20,9 @@ function require_params {
 function git_config {
 	git config user.email 2>/dev/null || git config --global user.email "gavin@foundries.io"
 	git config user.name 2>/dev/null || git config --global user.name "cibot"
+	# https://github.blog/2022-04-12-git-security-vulnerability-announced/
+	git config --system --add safe.directory /srv/oe/layers/meta-subscriber-overrides
+	git config --system --add safe.directory /srv/oe/.repo/manifests
 }
 
 function start_ssh_agent {
