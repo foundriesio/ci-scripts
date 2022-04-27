@@ -88,6 +88,7 @@ SOTA_CLIENT = "${SOTA_CLIENT}"
 
 # git-describe version of LMP
 LMP_VERSION = "${LMP_VERSION}"
+H_BUILD = "${H_BUILD}"
 
 # Default AKLITE tag
 AKLITE_TAG = "${AKLITE_TAG}"
