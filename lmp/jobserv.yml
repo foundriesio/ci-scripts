@@ -55,6 +55,7 @@ triggers:
               - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - jetson-agx-xavier-devkit
@@ -103,6 +104,7 @@ triggers:
               - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
         params:
@@ -233,6 +235,7 @@ triggers:
               - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - jetson-agx-xavier-devkit
@@ -300,6 +303,7 @@ triggers:
               - imx8mm-lpddr4-evk
               - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
         params:
