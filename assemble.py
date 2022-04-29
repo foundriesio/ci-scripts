@@ -156,7 +156,6 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
             # intel installer images won't have this directory
             _mk_parent_dir(wic_image.docker_data_root)
 
-
         if os.path.exists(wic_image.compose_apps_root):
             # wic image was populated by container images data during LmP build (/var/sota/compose-apps)
             # let's remove it and populate with the given images data
@@ -205,7 +204,10 @@ def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, to
             logger.info('Removing existing preloaded app images from the system image')
             shutil.rmtree(wic_image.restorable_apps_root)
 
-        cmd('cp', '-r', apps_fetcher.target_dir(target.name), wic_image.restorable_apps_root)
+        cmd('cp', '-r', apps_fetcher.restorable_apps_dir(target.name), wic_image.restorable_apps_root)
+        cmd('cp', '-a', apps_fetcher.compose_apps_dir(target.name), wic_image.compose_apps_root)
+        cmd('cp', '-a', apps_fetcher.docker_data_dir(target.name), wic_image.docker_data_root)
+
         p.tick()
         wic_image.update_target(target)
     p.tick()

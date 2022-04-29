@@ -5,6 +5,7 @@ import tarfile
 import subprocess
 from io import BytesIO as BIO
 
+from helpers import cmd
 from factory_client import FactoryClient
 from apps.docker_registry_client import DockerRegistryClient
 from apps.dockerd import DockerDaemon
@@ -91,13 +92,25 @@ class TargetAppsFetcher:
 class SkopeAppFetcher(TargetAppsFetcher):
     ManifestFile = 'manifest.json'
     ArchiveFileExt = '.tgz'
+    RestorableAppsDir = 'reset-apps'
+    ComposeAppsDir = 'compose-apps'
+    DockerDataDir = 'docker'
     BlobsDir = 'blobs'
 
     def __init__(self, token, work_dir, factory=None):
         super().__init__(token, work_dir, factory)
 
+    def restorable_apps_dir(self, target_name):
+        return os.path.join(self.target_dir(target_name), self.RestorableAppsDir)
+
+    def compose_apps_dir(self, target_name):
+        return os.path.join(self.target_dir(target_name), self.ComposeAppsDir)
+
+    def docker_data_dir(self, target_name):
+        return os.path.join(self.target_dir(target_name), self.DockerDataDir)
+
     def blobs_dir(self, target_name):
-        return os.path.join(self.target_dir(target_name), self.BlobsDir)
+        return os.path.join(self.restorable_apps_dir(target_name), self.BlobsDir)
 
     def _fetch_apps(self, target, apps_shortlist=None, force=False):
         fetched_apps = []
@@ -107,7 +120,7 @@ class SkopeAppFetcher(TargetAppsFetcher):
                 continue
 
             uri = DockerRegistryClient.parse_image_uri(app_uri)
-            app_dir = os.path.join(self.apps_dir(target.name), app_name, uri.hash)
+            app_dir = os.path.join(self.restorable_apps_dir(target.name), self.AppsDir, app_name, uri.hash)
             if os.path.exists(app_dir) and not force:
                 logger.info('App has been already fetched; Target: {}, App: {}'.format(target.name, app_name))
                 continue
@@ -128,24 +141,34 @@ class SkopeAppFetcher(TargetAppsFetcher):
             with tarfile.open(fileobj=BIO(app_blob)) as t:
                 t.extract('docker-compose.yml', app_dir)
 
+            # extract App archive into `compose-apps` folder
+            compose_app_dir = os.path.join(self.compose_apps_dir(target.name), app_name)
+            os.makedirs(compose_app_dir, exist_ok=True)
+            cmd('tar', '-xzf',  app_blob_file, '-C', compose_app_dir)
+
             fetched_apps.append(ComposeApps.App(app_name, app_dir))
         return fetched_apps
 
     def fetch_apps_images(self, graphdriver='overlay2', force=False):
         self._registry_client.login()
         for target, apps in self.target_apps.items():
-            logger.info('Pulling images of {} apps'.format(target.name))
-            for app in apps:
-                logger.info('Pulling {} images'.format(app.name))
-                images_dir = os.path.join(app.dir, self.ImagesDir)
-                os.makedirs(images_dir, exist_ok=True)
-                for image in app.images():
-                    self.fetch_image(target.name, target.platform, image, images_dir)
+            with DockerDaemon(self.docker_data_dir(target.name), graphdriver) as dockerd:
+                logger.info('Pulling images of {} apps'.format(target.name))
+                for app in apps:
+                    logger.info('Pulling {} images'.format(app.name))
+                    images_dir = os.path.join(app.dir, self.ImagesDir)
+                    os.makedirs(images_dir, exist_ok=True)
+                    for image in app.images():
+                        self.fetch_image(target.name, target.platform, image, images_dir, dockerd.host)
 
-    def fetch_image(self, target_name: str, arch: str, image: str, dst_root_dir: str):
+    def fetch_image(self, target_name: str, arch: str, image: str, dst_root_dir: str, dockerd_host: str):
         logger.info('Pulling image: {}'.format(image))
         uri = self._registry_client.parse_image_uri(image)
         image_dir = os.path.join(dst_root_dir, uri.host, uri.name, uri.hash)
         os.makedirs(image_dir, exist_ok=True)
         subprocess.check_call(['skopeo', '--override-arch', arch, 'copy', '--format', 'v2s2', '--dest-shared-blob-dir',
                                self.blobs_dir(target_name), 'docker://' + image, 'oci:' + image_dir])
+        subprocess.check_call(
+            ['skopeo', 'copy', '--format', 'v2s2', '--dest-daemon-host', dockerd_host,
+             '--src-shared-blob-dir', self.blobs_dir(target_name), 'oci:' + image_dir,
+             'docker-daemon:' + uri.host + '/' + uri.name + ':' + uri.hash[:7]])
