@@ -272,10 +272,10 @@ if __name__ == '__main__':
 
             if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
                 logger.info('Preloading Restorable Apps...')
-                copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist, args.fetch_dir, subprog)
-            else:
-                logger.info('Preloading Compose Apps...')
-                copy_compose_apps_to_wic(target, args.fetch_dir, image_file_path, args.token, args.app_shortlist, subprog)
+                copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist, args.fetch_dir + "/restorable", subprog)
+
+            logger.info('Preloading Compose Apps...')
+            copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image_file_path, args.token, args.app_shortlist, subprog)
 
             # Don't think its possible to have more than one tag at the time
             # we assemble, but the first tag will be the primary thing its
