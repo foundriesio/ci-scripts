@@ -125,7 +125,7 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
-        refs/heads/gatesgarth
+        refs/heads/honister
       OTA_LITE_TAG: 'postmerge-stable:postmerge'
       AKLITE_TAG: promoted-stable
     runs:
@@ -135,28 +135,42 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - am64xx-sk
+              - am64xx-evm
               - apalis-imx6
+              - apalis-imx6-sec
               - apalis-imx8
               - beaglebone-yocto
               - corstone700-mps3
               - freedom-u540
+              - generic-arm64
+              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
-              - imx8mmevk
-              - imx8mqevk
-              - intel-corei7-64
+              - imx8mm-lpddr4-evk
+              - imx8mm-lpddr4-evk-sec
+              - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
+              - imx8mq-evk
+              - imx8qm-mek
+              - jetson-agx-xavier-devkit
               - n1sdp
               - qemuarm
-              - qemuarm64
+              - qemuarm64-secureboot
               - qemuriscv64
+              - nanopi-neo
+              - orange-pi-zero
               - raspberrypi3
               - raspberrypi3-64
               - raspberrypi4
               - raspberrypi4-64
               - stm32mp1-disco
+              - kv260
+              - kv260-ebbr
               - uz3eg-iocc
+              - uz3eg-iocc-sec
+              - uz3eg-iocc-ebbr
+              - uz3eg-iocc-ebbr-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
@@ -176,12 +190,18 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
+              - apalis-imx6-sec
               - apalis-imx8
+              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx7ulpea-ucom
-              - imx8mmevk
-              - imx8mqevk
+              - imx8mm-lpddr4-evk
+              - imx8mm-lpddr4-evk-sec
+              - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
+              - imx8mq-evk
+              - imx8qm-mek
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -223,6 +243,7 @@ triggers:
             values:
               - am64xx-evm
               - apalis-imx6
+              - apalis-imx6-sec
               - apalis-imx8
               - beaglebone-yocto
               - corstone700-mps3
@@ -273,7 +294,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - raspberrypi3-64
               - raspberrypi4-64
               - apalis-imx6
               - apalis-imx8
@@ -295,6 +315,7 @@ triggers:
           - param: MACHINE
             values:
               - apalis-imx6
+              - apalis-imx6-sec
               - apalis-imx8
               - imx6ulevk
               - imx6ullevk
