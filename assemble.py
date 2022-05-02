@@ -268,6 +268,10 @@ if __name__ == '__main__':
         for target in targets:
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
             subprog = Progress(3, p)
+            if not target.has_apps():
+                logger.info("Target has no apps, skipping preload")
+                subprog.tick(complete=True)
+                continue
             image_file_path, release_info = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
 
             if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
