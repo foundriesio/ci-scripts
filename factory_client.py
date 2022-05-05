@@ -61,6 +61,10 @@ class FactoryClient:
             for app_name, app_desc in apps.items():
                 yield app_name, app_desc['uri']
 
+        def has_apps(self):
+            apps = self['custom'].get('docker_compose_apps')
+            return apps is not None and len(apps) > 0
+
         def _set_apps_commit_hash(self):
             self._apps_commit_hash = None
             if self.apps_uri:
