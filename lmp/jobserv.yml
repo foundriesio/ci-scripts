@@ -45,7 +45,6 @@ triggers:
               - apalis-imx6-sec
               - apalis-imx8
               - beaglebone-yocto
-              - corstone700-mps3
               - freedom-u540
               - generic-arm64
               - imx6ulevk
@@ -246,7 +245,6 @@ triggers:
               - apalis-imx6-sec
               - apalis-imx8
               - beaglebone-yocto
-              - corstone700-mps3
               - freedom-u540
               - generic-arm64
               - imx6ulevk
