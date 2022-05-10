@@ -31,6 +31,8 @@ class ComposeAppsPublisherTest(unittest.TestCase):
         restart: always
         volumes:
         - .:/var/http
+      pinned:
+        image: hub.foundries.io/test_factory/app-07@sha256:deadbeef
     version: '3.2'
     '''
 
@@ -58,7 +60,9 @@ class ComposeAppsPublisherTest(unittest.TestCase):
 
         expected_images = ['hub.foundries.io/test_factory/nginx:{}'.format(tag),
                            'nginx:1.19.2-alpine',
-                           'hub.foundries.io/test_factory/app-07:{}'.format(tag)]
+                           'hub.foundries.io/test_factory/app-07:{}'.format(tag),
+                           'hub.foundries.io/test_factory/app-07@sha256:deadbeef',
+                           ]
         for image in self.apps[0].images():
             self.assertIn(image, expected_images)
 

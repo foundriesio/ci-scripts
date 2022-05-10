@@ -65,6 +65,8 @@ class AppsPublisher:
                 service_cfg['image'] = image_url + ':' + tag
                 changed = True
             elif len(parts) == 2:
+                if parts[0].endswith('@sha256'):
+                    continue  # it's already pinned
                 if not (parts[1] in self._allowed_tags or parts[1] == tag):
                     raise Exception('Image {} pinned to {}, can be {}'.format(image_url, parts[1], self._allowed_tags))
 
