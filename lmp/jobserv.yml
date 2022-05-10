@@ -71,6 +71,7 @@ triggers:
               - stm32mp1-disco
               - kv260
               - kv260-ebbr
+              - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
               - uz3eg-iocc-ebbr
@@ -166,6 +167,7 @@ triggers:
               - stm32mp1-disco
               - kv260
               - kv260-ebbr
+              - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
               - uz3eg-iocc-ebbr
@@ -271,6 +273,7 @@ triggers:
               - stm32mp1-disco
               - kv260
               - kv260-ebbr
+              - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
               - uz3eg-iocc-ebbr
