@@ -8,7 +8,7 @@ start_ssh_agent
 
 source setup-environment build
 
-# Parsing first, to abort in case of parsing issues
+# Parsing first, to stop in case of parsing issues
 bitbake -p
 
 # Global and image specific envs
