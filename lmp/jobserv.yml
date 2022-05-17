@@ -128,7 +128,8 @@ triggers:
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
         refs/heads/main-next
-      OTA_LITE_TAG: postmerge
+      OTA_LITE_TAG: 'postmerge-next:postmerge'
+      AKLITE_TAG: promoted-next
     runs:
       # images that have ptest
       - name: "{loop}"
