@@ -115,6 +115,63 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+  - name: build-main-next
+    type: git_poller
+    email:
+      users: 'ci-notifications@foundries.io'
+    webhooks:
+      - url: https://conductor.infra.foundries.io/api/lmp/
+        only_failures: false
+        secret_name: lava-webhook-key
+    params:
+      GIT_URL: |
+        https://github.com/foundriesio/lmp-manifest.git
+      GIT_POLL_REFS: |
+        refs/heads/main-next
+      OTA_LITE_TAG: postmerge
+    runs:
+      # images that have ptest
+      - name: "{loop}"
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - intel-corei7-64
+        triggers:
+          - name: ptest-build-{loop}
+        params:
+          IMAGE: lmp-base-console-image
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # images with no OTA
+      - name: "{loop}"
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - beaglebone-yocto
+              - generic-arm64
+              - qemuarm
+              - qemuarm64-secureboot
+              - qemuriscv64
+              - raspberrypi4-64
+        params:
+          IMAGE: lmp-base-console-image
+          MFGTOOL_FLASH_IMAGE: lmp-base-console-image
+          EULA_stm32mp1eval: "1"
+          EULA_stm32mp1disco: "1"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
   - name: build-release-stable
     type: git_poller
     email:
