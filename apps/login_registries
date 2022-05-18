@@ -49,7 +49,7 @@ for reg in registries:
         creds_file.write_text(secrets_file.read_text())
         try:
             cmd = ["docker-credential-gcr", "configure-docker", "--include-artifact-registry"]
-            subprocess.run(cmd, check=True, input=token.encode())
+            subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError as e:
             sys.exit(e.returncode)
     else:
