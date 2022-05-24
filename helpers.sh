@@ -23,6 +23,7 @@ function git_config {
 	# https://github.blog/2022-04-12-git-security-vulnerability-announced/
 	git config --system --add safe.directory /srv/oe/layers/meta-subscriber-overrides
 	git config --system --add safe.directory /srv/oe/.repo/manifests
+	git config --system --add safe.directory /repo
 }
 
 function start_ssh_agent {
