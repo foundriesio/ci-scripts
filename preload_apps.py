@@ -13,6 +13,8 @@ import traceback
 from factory_client import FactoryClient
 from apps.target_apps_fetcher import SkopeAppFetcher
 
+logger = logging.getLogger(__name__)
+
 
 def pull_target_apps(target: FactoryClient.Target, oci_store_path: str, token: str):
     apps_fetcher = SkopeAppFetcher(token, oci_store_path, create_target_dir=False)
@@ -30,37 +32,55 @@ def get_args():
     parser.add_argument('-d', '--oci-store-path', help="A path to a local OCI image store to copy images to",
                         required=True)
 
-    parser.add_argument('-a', '--token', help="A token to authN/authZ at the Fio's Registry to pull Compose Apps",
+    parser.add_argument('-a', '--token-file', help="A file containing the token to authN/authZ"
+                                                   " at the Fio's Registry to pull Compose Apps",
                         required=True)
+
+    parser.add_argument('-l', '--log-file', help="A file to dump logs to", required=False)
 
     params = parser.parse_args()
     return params
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s %(levelname)s: %(module)s: %(message)s', level=logging.INFO)
+    log_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(module)s: %(message)s')
+    stream_hdl = logging.StreamHandler(sys.stdout)
+    stream_hdl.setFormatter(log_formatter)
+
+    logging.root.addHandler(stream_hdl)
+    logging.root.setLevel('INFO')
+
     try:
         params = get_args()
 
-        logging.info(f'Preloading Apps; Target json path: {params.target_json_file},'
-                     f' shortlist: {params.app_shortlist}, destination OCI store: {params.oci_store_path}')
+        if params.log_file:
+            file_hdl = logging.FileHandler(params.log_file)
+            file_hdl.setFormatter(log_formatter)
+            logging.root.addHandler(file_hdl)
+
+        logger.info(f'Apps Preloading starting; Target json path: {params.target_json_file},'
+                    f' shortlist: {params.app_shortlist}, destination OCI store: {params.oci_store_path}')
 
         with open(params.target_json_file) as target_json_file:
             target_json = json.load(target_json_file)
 
         target_names = list(target_json.keys())
         if len(target_names) == 0:
-            logging.error(f'None of Targets are found in the specified target file: {params.target_json_file}')
+            logger.error(f'None of Targets are found in the specified target file: {params.target_json_file}')
             sys.exit(os.EX_USAGE)
 
         if len(target_json.keys()) > 1:
-            logging.error(f'More than one Target is found in the specified target file: {params.target_json_file}')
+            logger.error(f'More than one Target is found in the specified target file: {params.target_json_file}')
             sys.exit(os.EX_USAGE)
 
         target_name = target_names[0]
         target = FactoryClient.Target(target_name, target_json[target_name], params.app_shortlist)
 
-        pull_target_apps(target, params.oci_store_path, params.token)
+        with open(params.token_file) as f:
+            token = f.read().strip()
+
+        pull_target_apps(target, params.oci_store_path, token)
+        logger.info(f'Apps Preloading succeeded; Target {target.name}, shortlist {target.shortlist}')
     except Exception as exc:
-        logging.error('Failed to preload Apps: {}\n{}'.format(exc, traceback.format_exc()))
+        logger.error('Apps preloading failed: {}\n{}'.format(exc, traceback.format_exc()))
         sys.exit(os.EX_SOFTWARE)

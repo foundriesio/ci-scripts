@@ -10,7 +10,7 @@ source setup-environment build
 
 if [ "${APP_PRELOAD_WITHIN_OE_BUILD}" = "1" ]; then
 	PYTHONPATH=$HERE/.. $HERE/../apps/login_registries /secrets/container-registries
-	skopeo login hub.foundries.io --username=doesntmatter --password=$(cat "${APP_PRELOAD_TOKEN_FILE}")
+	skopeo login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok)
 fi
 
 # Parsing first, to stop in case of parsing issues
