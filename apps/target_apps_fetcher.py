@@ -24,9 +24,13 @@ class TargetAppsFetcher:
         self._registry_client = DockerRegistryClient(token)
         self._work_dir = work_dir
         self.target_apps = {}
+        self.create_target_dir = True
 
     def target_dir(self, target_name):
-        return os.path.join(self._work_dir, target_name)
+        if self.create_target_dir:
+            return os.path.join(self._work_dir, target_name)
+        else:
+            return os.path.join(self._work_dir)
 
     def target_file(self, target_name):
         return os.path.join(self.target_dir(target_name), self.TargetFile)
@@ -93,8 +97,9 @@ class SkopeAppFetcher(TargetAppsFetcher):
     ArchiveFileExt = '.tgz'
     BlobsDir = 'blobs'
 
-    def __init__(self, token, work_dir, factory=None):
+    def __init__(self, token, work_dir, factory=None, create_target_dir=True):
         super().__init__(token, work_dir, factory)
+        self.create_target_dir = create_target_dir
 
     def blobs_dir(self, target_name):
         return os.path.join(self.target_dir(target_name), self.BlobsDir)
