@@ -29,7 +29,7 @@ for reg in registries:
         try:
             cmd = ["aws", "ecr", "get-login-password", "--region", reg["region"]]
             token = subprocess.check_output(cmd)
-            cmd = ["docker", "login", "--password-stdin", "-u", "AWS", reg["url"]]
+            cmd = ["skopeo", "login", "--password-stdin", "-u", "AWS", reg["url"]]
             subprocess.run(cmd, check=True, input=token)
         except subprocess.CalledProcessError as e:
             sys.exit(e.returncode)
