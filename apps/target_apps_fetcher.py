@@ -18,10 +18,10 @@ class TargetAppsFetcher:
     AppsDir = 'apps'
     ImagesDir = 'images'
 
-    def __init__(self, token, work_dir, factory=None):
+    def __init__(self, token, work_dir, factory=None, client='docker'):
         if factory:
             self._factory_client = FactoryClient(factory, token)
-        self._registry_client = DockerRegistryClient(token)
+        self._registry_client = DockerRegistryClient(token, client=client)
         self._work_dir = work_dir
         self.target_apps = {}
         self.create_target_dir = True
@@ -98,7 +98,7 @@ class SkopeAppFetcher(TargetAppsFetcher):
     BlobsDir = 'blobs'
 
     def __init__(self, token, work_dir, factory=None, create_target_dir=True):
-        super().__init__(token, work_dir, factory)
+        super().__init__(token, work_dir, factory, client='skopeo')
         self.create_target_dir = create_target_dir
 
     def blobs_dir(self, target_name):

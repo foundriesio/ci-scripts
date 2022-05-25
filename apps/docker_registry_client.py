@@ -15,11 +15,12 @@ from helpers import http_get
 class DockerRegistryClient:
     DefaultRegistryHost = 'hub.foundries.io'
 
-    def __init__(self, token: str, registry_host=DefaultRegistryHost, schema='https'):
+    def __init__(self, token: str, registry_host=DefaultRegistryHost, schema='https', client='docker'):
         self._token = token
         self.registry_url = '{}://{}'.format(schema, registry_host)
         self.registry_host = registry_host
         self.auth_endpoint = os.path.join(self.registry_url, 'token-auth/')
+        self._client = client
 
         self._jwt_token = None
 
@@ -123,7 +124,7 @@ class DockerRegistryClient:
 
     def login(self):
         login_process = subprocess.Popen(
-            ['docker', 'login', self.registry_host, '--username=doesntmatter', '--password-stdin'],
+            [self._client, 'login', self.registry_host, '--username=doesntmatter', '--password-stdin'],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         output = login_process.communicate(input=self._token.encode())[0]
