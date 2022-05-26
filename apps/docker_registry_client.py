@@ -2,24 +2,27 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import sys
 import base64
 import tarfile
 import subprocess
 import json
 import hashlib
 from io import BytesIO as BIO
+from pathlib import Path
 
-from helpers import http_get
+from helpers import http_get, status
 
 
 class DockerRegistryClient:
     DefaultRegistryHost = 'hub.foundries.io'
 
-    def __init__(self, token: str, registry_host=DefaultRegistryHost, schema='https'):
+    def __init__(self, token: str, registry_host=DefaultRegistryHost, schema='https', client='docker'):
         self._token = token
         self.registry_url = '{}://{}'.format(schema, registry_host)
         self.registry_host = registry_host
         self.auth_endpoint = os.path.join(self.registry_url, 'token-auth/')
+        self._client = client
 
         self._jwt_token = None
 
@@ -123,7 +126,7 @@ class DockerRegistryClient:
 
     def login(self):
         login_process = subprocess.Popen(
-            ['docker', 'login', self.registry_host, '--username=doesntmatter', '--password-stdin'],
+            [self._client, 'login', self.registry_host, '--username=doesntmatter', '--password-stdin'],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         output = login_process.communicate(input=self._token.encode())[0]
@@ -131,3 +134,52 @@ class DockerRegistryClient:
         # for any value of username and/or password
         if -1 == (str(output)).find('Login Succeeded'):
             raise Exception('Failed to login at {}'.format('hub.foundries.io'))
+
+
+# TODO: Refactor this implementation, subclass for each Registry type, and inheritance from DockerRegistryClient
+class ThirdPartyRegistry:
+    def __init__(self, registries_creds, client='docker'):
+        self._registries_creds = registries_creds
+        self._client = client
+
+    def login(self):
+        for reg in self._registries_creds:
+            url = reg.get("url")
+            if url:
+                status("Configuring registry %s - %s" % (reg["type"], url))
+            else:
+                status("Configuring registry %s" % reg["type"])
+            if reg["type"] == "aws":
+                creds_file = Path.home() / ".aws/credentials"
+                creds_file.parent.mkdir()
+                secrets_file = Path("/secrets") / reg["aws_creds_secret_name"]
+                creds_file.write_text(secrets_file.read_text())
+
+                try:
+                    cmd = ["aws", "ecr", "get-login-password", "--region", reg["region"]]
+                    token = subprocess.check_output(cmd)
+                    cmd = [self._client, "login", "--password-stdin", "-u", "AWS", reg["url"]]
+                    subprocess.run(cmd, check=True, input=token)
+                except subprocess.CalledProcessError as e:
+                    sys.exit(e.returncode)
+            elif reg["type"] == "azure":
+                secrets_file = Path("/secrets") / reg["azure_principal_secret_name"]
+                creds = secrets_file.read_text().strip()
+                user, token = creds.split(":")
+                try:
+                    cmd = [self._client, "login", "--password-stdin", "-u", user, reg["url"]]
+                    subprocess.run(cmd, check=True, input=token.encode())
+                except subprocess.CalledProcessError as e:
+                    sys.exit(e.returncode)
+            elif reg["type"] == "gar":
+                creds_file = Path.home() / ".config/gcloud/application_default_credentials.json"
+                creds_file.parent.mkdir(parents=True)
+                secrets_file = Path("/secrets") / reg["gar_creds_secret_name"]
+                creds_file.write_text(secrets_file.read_text())
+                try:
+                    cmd = ["docker-credential-gcr", "configure-docker", "--include-artifact-registry"]
+                    subprocess.run(cmd, check=True)
+                except subprocess.CalledProcessError as e:
+                    sys.exit(e.returncode)
+            else:
+                sys.exit("Unsupported registry type")
