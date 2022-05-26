@@ -306,9 +306,6 @@ triggers:
               - qemuarm
               - qemuarm64-secureboot
               - qemuriscv64
-              - raspberrypi3
-              - raspberrypi3-64
-              - raspberrypi4
               - raspberrypi4-64
               - stm32mp1-disco
               - kv260
