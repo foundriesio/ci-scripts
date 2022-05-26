@@ -45,7 +45,6 @@ triggers:
               - apalis-imx6-sec
               - apalis-imx8
               - beaglebone-yocto
-              - freedom-u540
               - generic-arm64
               - imx6ulevk
               - imx6ullevk
@@ -58,13 +57,9 @@ triggers:
               - imx8mq-evk
               - imx8qm-mek
               - jetson-agx-xavier-devkit
-              - n1sdp
               - qemuarm
               - qemuarm64-secureboot
               - qemuriscv64
-              - raspberrypi3
-              - raspberrypi3-64
-              - raspberrypi4
               - raspberrypi4-64
               - stm32mp1-disco
               - kv260
@@ -197,7 +192,6 @@ triggers:
               - apalis-imx8
               - beaglebone-yocto
               - corstone700-mps3
-              - freedom-u540
               - generic-arm64
               - imx6ulevk
               - imx6ullevk
@@ -210,13 +204,9 @@ triggers:
               - imx8mq-evk
               - imx8qm-mek
               - jetson-agx-xavier-devkit
-              - n1sdp
               - qemuarm
               - qemuarm64-secureboot
               - qemuriscv64
-              - raspberrypi3
-              - raspberrypi3-64
-              - raspberrypi4
               - raspberrypi4-64
               - stm32mp1-disco
               - kv260
@@ -301,7 +291,6 @@ triggers:
               - apalis-imx6-sec
               - apalis-imx8
               - beaglebone-yocto
-              - freedom-u540
               - generic-arm64
               - imx6ulevk
               - imx6ullevk
@@ -314,7 +303,6 @@ triggers:
               - imx8mq-evk
               - imx8qm-mek
               - jetson-agx-xavier-devkit
-              - n1sdp
               - qemuarm
               - qemuarm64-secureboot
               - qemuriscv64
