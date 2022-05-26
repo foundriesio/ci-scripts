@@ -11,12 +11,17 @@ import os
 import traceback
 
 from factory_client import FactoryClient
+from apps.docker_registry_client import ThirdPartyRegistry
 from apps.target_apps_fetcher import SkopeAppFetcher
 
 logger = logging.getLogger(__name__)
 
 
-def pull_target_apps(target: FactoryClient.Target, oci_store_path: str, token: str):
+def pull_target_apps(target: FactoryClient.Target, oci_store_path: str, token: str, registry_creds: dict = None):
+    if registry_creds:
+        ThirdPartyRegistry(registry_creds, client='skopeo').login()
+    else:
+        logger.info("3rd party Registry credentials are not specified")
     apps_fetcher = SkopeAppFetcher(token, oci_store_path, create_target_dir=False)
     apps_fetcher.fetch_target(target, force=True)
 
@@ -32,9 +37,12 @@ def get_args():
     parser.add_argument('-d', '--oci-store-path', help="A path to a local OCI image store to copy images to",
                         required=True)
 
-    parser.add_argument('-a', '--token-file', help="A file containing the token to authN/authZ"
+    parser.add_argument('-a', '--token-file', help="A file containing the token to AuthN/AuthZ"
                                                    " at the Fio's Registry to pull Compose Apps",
                         required=True)
+
+    parser.add_argument('-r', '--registry-creds', help="A path to file containing creds to AuthN/AuthZ"
+                                                       " at 3rd party registries", required=False)
 
     parser.add_argument('-l', '--log-file', help="A file to dump logs to", required=False)
 
@@ -64,6 +72,11 @@ if __name__ == '__main__':
         with open(params.target_json_file) as target_json_file:
             target_json = json.load(target_json_file)
 
+        registry_creds = None
+        if params.registry_creds:
+            with open(params.registry_creds) as f:
+                registry_creds = json.load(f)
+
         target_names = list(target_json.keys())
         if len(target_names) == 0:
             logger.error(f'None of Targets are found in the specified target file: {params.target_json_file}')
@@ -79,7 +92,7 @@ if __name__ == '__main__':
         with open(params.token_file) as f:
             token = f.read().strip()
 
-        pull_target_apps(target, params.oci_store_path, token)
+        pull_target_apps(target, params.oci_store_path, token, registry_creds)
         logger.info(f'Apps Preloading succeeded; Target {target.name}, shortlist {target.shortlist}')
     except Exception as exc:
         logger.error('Apps preloading failed: {}\n{}'.format(exc, traceback.format_exc()))

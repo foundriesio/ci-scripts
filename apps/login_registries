@@ -1,11 +1,9 @@
 #!/usr/bin/python3
 
 import json
-from pathlib import Path
-import subprocess
 import sys
 
-from helpers import status
+from docker_registry_client import ThirdPartyRegistry
 
 
 if len(sys.argv) != 2:
@@ -14,43 +12,4 @@ if len(sys.argv) != 2:
 with open(sys.argv[1]) as f:
     registries = json.load(f)
 
-for reg in registries:
-    url = reg.get("url")
-    if url:
-        status("Configuring registry %s - %s" % (reg["type"], url))
-    else:
-        status("Configuring registry %s" % reg["type"])
-    if reg["type"] == "aws":
-        creds_file = Path.home() / ".aws/credentials"
-        creds_file.parent.mkdir()
-        secrets_file = Path("/secrets") / reg["aws_creds_secret_name"]
-        creds_file.write_text(secrets_file.read_text())
-
-        try:
-            cmd = ["aws", "ecr", "get-login-password", "--region", reg["region"]]
-            token = subprocess.check_output(cmd)
-            cmd = ["skopeo", "login", "--password-stdin", "-u", "AWS", reg["url"]]
-            subprocess.run(cmd, check=True, input=token)
-        except subprocess.CalledProcessError as e:
-            sys.exit(e.returncode)
-    elif reg["type"] == "azure":
-        secrets_file = Path("/secrets") / reg["azure_principal_secret_name"]
-        creds = secrets_file.read_text().strip()
-        user, token = creds.split(":")
-        try:
-            cmd = ["docker", "login", "--password-stdin", "-u", user, reg["url"]]
-            subprocess.run(cmd, check=True, input=token.encode())
-        except subprocess.CalledProcessError as e:
-            sys.exit(e.returncode)
-    elif reg["type"] == "gar":
-        creds_file = Path.home() / ".config/gcloud/application_default_credentials.json"
-        creds_file.parent.mkdir(parents=True)
-        secrets_file = Path("/secrets") / reg["gar_creds_secret_name"]
-        creds_file.write_text(secrets_file.read_text())
-        try:
-            cmd = ["docker-credential-gcr", "configure-docker", "--include-artifact-registry"]
-            subprocess.run(cmd, check=True)
-        except subprocess.CalledProcessError as e:
-            sys.exit(e.returncode)
-    else:
-        sys.exit("Unsupported registry type")
+ThirdPartyRegistry(registries).login()
