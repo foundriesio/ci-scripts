@@ -82,6 +82,13 @@ FIO_CHECK_CMD = "${FIO_CHECK_CMD}"
 FIO_PUSH_CMD = "${FIO_PUSH_CMD}"
 FIO_CHECK_PUSH = "${FIO_PUSH_CMD}"
 OSTREE_API_VERSION = "${OSTREE_API_VERSION}"
+# Apps preloading params
+APP_PRELOAD_WITHIN_OE_BUILD = "${APP_PRELOAD_WITHIN_OE_BUILD}"
+APP_PRELOADER = "${HERE}/../preload-apps.sh"
+APP_SHORTLIST = "${APP_SHORTLIST}"
+APP_PRELOAD_TOKEN_FILE = "/secrets/osftok"
+APP_PRELOAD_REGISTRY_SECRETS_FILE = "/secrets/container-registries"
+APP_PRELOAD_LOG_FILE = "/archive/app-preload.log"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"
