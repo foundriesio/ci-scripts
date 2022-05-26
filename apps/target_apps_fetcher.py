@@ -18,15 +18,19 @@ class TargetAppsFetcher:
     AppsDir = 'apps'
     ImagesDir = 'images'
 
-    def __init__(self, token, work_dir, factory=None):
+    def __init__(self, token, work_dir, factory=None, client='docker'):
         if factory:
             self._factory_client = FactoryClient(factory, token)
-        self._registry_client = DockerRegistryClient(token)
+        self._registry_client = DockerRegistryClient(token, client=client)
         self._work_dir = work_dir
         self.target_apps = {}
+        self.create_target_dir = True
 
     def target_dir(self, target_name):
-        return os.path.join(self._work_dir, target_name)
+        if self.create_target_dir:
+            return os.path.join(self._work_dir, target_name)
+        else:
+            return os.path.join(self._work_dir)
 
     def target_file(self, target_name):
         return os.path.join(self.target_dir(target_name), self.TargetFile)
@@ -93,8 +97,9 @@ class SkopeAppFetcher(TargetAppsFetcher):
     ArchiveFileExt = '.tgz'
     BlobsDir = 'blobs'
 
-    def __init__(self, token, work_dir, factory=None):
-        super().__init__(token, work_dir, factory)
+    def __init__(self, token, work_dir, factory=None, create_target_dir=True):
+        super().__init__(token, work_dir, factory, client='skopeo')
+        self.create_target_dir = create_target_dir
 
     def blobs_dir(self, target_name):
         return os.path.join(self.target_dir(target_name), self.BlobsDir)
@@ -147,5 +152,6 @@ class SkopeAppFetcher(TargetAppsFetcher):
         uri = self._registry_client.parse_image_uri(image)
         image_dir = os.path.join(dst_root_dir, uri.host, uri.name, uri.hash)
         os.makedirs(image_dir, exist_ok=True)
-        subprocess.check_call(['skopeo', '--override-arch', arch, 'copy', '--format', 'v2s2', '--dest-shared-blob-dir',
-                               self.blobs_dir(target_name), 'docker://' + image, 'oci:' + image_dir])
+        subprocess.check_call(['skopeo', '--insecure-policy', '--override-arch', arch, 'copy', '--format',
+                               'v2s2', '--dest-shared-blob-dir', self.blobs_dir(target_name), 'docker://' + image,
+                               'oci:' + image_dir])
