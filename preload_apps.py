@@ -18,10 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def pull_target_apps(target: FactoryClient.Target, oci_store_path: str, token: str, registry_creds: dict = None):
-    if registry_creds:
-        ThirdPartyRegistry(registry_creds, client='skopeo').login()
-    else:
-        logger.info("3rd party Registry credentials are not specified")
+    ThirdPartyRegistry(registry_creds, client='skopeo').login()
     apps_fetcher = SkopeAppFetcher(token, oci_store_path, create_target_dir=False)
     apps_fetcher.fetch_target(target, force=True)
 
@@ -72,7 +69,7 @@ if __name__ == '__main__':
         with open(params.target_json_file) as target_json_file:
             target_json = json.load(target_json_file)
 
-        registry_creds = None
+        registry_creds = []
         if params.registry_creds_file:
             with open(params.registry_creds_file) as f:
                 registry_creds = json.load(f)
