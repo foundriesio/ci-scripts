@@ -89,6 +89,7 @@ APP_SHORTLIST = "${APP_SHORTLIST}"
 APP_PRELOAD_TOKEN_FILE = "/secrets/osftok"
 APP_PRELOAD_REGISTRY_SECRETS_FILE = "/secrets/container-registries"
 APP_PRELOAD_LOG_FILE = "/archive/app-preload.log"
+COMPOSE_APP_TYPE="${COMPOSE_APP_TYPE-restorable}"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"
