@@ -8,7 +8,9 @@ set -o pipefail
 HERE="$(dirname $(readlink -f $0))"
 . "$HERE/helpers.sh"
 
-require_params TARGET_JSON_FILE OCI_STORE_PATH TOKEN_FILE
+require_params TARGET_JSON_FILE OCI_STORE_PATH TOKEN_FILE DOCKER_STORE_PATH
+
+/usr/bin/dockerd --storage-driver=overlay2 --data-root=${DOCKER_STORE_PATH} &
 
 # Create a temporal file for `skopeo` to store auth material in.
 # The file is removed once preloading is completed.
@@ -24,4 +26,4 @@ PATH="${PATH}:/usr/bin" "${HERE}/preload_apps.py" \
     --registry-creds-file "${REGISTRY_SECRETS_FILE}" \
     --log-file "${LOG_FILE}"
 
-trap 'rm -f "${REGISTRY_AUTH_FILE}"' INT TERM HUP EXIT
+trap 'unset REGISTRY_AUTH_FILE && rm -f "${REGISTRY_AUTH_FILE}" && kill 0' INT TERM HUP EXIT

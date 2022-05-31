@@ -11,8 +11,10 @@ import os
 import traceback
 
 from factory_client import FactoryClient
-from apps.docker_registry_client import ThirdPartyRegistry
+from apps.docker_registry_client import ThirdPartyRegistry, DockerRegistryClient
 from apps.target_apps_fetcher import SkopeAppFetcher
+from apps.compose_apps import ComposeApps
+from helpers import cmd
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,23 @@ def pull_target_apps(target: FactoryClient.Target, oci_store_path: str, token: s
     ThirdPartyRegistry(registry_creds, client='skopeo').login()
     apps_fetcher = SkopeAppFetcher(token, oci_store_path, create_target_dir=False)
     apps_fetcher.fetch_target(target, force=True)
+
+    DockerRegistryClient(token).login()
+    for app_name, app_uri in target.apps():
+        if target.shortlist and app_name not in target.shortlist:
+            continue
+        uri = DockerRegistryClient.parse_image_uri(app_uri)
+        app_dir = os.path.join(oci_store_path, 'apps', app_name, uri.hash)
+        print(app_dir)
+        app = ComposeApps.App(app_name, app_dir)
+        for u in app.images():
+            print(u)
+            image_uri = DockerRegistryClient.parse_image_uri(u)
+            image_dir = os.path.join(app_dir, 'images', image_uri.host, image_uri.name, image_uri.hash)
+            print(image_dir)
+            cmd('skopeo', '--insecure-policy', 'copy', '--src-shared-blob-dir', apps_fetcher.blobs_dir(target.name),
+                'oci:' + image_dir,
+                'docker-daemon:' + os.path.join(image_uri.host, image_uri.name) + ':latest')
 
 
 def get_args():
