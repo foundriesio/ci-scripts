@@ -8,12 +8,10 @@ start_ssh_agent
 
 source setup-environment build
 
-# Parsing first, to stop in case of parsing issues
+# Global and image specific envs and if not possible run the parsing to get the reason
+bitbake -e > ${archive}/bitbake_global_env.txt && \
+bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt || \
 bitbake -p
-
-# Global and image specific envs
-bitbake -e > ${archive}/bitbake_global_env.txt
-bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt
 
 # Setscene (cache), failures not critical
 bitbake --setscene-only ${IMAGE} || true
