@@ -18,4 +18,4 @@ bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt
 # Setscene (cache), failures not critical
 bitbake --setscene-only ${IMAGE} || true
 
-bitbake -D ${IMAGE}
+bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE}
