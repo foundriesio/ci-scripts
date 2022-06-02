@@ -102,7 +102,7 @@ class WicImage:
         wic_k = ceil(os.stat(self._path).st_size / bs)
         logger.info('Extending the wic image; adding: {} bytes, asked {}'.format(increase_k * bs, increase_bytes))
         cmd('dd', 'if=/dev/zero', 'bs=' + str(bs), 'of=' + self._path,
-            'conv=notrunc', 'oflag=append', 'count=' + str(increase_k),
+            'conv=notrunc,fsync', 'oflag=append', 'count=' + str(increase_k),
             'seek=' + str(wic_k))
 
         parted_out = subprocess.check_output(['parted', self._path, 'print'])
@@ -117,6 +117,7 @@ class WicImage:
         self._last_part = int(parted_out.split(b'\n')[-3].split()[0])
         logger.info('last partition: %d' % self._last_part)
         subprocess.check_call(['parted', self._path, 'resizepart', str(self._last_part), '100%'])
+        os.sync()
 
     def _resize_rootfs_img(self, path, increase_bytes: int):
         bs = 1024
