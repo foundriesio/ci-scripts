@@ -49,7 +49,6 @@ function start_ssh_agent {
 function repo_sync {
 	status "Repo syncing sources..."
 
-	git_config
 	if [ -f /secrets/git.http.extraheader ] ; then
 		domain=$(echo $GIT_URL | cut -d/  -f3)
 		status "Adding git config extraheader for $domain"
