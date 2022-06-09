@@ -57,6 +57,8 @@ else
 	cat << EOFEOF >> conf/local.conf
 ACCEPT_EULA:stm32mp1-disco = "1"
 ACCEPT_EULA:stm32mp1-eval = "1"
+ACCEPT_EULA:stm32mp15-disco = "1"
+ACCEPT_EULA:stm32mp15-eval = "1"
 EOFEOF
 fi
 

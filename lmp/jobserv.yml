@@ -61,7 +61,7 @@ triggers:
               - qemuarm64-secureboot
               - qemuriscv64
               - raspberrypi4-64
-              - stm32mp1-disco
+              - stm32mp15-disco
               - kv260
               - kv260-ebbr
               - vck190-versal
@@ -72,8 +72,8 @@ triggers:
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
-          EULA_stm32mp1eval: "1"
-          EULA_stm32mp1disco: "1"
+          EULA_stm32mp15eval: "1"
+          EULA_stm32mp15disco: "1"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -307,7 +307,8 @@ triggers:
               - qemuarm64-secureboot
               - qemuriscv64
               - raspberrypi4-64
-              - stm32mp1-disco
+              - stm32mp15-disco
+              - stm32mp15-eval
               - kv260
               - kv260-ebbr
               - vck190-versal
@@ -318,8 +319,8 @@ triggers:
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
-          EULA_stm32mp1eval: "1"
-          EULA_stm32mp1disco: "1"
+          EULA_stm32mp15eval: "1"
+          EULA_stm32mp15disco: "1"
         script-repo:
           name: fio
           path: lmp/build.sh
