@@ -41,7 +41,17 @@ class WicImage:
         self.installed_target_filepath = os.path.join(self._mnt_dir, self.InstalledTargetFile)
 
     def __enter__(self):
-        cmd('losetup', '-P', '-f', self._path)
+        max_attempts_numb = 3
+        for attempt_counter in range(0, max_attempts_numb):
+            try:
+                sleep(0.5)
+                cmd('losetup', '-P', '-f', self._path)
+                break
+            except subprocess.CalledProcessError as exc:
+                logger.error(f'Failed to setup a loopback device; attempt number: {attempt_counter + 1} out of {max_attempts_numb}')
+                if attempt_counter + 1 == max_attempts_numb:
+                    raise
+
         out = cmd('losetup', '-a', capture=True).decode()
         for line in out.splitlines():
             if self._path in line:
