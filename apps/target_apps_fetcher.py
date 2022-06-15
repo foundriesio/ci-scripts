@@ -93,6 +93,7 @@ class TargetAppsFetcher:
 
 
 class SkopeAppFetcher(TargetAppsFetcher):
+    UriFile = 'uri'
     ManifestFile = 'manifest.json'
     ArchiveFileExt = '.tgz'
     BlobsDir = 'blobs'
@@ -118,6 +119,10 @@ class SkopeAppFetcher(TargetAppsFetcher):
                 continue
 
             os.makedirs(app_dir, exist_ok=True)
+
+            with open(os.path.join(app_dir, self.UriFile), 'w') as f:
+                f.write(app_uri)
+
             manifest_data = self._registry_client.pull_manifest(uri)
             with open(os.path.join(app_dir, self.ManifestFile), 'wb') as f:
                 f.write(manifest_data)
