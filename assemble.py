@@ -41,10 +41,10 @@ class WicImage:
         self.installed_target_filepath = os.path.join(self._mnt_dir, self.InstalledTargetFile)
 
     def __enter__(self):
-        max_attempts_numb = 3
+        max_attempts_numb = 6
         for attempt_counter in range(0, max_attempts_numb):
             try:
-                sleep(0.5)
+                sleep(1)
                 cmd('losetup', '-P', '-f', self._path)
                 break
             except subprocess.CalledProcessError as exc:
