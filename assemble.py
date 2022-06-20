@@ -188,7 +188,7 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
 
 
 def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, token: str, apps_shortlist: list,
-                                fetch_dir: str, progress: Progress):
+                                fetch_dir: str, progress: Progress) -> str:
     p = Progress(4, progress)
     apps_fetcher = SkopeAppFetcher(token, fetch_dir)
     apps_fetcher.fetch_target(target, shortlist=apps_shortlist, force=True)
@@ -220,11 +220,11 @@ def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, to
         p.tick()
         wic_image.update_target(target)
     p.tick()
+    return apps_fetcher.target_dir(target.name)
 
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
     logger.info('Gzip and move resultant WIC image to the specified destination folder: {}'.format(out_image_dir))
-    os.makedirs(out_image_dir, exist_ok=True)
     subprocess.check_call(['gzip', wic_image])
     subprocess.check_call(['mv', '-f', wic_image + '.gz', out_image_dir])
 
@@ -285,9 +285,11 @@ if __name__ == '__main__':
                 continue
             image_file_path, release_info = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
 
+            apps_dir = None
             if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
                 logger.info('Preloading Restorable Apps...')
-                copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist, args.fetch_dir + "/restorable", subprog)
+                apps_dir = copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist,
+                                                       args.fetch_dir + "/restorable", subprog)
 
             logger.info('Preloading Compose Apps...')
             copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image_file_path, args.token, args.app_shortlist, subprog)
@@ -296,6 +298,9 @@ if __name__ == '__main__':
             # we assemble, but the first tag will be the primary thing its
             # known as and also match what's in the target name.
             archive_dir = os.path.join(args.out_image_dir, target.tags[0])
+            os.makedirs(archive_dir, exist_ok=True)
+            if apps_dir:
+                cmd('tar', '-cf', os.path.join(archive_dir, target.name + '-apps.tar'), '-C', apps_dir, '.')
             archive_and_output_assembled_wic(image_file_path, archive_dir)
             subprog.tick(complete=True)
 
