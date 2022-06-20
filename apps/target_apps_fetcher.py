@@ -118,8 +118,9 @@ class SkopeAppFetcher(TargetAppsFetcher):
                 logger.info('App has been already fetched; Target: {}, App: {}'.format(target.name, app_name))
                 continue
 
+            logger.info('Fetching App; Target: {}, App: {}, URI: {}, dst dir {} '
+                        .format(target.name, app_name, app_uri, app_dir))
             os.makedirs(app_dir, exist_ok=True)
-
             with open(os.path.join(app_dir, self.UriFile), 'w') as f:
                 f.write(app_uri)
 
