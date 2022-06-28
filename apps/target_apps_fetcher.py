@@ -107,6 +107,8 @@ class SkopeAppFetcher(TargetAppsFetcher):
 
     def _fetch_apps(self, target, apps_shortlist=None, force=False):
         fetched_apps = []
+        blobs_dir = os.path.join(self.blobs_dir(target.name), "sha256")
+        os.makedirs(blobs_dir, exist_ok=True)
         for app_name, app_uri in target.apps():
             if apps_shortlist and app_name not in apps_shortlist:
                 logger.info('{} is not in the shortlist, skipping it'.format(app_name))
@@ -128,8 +130,12 @@ class SkopeAppFetcher(TargetAppsFetcher):
             with open(os.path.join(app_dir, self.ManifestFile), 'wb') as f:
                 f.write(manifest_data)
 
+            # Store the app manifest in the blobs directory to simplify its fetching from the store
+            with open(os.path.join(blobs_dir, uri.hash), 'wb') as f:
+                f.write(manifest_data)
+
             manifest = json.loads(manifest_data)
-            app_blob_digest = manifest["layers"][0]["digest"]
+            app_blob_digest = manifest['layers'][0]['digest']
             app_blob_hash = app_blob_digest[len('sha256:'):]
             app_blob = self._registry_client.pull_layer(uri, app_blob_digest)
             app_blob_file = os.path.join(app_dir, app_blob_hash + self.ArchiveFileExt)
@@ -138,6 +144,15 @@ class SkopeAppFetcher(TargetAppsFetcher):
 
             with tarfile.open(fileobj=BIO(app_blob)) as t:
                 t.extract('docker-compose.yml', app_dir)
+
+            # Download and store the layers' manifest that contains a list of all layers that app's images are based on.
+            # It's needed for aklite to calculate an update size in an offline update case.
+            for lm in manifest.get('manifests', []):
+                if target.platform == lm['platform']['architecture']:
+                    lm_uri = self._registry_client.parse_image_uri(uri.host + '/' + uri.name + "@" + lm["digest"])
+                    layers_index = self._registry_client.pull_manifest(lm_uri, 'application/vnd.oci.image.index.v1+json')
+                    with open(os.path.join(blobs_dir, lm_uri.hash), 'wb') as f:
+                        f.write(layers_index)
 
             fetched_apps.append(ComposeApps.App(app_name, app_dir))
         return fetched_apps

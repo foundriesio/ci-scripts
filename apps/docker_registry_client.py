@@ -35,8 +35,8 @@ class DockerRegistryClient:
         else:
             return compose_app_archive
 
-    def pull_manifest(self, uri):
-        req_headers = {'accept': 'application/vnd.oci.image.manifest.v1+json'}
+    def pull_manifest(self, uri, format='application/vnd.oci.image.manifest.v1+json'):
+        req_headers = {'accept': format}
         if uri.factory:
             registry_jwt_token = self.__get_registry_jwt_token(uri.factory, uri.app)
             req_headers['authorization'] = 'bearer {}'.format(registry_jwt_token['token'])
