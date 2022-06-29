@@ -37,6 +37,12 @@ if [ -f "/secrets/targets.sec" ] ; then
 	SOTA_PACKED_CREDENTIALS=$dynamic
 fi
 
+# EULA handling (assume accepted as we now have a click through process when creating the factory)
+EULA_stm32mp1disco="1"
+EULA_stm32mp15disco="1"
+EULA_stm32mp1eval="1"
+EULA_stm32mp15eval="1"
+
 source setup-environment build
 
 if [ "$DEV_MODE" == "1" ]; then
