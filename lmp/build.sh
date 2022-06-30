@@ -62,8 +62,10 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest; do
 	image_name=`basename ${img} | sed -e "s/.manifest//"`
 	image_name_id=`readlink ${img} | sed -e "s/\..*manifest//"`
-	cp ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
-	ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
+	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ]; then
+		cp ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
+		ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
+	fi
 	# Also take care of the image_license, which contains the binaries used by wic outside the rootfs
 	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ]; then
 		cp ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.image_license.manifest
