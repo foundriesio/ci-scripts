@@ -183,6 +183,7 @@ if [ -d "${archive}" ] ; then
 		## Targets with SPL / u-boot.itb
 		mv ${archive}/other/SPL-${MACHINE} ${archive}/ || true
 		mv ${archive}/other/u-boot-${MACHINE}.itb ${archive}/ || true
+		mv ${archive}/other/u-boot-${MACHINE}.rom ${archive}/ || true
 		## iMX targets with imx-boot
 		mv ${archive}/other/imx-boot ${archive}/ || true
 		mv ${archive}/other/imx-boot-${MACHINE}* ${archive}/ || true
