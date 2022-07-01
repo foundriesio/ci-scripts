@@ -223,6 +223,11 @@ for x in $IMAGES ; do
 		echo "osftoken not provided, skipping publishing step"
 	fi
 
+	status "Doing a syft SBOM scan"
+	sbom_dst=/archive/sboms/${ct_base}/${ARCH}.sdpx.json
+	mkdir -p $(dirname $sbom_dst)
+	syft ${ct_base}:$TAG-$ARCH -o spdx-json > $sbom_dst
+
 	if [ -n "$TEST_CMD" ] ; then
 		status Running test command inside container: $TEST_CMD
 		echo "<testcase name=\"test-$x\">" >> /archive/junit.xml
@@ -241,3 +246,5 @@ done
 # Store the manifest so we can use them in the publish run. A brand new
 # factory may not have built any containers, so ensure the directory exists
 [ -d $HOME/.docker/manifests ] && mv $HOME/.docker/manifests /archive/manifests || echo 'no manifests to archive'
+
+PYTHONPATH=${HERE}/.. python3 ${HERE}/generate_non_factory_sboms.py --arch=$ARCH
