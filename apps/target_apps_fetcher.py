@@ -141,6 +141,9 @@ class SkopeAppFetcher(TargetAppsFetcher):
             app_blob_file = os.path.join(app_dir, app_blob_hash + self.ArchiveFileExt)
             with open(app_blob_file, 'wb') as f:
                 f.write(app_blob)
+            # Store the app archive/blob in the blobs directory to simplify fetching
+            with open(os.path.join(blobs_dir, app_blob_hash), 'wb') as f:
+                f.write(app_blob)
 
             with tarfile.open(fileobj=BIO(app_blob)) as t:
                 t.extract('docker-compose.yml', app_dir)
