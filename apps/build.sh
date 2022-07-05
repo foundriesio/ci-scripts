@@ -196,26 +196,24 @@ for x in $IMAGES ; do
 			run docker push ${ct_base}:$TAG-$ARCH
 		fi
 
+		run docker manifest create ${ct_base}:${H_BUILD}_$TAG ${ct_base}:$TAG-$ARCH
+		run docker manifest create ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
+
 		var="EXTRA_TAGS_$ARCH"
 		for t in $(eval echo "\$$var") ; do
-			status "Tagging and pushing extra tag defined in docker-build.conf: $t"
-			run docker tag ${ct_base}:$TAG-$ARCH ${ct_base}:$TAG-$t
-			run docker push ${ct_base}:$TAG-$t
+			status "Handling manifest logic for $var"
+
+			tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${H_BUILD}_${TAG}
+			cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
+			run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t
+
+			tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${LATEST}
+			cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
+			run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t
 		done
 
 		echo "Build step $((completed+2)) of $total is complete"
 
-		# Convert the old manifest-tool formatted arguments of:
-		#  linux/amd64,linux/arm,linux/arm64
-		# into amd64 arm arm64
-		manifest_args=""
-		for arch in `echo $MANIFEST_PLATFORMS | sed -e 's/linux\///g' -e 's/,/ /g'` ; do
-			manifest_args="${manifest_args} ${ct_base}:$TAG-$arch"
-		done
-		run docker manifest create ${ct_base}:${H_BUILD}_$TAG $manifest_args && \
-			run docker manifest create ${ct_base}:$LATEST $manifest_args && \
-			run docker manifest push ${ct_base}:${H_BUILD}_$TAG && \
-			run docker manifest push ${ct_base}:$LATEST || true
 	else
 		echo "osftoken not provided, skipping publishing step"
 	fi
@@ -234,3 +232,6 @@ for x in $IMAGES ; do
 	fi
 	echo "Build step $((completed+3)) of $total is complete"
 done
+
+# store the manifest so we can use them in the publish run
+mv $HOME/.docker/manifests /archive/manifests

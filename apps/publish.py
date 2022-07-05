@@ -12,6 +12,7 @@ from apps.target_manager import create_target
 from apps.compose_apps import ComposeApps
 from apps.apps_publisher import AppsPublisher
 from apps.docker_to_compose import convert_docker_apps
+from apps.publish_manifest_lists import publish_manifest_lists
 
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [], app_root_dir: str,
          publish_tool: str, apps_version: str, target_tag: str, target_version: str, new_targets_file: str):
+    publish_manifest_lists()
     convert_docker_apps()
     status('Searching for Compose Apps in {}'.format(app_root_dir))
     apps = ComposeApps(app_root_dir)
