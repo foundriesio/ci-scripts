@@ -70,7 +70,12 @@ if __name__ == '__main__':
             target_json = json.load(target_json_file)
 
         registry_creds = []
-        if params.registry_creds_file:
+        # If a file that contains an info about 3rd party registry credentials exists, then load it
+        # so the follow-up logic logins into the registries.
+        # If the file exists and file opening or reading fails then no point to continue since the fact that
+        # the creds file exists implies a need in login into registries and the file reading becomes mandatory.
+        # If the file does not exist, then it's considered as a normal flow - no images in 3rd party registries.
+        if params.registry_creds_file and os.path.exists(params.registry_creds_file):
             with open(params.registry_creds_file) as f:
                 registry_creds = json.load(f)
 
