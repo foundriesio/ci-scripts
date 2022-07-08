@@ -125,9 +125,11 @@ def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
                 sha = u['prev']['custom'].get('containers-sha')
                 if sha:
                     u['tgt']['custom']['containers-sha'] = sha
-                apps_uri = u['prev']['custom'].get('compose-apps-uri')
+                apps_uri = u['prev']['custom'].get('origUriApps')
                 if apps_uri:
-                    u['tgt']['custom']['compose-apps-uri'] = apps_uri
+                    u['tgt']['custom']['origUriApps'] = apps_uri
+                else:
+                    u['tgt']['custom']['origUriApps'] = u['prev']['custom']['uri']
                 changed = True
 
     if changed:
