@@ -210,4 +210,7 @@ if [ -d "${archive}" ] ; then
 
 	mv ${archive}/manifest* ${archive}/other/
 	cp "${DEPLOY_DIR_IMAGE}/os-release" "${archive}/" || true
+
+	mkdir ${archive}/sboms
+	mv ${archive}/other/*spdx* ${archive}/sboms/ || true
 fi
