@@ -40,6 +40,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - am62xx-evm
               - am64xx-evm
               - apalis-imx6
               - apalis-imx6-sec
@@ -186,6 +187,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - am62xx-evm
               - am64xx-evm
               - apalis-imx6
               - apalis-imx6-sec
@@ -286,6 +288,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - am62xx-evm
               - am64xx-evm
               - apalis-imx6
               - apalis-imx6-sec
