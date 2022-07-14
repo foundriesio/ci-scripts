@@ -233,5 +233,6 @@ for x in $IMAGES ; do
 	echo "Build step $((completed+3)) of $total is complete"
 done
 
-# store the manifest so we can use them in the publish run
-mv $HOME/.docker/manifests /archive/manifests
+# Store the manifest so we can use them in the publish run. A brand new
+# factory may not have built any containers, so ensure the directory exists
+[ -d $HOME/.docker/manifests ] && mv $HOME/.docker/manifests /archive/manifests
