@@ -235,4 +235,4 @@ done
 
 # Store the manifest so we can use them in the publish run. A brand new
 # factory may not have built any containers, so ensure the directory exists
-[ -d $HOME/.docker/manifests ] && mv $HOME/.docker/manifests /archive/manifests
+[ -d $HOME/.docker/manifests ] && mv $HOME/.docker/manifests /archive/manifests || echo 'no manifests to archive'
