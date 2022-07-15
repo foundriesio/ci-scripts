@@ -92,6 +92,7 @@ FIO_CHECK_CMD = "${FIO_CHECK_CMD}"
 FIO_PUSH_CMD = "${FIO_PUSH_CMD}"
 FIO_CHECK_PUSH = "${FIO_PUSH_CMD}"
 OSTREE_API_VERSION = "${OSTREE_API_VERSION}"
+
 # Apps preloading params
 APP_PRELOAD_WITHIN_OE_BUILD = "${APP_PRELOAD_WITHIN_OE_BUILD}"
 APP_PRELOADER = "${HERE}/../preload-apps.sh"
@@ -100,6 +101,12 @@ APP_PRELOAD_TOKEN_FILE = "/secrets/osftok"
 APP_PRELOAD_REGISTRY_SECRETS_FILE = "/secrets/container-registries"
 APP_PRELOAD_LOG_FILE = "/archive/app-preload.log"
 COMPOSE_APP_TYPE="${COMPOSE_APP_TYPE-restorable}"
+
+# TUF root meta provisioning parameters
+SOTA_TUF_ROOT_PROVISION = "1"
+SOTA_TUF_ROOT_FETCHER = "${HERE}/fetch-root-meta.sh"
+SOTA_TUF_ROOT_DIR = "usr/lib/sota/tuf"
+SOTA_TUF_ROOT_LOG_FILE = "/archive/tuf-root-fetch.log"
 
 # Default SOTA client
 SOTA_CLIENT = "${SOTA_CLIENT}"

@@ -48,6 +48,7 @@ touch ${archive}/customize-target.log && chown builder ${archive}/customize-targ
 touch ${archive}/bitbake_debug.log ${archive}/bitbake_warning.log && chown builder ${archive}/bitbake_*.log
 touch ${archive}/bitbake_global_env.txt ${archive}/bitbake_image_env.txt && chown builder ${archive}/bitbake_*_env.txt
 touch ${archive}/app-preload.log && chown builder ${archive}/app-preload.log
+touch ${archive}/tuf-root-fetch.log && chown builder ${archive}/tuf-root-fetch.log
 su builder -c $HERE/bb-build.sh
 
 DEPLOY_DIR="$(grep "^DEPLOY_DIR=" ${archive}/bitbake_global_env.txt | cut -d'=' -f2 | tr -d '"')"
