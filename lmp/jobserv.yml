@@ -63,6 +63,7 @@ triggers:
               - qemuriscv64
               - raspberrypi4-64
               - stm32mp15-disco
+              - stm32mp15-eval
               - kv260
               - kv260-ebbr
               - vck190-versal
