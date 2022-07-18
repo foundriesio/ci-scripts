@@ -341,6 +341,7 @@ triggers:
               - apalis-imx6
               - apalis-imx8
               - imx8mm-lpddr4-evk
+              - stm32mp15-disco
         params:
           DISTRO: lmp-base
           IMAGE: lmp-base-console-image
