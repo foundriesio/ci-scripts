@@ -16,6 +16,8 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
+BUILDKIT_VERSION="${BUILDKIT_VERSION-v0.10.3}"
+
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
@@ -120,6 +122,9 @@ for x in $IMAGES ; do
 		fi
 	done
 	[ $found -eq 1 ] && continue
+
+	# We need a new context for each container we build
+	run docker buildx create --driver-opt image=moby/buildkit:${BUILDKIT_VERSION} --use
 
 	# allow the docker-build.conf to override our manifest platforms
 	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-${MANIFEST_PLATFORMS_DEFAULT}}"
