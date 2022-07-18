@@ -400,7 +400,6 @@ triggers:
 params:
   archive: /archive
   DISTRO: lmp
-  SOTA_PACKED_CREDENTIALS: /var/cache/bitbake/credentials.zip
   SOTA_CLIENT: aktualizr-lite
   EXTRA_IMAGE_INSTALL: aktualizr-lite-public-stream
   OSTREE_BRANCHNAME: lmp
