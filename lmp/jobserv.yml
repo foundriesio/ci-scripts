@@ -351,6 +351,42 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+      - name: build-lmp-wayland-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - imx8mm-lpddr4-evk
+              - intel-corei7-64
+              - stm32mp15-disco
+        params:
+          DISTRO: lmp-wayland
+          IMAGE: lmp-base-console-image
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      - name: build-lmp-xwayland-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - imx8mm-lpddr4-evk
+              - intel-corei7-64
+              - stm32mp15-disco
+        params:
+          DISTRO: lmp-xwayland
+          IMAGE: lmp-base-console-image
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
       # mfgtool / uuu related build files
       - name: build-mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
