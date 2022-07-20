@@ -5,6 +5,7 @@ email:
 
 params:
   FACTORY: lmp
+  DOCKER_BUILDX: "1"
 
 triggers:
   - name: containers
