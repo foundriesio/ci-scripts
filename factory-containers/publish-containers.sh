@@ -9,7 +9,7 @@ HERE=$(dirname $(readlink -f $0))
 
 
 status Doing docker-login to hub.foundries.io with secret
-docker login hub.foundries.io --username=doesntmatter --password="$(cat "${SECRETS}/osftok")" | indent
+docker login hub.foundries.io --username=doesntmatter --password="$(cat "/secrets/osftok")" | indent
 
 export PYTHONPATH=${HERE}/../
 python3 -c 'from apps.publish_manifest_lists import publish_manifest_lists; publish_manifest_lists("lmp/na")'
