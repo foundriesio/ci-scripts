@@ -13,7 +13,10 @@ def publish_manifest_lists(project: str = "", build_num: str = "", ota_lite_tag:
         build_num = os.environ["H_BUILD"]
     if not ota_lite_tag:
         ota_lite_tag = os.environ["OTA_LITE_TAG"]
-    factory, _ = project.split("/")
+    if project == "lmp":
+        factory = "lmp"
+    else:
+        factory, _ = project.split("/")
     latest_tag = TagMgr(ota_lite_tag).tags[0][0]
 
     status("Publish manifest lists for containers")
