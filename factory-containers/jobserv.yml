@@ -43,7 +43,7 @@ triggers:
           OTA_LITE_TAG: postmerge,postmerge-ptest
         script-repo:
           name: fio
-          path: factory-containers/publish-compose-apps.sh
+          path: factory-containers/publish-containers.sh
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
@@ -60,7 +60,7 @@ triggers:
           OTA_LITE_TAG: premerge:postmerge,premerge-ptest:postmerge-ptest
         script-repo:
           name: fio
-          path: factory-containers/publish-compose-apps.sh
+          path: factory-containers/publish-containers.sh
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
