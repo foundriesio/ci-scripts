@@ -56,9 +56,7 @@ def publish_manifest_lists(project: str = "", build_num: str = "", ota_lite_tag:
         mfdir = os.path.join(manifests_dir, tag)
         names = os.listdir(mfdir)
         tag = tag.replace(f"_{factory}_", f"/{factory}/")
-        if mfdir.endswith(latest_tag):
-            tag = tag.replace(f"-{latest_tag}", f":{latest_tag}")
-        else:
-            tag = tag.replace(f"-{build_num}_", f":{build_num}_")
+        tag_pos = tag.rindex("-")
+        tag = tag[:tag_pos] + ':' + tag[tag_pos + 1:]
         status(f" Creating {tag} from {names}")
         cmd("docker", "manifest", "push", tag)
