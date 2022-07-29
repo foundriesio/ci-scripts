@@ -16,7 +16,7 @@ class ComposeApps:
     DisabledSuffix = '.disabled'
 
     class App:
-        DockerComposeTool = 'docker-compose'
+        DockerComposeTool = 'docker'
         ComposeFile = 'docker-compose.yml'
 
         @staticmethod
@@ -37,7 +37,7 @@ class ComposeApps:
 
             self._image_downloader_cls = image_downloader_cls
 
-            args = [self.DockerComposeTool, '-f', self.ComposeFile, 'config']
+            args = [self.DockerComposeTool, 'compose', '-f', self.ComposeFile, 'config']
             cmd_exe(*args, cwd=self.dir)
 
             with open(self.file) as compose_file:
