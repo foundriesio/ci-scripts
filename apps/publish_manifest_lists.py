@@ -6,6 +6,13 @@ from helpers import cmd, jobserv_get, status
 from tag_manager import TagMgr
 
 
+def compose_tagged_uri(factory: str, org_uri: str, build_num: str, latest_tag: str) -> str:
+    uri = org_uri.replace(f"_{factory}_", f"/{factory}/")
+    tag_pos = uri.rindex("-")
+    uri = uri[:tag_pos] + ':' + uri[tag_pos + 1:]
+    return uri
+
+
 def publish_manifest_lists(project: str = "", build_num: str = "", ota_lite_tag: str = ""):
     if not project:
         project = os.environ["H_PROJECT"]
@@ -55,8 +62,7 @@ def publish_manifest_lists(project: str = "", build_num: str = "", ota_lite_tag:
         # what we should publish:
         mfdir = os.path.join(manifests_dir, tag)
         names = os.listdir(mfdir)
-        tag = tag.replace(f"_{factory}_", f"/{factory}/")
-        tag_pos = tag.rindex("-")
-        tag = tag[:tag_pos] + ':' + tag[tag_pos + 1:]
-        status(f" Creating {tag} from {names}")
-        cmd("docker", "manifest", "push", tag)
+        status(f" Creating tagged URI from {names}; original URI: {tag}, build number: {build_num}, latest tag: {latest_tag}")
+        uri = compose_tagged_uri(factory, tag, build_num, latest_tag)
+        status(f" Pushing manifest to {uri}")
+        cmd("docker", "manifest", "push", uri)
