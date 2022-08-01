@@ -7,10 +7,24 @@ from tag_manager import TagMgr
 
 
 def compose_tagged_uri(factory: str, org_uri: str, build_num: str, latest_tag: str) -> str:
-    uri = org_uri.replace(f"_{factory}_", f"/{factory}/")
-    tag_pos = uri.rindex("-")
-    uri = uri[:tag_pos] + ':' + uri[tag_pos + 1:]
-    return uri
+    if -1 == org_uri.find(f"hub.foundries.io_{factory}_"):
+        raise RuntimeError(f"Invalid format of an input URI: {org_uri}")
+
+    uri = org_uri.replace(f"hub.foundries.io_{factory}_", f"hub.foundries.io/{factory}/")
+
+    latest_tag_case = f"-{latest_tag}"
+    latest_tag_indx = uri.rfind(latest_tag_case, len(uri) - len(latest_tag_case))
+    if latest_tag_indx != -1:
+        uri = uri[:latest_tag_indx] + f":{latest_tag}"
+        return uri
+
+    build_num_case = f"-{build_num}_"
+    build_num_indx = uri.rfind(build_num_case, len(uri) - (len(build_num_case) + 7))
+    if build_num_indx != -1:
+        uri = uri[:build_num_indx] + ":" + uri[build_num_indx + 1:]
+        return uri
+
+    raise RuntimeError(f"Invalid URI, couldn't deduce a tag: {org_uri}")
 
 
 def publish_manifest_lists(project: str = "", build_num: str = "", ota_lite_tag: str = ""):
@@ -64,5 +78,4 @@ def publish_manifest_lists(project: str = "", build_num: str = "", ota_lite_tag:
         names = os.listdir(mfdir)
         status(f" Creating tagged URI from {names}; original URI: {tag}, build number: {build_num}, latest tag: {latest_tag}")
         uri = compose_tagged_uri(factory, tag, build_num, latest_tag)
-        status(f" Pushing manifest to {uri}")
         cmd("docker", "manifest", "push", uri)
