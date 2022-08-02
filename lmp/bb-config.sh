@@ -169,8 +169,8 @@ fi
 
 cat << EOFEOF >> conf/local.conf
 # Take a tag from a spec like:
-#  https://docs.foundries.io/latest/reference/advanced-tagging.html
-# and find the first tag name to produce a senible default
+#  https://docs.foundries.io/latest/reference-manual/ota/advanced-tagging.html
+# and find the first tag name to produce a sensible default
 LMP_DEVICE_REGISTER_TAG = "$(echo ${OTA_LITE_TAG} | cut -d: -f1 | cut -d, -f1)"
 LMP_DEVICE_FACTORY = "${FACTORY}"
 LMP_DEVICE_API = "${LMP_DEVICE_API}"
