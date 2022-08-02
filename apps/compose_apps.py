@@ -38,7 +38,10 @@ class ComposeApps:
             self._image_downloader_cls = image_downloader_cls
 
             args = [self.DockerComposeTool, 'compose', '-f', self.ComposeFile, 'config']
-            cmd_exe(*args, cwd=self.dir)
+            try:
+                cmd_exe(*args, cwd=self.dir)
+            except FileNotFoundError:
+                cmd_exe('docker-compose', '-f', self.ComposeFile, 'config', cwd=self.dir)
 
             with open(self.file) as compose_file:
                 self._desc = yaml.safe_load(compose_file)
