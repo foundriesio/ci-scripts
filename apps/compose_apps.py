@@ -5,6 +5,8 @@ import logging
 import os
 import yaml
 
+from expandvars import expandvars
+
 from helpers import cmd as cmd_exe
 from apps.image_downloader import DockerDownloader
 
@@ -27,7 +29,7 @@ class ComposeApps:
                 raise ValueError('docker-compose.yaml file found. This must be named docker-compose.yml')
             return exists
 
-        def __init__(self, name, app_dir, image_downloader_cls=DockerDownloader):
+        def __init__(self, name, app_dir, image_downloader_cls=DockerDownloader, quiet=False):
             if not self.is_compose_app_dir(app_dir):
                 raise Exception('Compose App dir {} does not contain a compose file {}'
                                 .format(app_dir, self.ComposeFile))
@@ -38,6 +40,8 @@ class ComposeApps:
             self._image_downloader_cls = image_downloader_cls
 
             args = [self.DockerComposeTool, 'compose', '-f', self.ComposeFile, 'config']
+            if quiet:
+                args.append('--quiet')
             cmd_exe(*args, cwd=self.dir)
 
             with open(self.file) as compose_file:
@@ -46,9 +50,12 @@ class ComposeApps:
         def services(self):
             return self['services'].items()
 
-        def images(self):
+        def images(self, expand_env=False):
             for _, service_cfg in self.services():
-                yield service_cfg['image']
+                img = service_cfg['image']
+                if expand_env:
+                    img = expandvars(img)
+                yield img
 
         def download_images(self, platform=None, docker_host='unix:///var/run/docker.sock'):
             downloader = self._image_downloader_cls(docker_host)
@@ -70,7 +77,7 @@ class ComposeApps:
     def str(self):
         return ' '.join(app.name for app in self)
 
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, quiet=False):
         self.root_dir = root_dir
         self._apps = []
         for app in os.listdir(self.root_dir):
@@ -84,7 +91,7 @@ class ComposeApps:
                 continue
 
             logger.debug('Found Compose App: '.format(app))
-            self._apps.append(self.App(app, app_dir))
+            self._apps.append(self.App(app, app_dir, quiet=quiet))
 
     def __iter__(self):
         return self._apps.__iter__()
