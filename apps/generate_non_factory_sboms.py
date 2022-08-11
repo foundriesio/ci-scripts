@@ -21,8 +21,14 @@ def main(args):
                 path = os.path.join(args.archive, img, f"{args.arch}.spdx.json")
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 try:
-                    out = subprocess.check_output(
-                        ["syft", "--platform", args.arch, "registry:" + img, "-o", "spdx-json"])
+                    # Syft doesn't know how to determine the platform correctly.
+                    # This causes problems for some 32-bit arm images. Images
+                    # such as eclipse-mosquitto only build for arm/v6. If
+                    # we ask for arm or arm/v7 - sfyt will fail. However,
+                    # dockerd is smart enough to get the "best" arm image
+                    # available for a given architecure.
+                    subprocess.check_call(["docker", "pull", img])
+                    out = subprocess.check_output(["syft", "docker:" + img, "-o", "spdx-json"])
                     with open(path, "wb") as f:
                         f.write(out)
                 except Exception:
