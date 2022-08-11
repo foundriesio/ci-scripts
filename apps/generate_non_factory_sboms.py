@@ -20,10 +20,13 @@ def main(args):
                 analyzed[img] = 1
                 path = os.path.join(args.archive, img, f"{args.arch}.spdx.json")
                 os.makedirs(os.path.dirname(path), exist_ok=True)
-                out = subprocess.check_output(
-                    ["syft", "--platform", args.arch, "registry:" + img, "-o", "spdx-json"])
-                with open(path, "wb") as f:
-                    f.write(out)
+                try:
+                    out = subprocess.check_output(
+                        ["syft", "--platform", args.arch, "registry:" + img, "-o", "spdx-json"])
+                    with open(path, "wb") as f:
+                        f.write(out)
+                except Exception:
+                    status("Unable to scan the image for this platform")
 
 
 def get_args():
