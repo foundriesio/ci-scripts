@@ -17,6 +17,7 @@ TARGETS_JSON = {
                 'version': '12',
                 'hardwareIds': ['rpi3-cm'],
                 'docker_compose_apps': {'foo': 'devel-r'},
+                'uri': 'example.com',
             },
         },
         'minnow-12': {
@@ -28,6 +29,7 @@ TARGETS_JSON = {
                 'version': '12',
                 'hardwareIds': ['minnow'],
                 'docker_compose_apps': {'foo': 'devel-m'},
+                'uri': 'example.com',
             },
         },
         'rpi3-cm-10': {
@@ -39,6 +41,7 @@ TARGETS_JSON = {
                 'version': '10',
                 'hardwareIds': ['rpi3-cm'],
                 'docker_compose_apps': {'foo': 'postmerge-r'},
+                'uri': 'example.com',
             },
         },
         'rpi3-cm-13': {
@@ -48,6 +51,7 @@ TARGETS_JSON = {
                 'targetFormat': 'OSTREE',
                 'version': '13',
                 'hardwareIds': ['rpi3-cm'],
+                'uri': 'example.com',
             },
         },
     }
