@@ -15,8 +15,11 @@ bitbake -p
 bitbake -e > ${archive}/bitbake_global_env.txt
 bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt
 
-# Setscene (cache), failures not critical
-bitbake --setscene-only ${IMAGE} || true
+# Before LmP version 87 (first release with OE-core kirkstone),
+# this is need to avoid build failures that can recover in the next steps
+if [ "$LMP_VERSION" -lt "87" ]; then
+    bitbake --setscene-only ${IMAGE} || true
+fi
 
 if [ "$BUILD_SDK" == "1" ] && [ "${DISTRO}" != "lmp-mfgtool" ]; then
     bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE} -c populate_sdk
