@@ -276,6 +276,7 @@ triggers:
         triggers:
           - name: ptest-build-{loop}
         params:
+          BITBAKE_EXTRA_ARGS: --continue
           IMAGE: lmp-base-console-image
         script-repo:
           name: fio
@@ -321,6 +322,7 @@ triggers:
               - uz3eg-iocc-ebbr
               - uz3eg-iocc-ebbr-sec
         params:
+          BITBAKE_EXTRA_ARGS: --continue
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
           EULA_stm32mp15eval: "1"
@@ -343,6 +345,7 @@ triggers:
               - imx8mm-lpddr4-evk
               - stm32mp15-disco
         params:
+          BITBAKE_EXTRA_ARGS: --continue
           DISTRO: lmp-base
           IMAGE: lmp-base-console-image
         script-repo:
@@ -361,6 +364,7 @@ triggers:
               - intel-corei7-64
               - stm32mp15-disco
         params:
+          BITBAKE_EXTRA_ARGS: --continue
           DISTRO: lmp-wayland
           IMAGE: lmp-base-console-image
         script-repo:
@@ -379,6 +383,7 @@ triggers:
               - intel-corei7-64
               - stm32mp15-disco
         params:
+          BITBAKE_EXTRA_ARGS: --continue
           DISTRO: lmp-xwayland
           IMAGE: lmp-base-console-image
         script-repo:
