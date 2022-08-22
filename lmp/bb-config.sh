@@ -65,6 +65,7 @@ ACCEPT_EULA:stm32mp1-disco = "1"
 ACCEPT_EULA:stm32mp1-eval = "1"
 ACCEPT_EULA:stm32mp15-disco = "1"
 ACCEPT_EULA:stm32mp15-eval = "1"
+LICENSE_FLAGS_ACCEPTED:append:rpi = " synaptics-killswitch"
 EOFEOF
 fi
 
