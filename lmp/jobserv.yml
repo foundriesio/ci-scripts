@@ -194,7 +194,6 @@ triggers:
               - apalis-imx6-sec
               - apalis-imx8
               - beaglebone-yocto
-              - corstone700-mps3
               - generic-arm64
               - imx6ulevk
               - imx6ullevk
@@ -211,7 +210,8 @@ triggers:
               - qemuarm64-secureboot
               - qemuriscv64
               - raspberrypi4-64
-              - stm32mp1-disco
+              - stm32mp15-disco
+              - stm32mp15-eval
               - kv260
               - kv260-ebbr
               - vck190-versal
