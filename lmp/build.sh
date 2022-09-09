@@ -164,7 +164,7 @@ if [ -d "${archive}" ] ; then
 	# Handle user provided extra artifacts
 	if [ ! -z "${EXTRA_ARTIFACTS}" ]; then
 		for extra_file in ${EXTRA_ARTIFACTS}; do
-			cp ${DEPLOY_DIR_IMAGE}/${extra_file} ${archive}/
+			cp ${DEPLOY_DIR_IMAGE}/${extra_file} ${archive}/ || true
 		done
 	fi
 
