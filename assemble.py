@@ -19,6 +19,50 @@ from factory_client import FactoryClient
 logger = logging.getLogger("System Image Assembler")
 
 
+def remount_dev():
+    # containers don't see changes to /dev, so we have to hack around
+    # this by basically mounting a new /dev. The idea was inspired by
+    # this comment:
+    #  https://github.com/moby/moby/issues/27886#issuecomment-257244027
+    if getattr(remount_dev, 'called', None):
+        # you can't call remount_dev dev a 2nd time without a umount, but
+        # it also sometimes *fails* in between doing multiple target assemblies.
+        # My guess is its something with dockerd getting spawned and stopped.
+        # So just *try* to umount and hope for the best.
+        subprocess.call(["umount", "/dev"])
+    cmd('mount', '-t', 'devtmpfs', 'devtmpfs', '/dev')
+    setattr(remount_dev, 'called', True)
+
+
+def losetup(path: str) -> str:
+    # losetup can be tricky to run in a container. Due to the issues with
+    # /dev noted about in `remount_dev`, we periodically will have losetup
+    # run like:
+    #   bash-5.1# losetup -f /file
+    #   losetup: /file: No such file or directory
+    # However, losetup is giving misleading error message. strace will show the
+    # real issue is that losetup creates new loop device, say loop2. However,
+    # there's some kind of timing issue where /dev/loop2 doesn't always show
+    # up, thus the "No such file or directory". When this happens, we need to
+    # remount /dev in order to see the new device.
+    try:
+        cmd('losetup', '-P', '-f', path)
+    except subprocess.CalledProcessError:
+        logger.error('losetup bug found, remounting /dev to work around')
+        remount_dev()
+        cmd('losetup', '-P', '-f', path)
+
+    # The -P in losetup scans for partitions and will create entries like:
+    # /dev/loopXp1. Since these are new /dev entries, we have to remount /dev
+    remount_dev()
+
+    out = cmd('losetup', '-a', capture=True).decode()
+    for line in out.splitlines():
+        if path in line:
+            return line.split(':', 1)[0]
+    raise RuntimeError(f'Unable to find loop device for {path}')
+
+
 class WicImage:
     ComposeAppsRootDir = 'ostree/deploy/lmp/var/sota/compose-apps/'
     DockerDataRootDir = 'ostree/deploy/lmp/var/lib/docker/'
@@ -41,31 +85,9 @@ class WicImage:
         self.installed_target_filepath = os.path.join(self._mnt_dir, self.InstalledTargetFile)
 
     def __enter__(self):
-        max_attempts_numb = 6
-        for attempt_counter in range(0, max_attempts_numb):
-            try:
-                sleep(1)
-                cmd('losetup', '-P', '-f', self._path)
-                break
-            except subprocess.CalledProcessError as exc:
-                logger.error(f'Failed to setup a loopback device; attempt number: {attempt_counter + 1} out of {max_attempts_numb}')
-                if attempt_counter + 1 == max_attempts_numb:
-                    raise
+        self._loop_device = losetup(self._path)
+        self._wic_device = self._loop_device + 'p' + str(self._last_part)
 
-        out = cmd('losetup', '-a', capture=True).decode()
-        for line in out.splitlines():
-            if self._path in line:
-                self._loop_device = line.split(':', 1)[0]
-                self._wic_device = line.split(':', 1)[0] + 'p' + str(self._last_part)
-                break
-        else:
-            raise RuntimeError('Unable to find loop device for wic image')
-
-        # containers don't see changes to /dev, so we have to hack around
-        # this by basically mounting a new /dev. The idea was inspired by
-        # this comment:
-        #  https://github.com/moby/moby/issues/27886#issuecomment-257244027
-        cmd('mount', '-t', 'devtmpfs', 'devtmpfs', '/dev')
         cmd('e2fsck', '-y', '-f', self._wic_device)
 
         if self._resized_image:
@@ -95,7 +117,6 @@ class WicImage:
             os.rmdir(self._installer_mount)
         cmd('umount', self._mnt_dir)
         os.rmdir(self._mnt_dir)
-        cmd('umount', '/dev')
         cmd('losetup', '-d', self._loop_device)
 
     def update_target(self, target):
