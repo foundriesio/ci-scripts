@@ -224,7 +224,7 @@ for x in $IMAGES ; do
 	fi
 
 	status "Doing a syft SBOM scan"
-	sbom_dst=/archive/sboms/${ct_base}/${ARCH}.sdpx.json
+	sbom_dst=/archive/sboms/${ct_base}/${ARCH}.spdx.json
 	mkdir -p $(dirname $sbom_dst)
 	syft ${ct_base}:$TAG-$ARCH -o spdx-json > $sbom_dst
 
