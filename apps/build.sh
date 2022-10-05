@@ -51,6 +51,10 @@ if [ -n "$DOCKER_BUILDX" ] ; then
 	docker_build="docker buildx build"
 fi
 
+TAG=$(git log -1 --format=%h)
+LATEST=${OTA_LITE_TAG-"latest"}
+LATEST=$(echo $LATEST | cut -d: -f1 | cut -d, -f1)  # Take into account advanced tagging
+
 pbc=pre-build.conf
 if [ -f $pbc ] ; then
   echo "Sourcing pre-build.conf."
@@ -66,10 +70,6 @@ if [ -z "$IMAGES" ] ; then
 	IMAGES=$(find ./ -mindepth 2 -maxdepth 2 -name Dockerfile | cut -d / -f2)
 fi
 
-
-TAG=$(git log -1 --format=%h)
-LATEST=${OTA_LITE_TAG-"latest"}
-LATEST=$(echo $LATEST | cut -d: -f1 | cut -d, -f1)  # Take into account advanced tagging
 
 if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
@@ -147,7 +147,7 @@ for x in $IMAGES ; do
 		status Tagging docker image $x for $ARCH
 		run docker tag ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
 	else
-		docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH --force-rm"
+		docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH -t ${ct_base}:$LATEST-$ARCH --force-rm"
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
 			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
