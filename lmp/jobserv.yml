@@ -45,6 +45,7 @@ triggers:
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
+              - apalis-imx8-sec
               - beaglebone-yocto
               - generic-arm64
               - imx6ulevk
@@ -58,6 +59,7 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mq-evk
               - imx8qm-mek
+              - imx8qm-mek-sec
               - jetson-agx-xavier-devkit
               - qemuarm
               - qemuarm64-secureboot
@@ -93,6 +95,7 @@ triggers:
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
+              - apalis-imx8-sec
               - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
@@ -104,6 +107,7 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mq-evk
               - imx8qm-mek
+              - imx8qm-mek-sec
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -195,6 +199,7 @@ triggers:
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
+              - apalis-imx8-sec
               - beaglebone-yocto
               - generic-arm64
               - imx6ulevk
@@ -208,6 +213,7 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mq-evk
               - imx8qm-mek
+              - imx8qm-mek-sec
               - jetson-agx-xavier-devkit
               - qemuarm
               - qemuarm64-secureboot
@@ -243,6 +249,7 @@ triggers:
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
+              - apalis-imx8-sec
               - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
@@ -254,6 +261,7 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mq-evk
               - imx8qm-mek
+              - imx8qm-mek-sec
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -299,6 +307,7 @@ triggers:
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
+              - apalis-imx8-sec
               - beaglebone-yocto
               - generic-arm64
               - imx6ulevk
@@ -312,6 +321,7 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mq-evk
               - imx8qm-mek
+              - imx8qm-mek-sec
               - jetson-agx-xavier-devkit
               - qemuarm
               - qemuarm64-secureboot
@@ -407,6 +417,7 @@ triggers:
               - apalis-imx6
               - apalis-imx6-sec
               - apalis-imx8
+              - apalis-imx8-sec
               - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
@@ -417,6 +428,7 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
+              - imx8qm-mek-sec
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
