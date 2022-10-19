@@ -53,6 +53,7 @@ su builder -c $HERE/bb-build.sh
 
 DEPLOY_DIR="$(grep "^DEPLOY_DIR=" ${archive}/bitbake_global_env.txt | cut -d'=' -f2 | tr -d '"')"
 DEPLOY_DIR_IMAGE="${DEPLOY_DIR}/images/${MACHINE}"
+DEPLOY_DIR_SDK="${DEPLOY_DIR}/sdk/"
 
 # Prepare files to publish
 rm -f ${DEPLOY_DIR_IMAGE}/*.txt
@@ -102,6 +103,7 @@ fi
 
 if [ -d "${archive}" ] ; then
 	mkdir ${archive}/other
+	mkdir ${archive}/sdk
 
 	# Bitbake env output
 	gzip -f ${archive}/bitbake_global_env.txt
@@ -167,6 +169,8 @@ if [ -d "${archive}" ] ; then
 			cp ${DEPLOY_DIR_IMAGE}/${extra_file} ${archive}/ || true
 		done
 	fi
+	## Copy the SDK installation file
+	cp ${DEPLOY_DIR_SDK}/lmp*.sh ${archive}/sdk/ || true
 
 	# Remove ota-ext4 in case the compressed format is available (to reduce time spent uploading)
 	if [ -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4.gz ]; then
