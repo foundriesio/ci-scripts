@@ -16,6 +16,10 @@ class ManifestListPublishing(unittest.TestCase):
                 f"hub.foundries.io/{factory}/{app_name}:{build_num}_d09aa17",
             ),
             (
+                f"hub.foundries.io_{factory}_{app_name}-{build_num}_d09aa17a",
+                f"hub.foundries.io/{factory}/{app_name}:{build_num}_d09aa17a",
+            ),
+            (
                 # `latest_tag` contains dashes
                 # `app_name` contains `latest_tag`
                 # `latest_tag` matches `factory` with underscores

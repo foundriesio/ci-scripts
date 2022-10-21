@@ -18,8 +18,11 @@ def compose_tagged_uri(factory: str, org_uri: str, build_num: str, latest_tag: s
         uri = uri[:latest_tag_indx] + f":{latest_tag}"
         return uri
 
+    # find the git-hash length. Its usually 7, but can be 8 when you hit hash
+    # collisions
+    hash_idx = uri.rfind("_")
     build_num_case = f"-{build_num}_"
-    build_num_indx = uri.rfind(build_num_case, len(uri) - (len(build_num_case) + 7))
+    build_num_indx = uri.rfind(build_num_case, len(uri) - (hash_idx-1)- (len(build_num_case)))
     if build_num_indx != -1:
         uri = uri[:build_num_indx] + ":" + uri[build_num_indx + 1:]
         return uri
