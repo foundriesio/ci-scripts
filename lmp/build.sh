@@ -168,6 +168,11 @@ if [ -d "${archive}" ] ; then
 		done
 	fi
 
+	# Remove ota-ext4 in case the compressed format is available (to reduce time spent uploading)
+	if [ -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4.gz ]; then
+		rm -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4
+	fi
+
 	# Make the main img.gz be in the root of the archive
 	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
 	# NVIDIA targets use a tegraflash tarball
