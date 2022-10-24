@@ -161,12 +161,41 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - am62xx-evm
+              - am64xx-evm
+              - apalis-imx6
+              - apalis-imx6-sec
+              - apalis-imx8
+              - apalis-imx8-sec
               - beaglebone-yocto
               - generic-arm64
+              - imx6ulevk
+              - imx6ullevk
+              - imx6ullevk-sec
+              - imx7ulpea-ucom
+              - imx8mm-lpddr4-evk
+              - imx8mm-lpddr4-evk-sec
+              - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
+              - imx8mn-ddr4-evk
+              - imx8mn-ddr4-evk-sec
+              - imx8mq-evk
+              - imx8qm-mek
+              - imx8qm-mek-sec
+              - jetson-agx-xavier-devkit
               - qemuarm
               - qemuarm64-secureboot
               - qemuriscv64
               - raspberrypi4-64
+              - stm32mp15-disco
+              - stm32mp15-eval
+              - kv260
+              - kv260-ebbr
+              - vck190-versal
+              - uz3eg-iocc
+              - uz3eg-iocc-sec
+              - uz3eg-iocc-ebbr
+              - uz3eg-iocc-ebbr-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
