@@ -105,7 +105,7 @@ APP_PRELOAD_LOG_FILE = "/archive/app-preload.log"
 COMPOSE_APP_TYPE="${COMPOSE_APP_TYPE-restorable}"
 
 # TUF root meta provisioning parameters
-SOTA_TUF_ROOT_PROVISION = "1"
+SOTA_TUF_ROOT_PROVISION = "${SOTA_TUF_ROOT_PROVISION-1}"
 SOTA_TUF_ROOT_FETCHER = "${HERE}/fetch-root-meta.sh"
 SOTA_TUF_ROOT_DIR = "usr/lib/sota/tuf"
 SOTA_TUF_ROOT_LOG_FILE = "/archive/tuf-root-fetch.log"
