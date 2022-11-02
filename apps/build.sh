@@ -43,7 +43,6 @@ for i in `seq 12` ; do
 	fi
 done
 
-DOCKER_BUILDX="1"
 docker_build="docker buildx build"
 
 TAG=$(git log -1 --format=%h)
