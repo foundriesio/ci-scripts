@@ -69,8 +69,7 @@ if [ -f /secrets/osftok ] ; then
 	mkdir -p $HOME/.docker
 fi
 
-echo '<testsuite name="unit-tests">' > /archive/junit.xml
-trap 'echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
+trap '[ -f /archive/junit.xml ] && echo "</testsuite>" >> /archive/junit.xml' TERM INT EXIT
 
 total=$(echo $IMAGES | wc -w)
 total=$((total*3)) # 3 steps per container: build, push, test*manifest
@@ -81,7 +80,7 @@ for x in $IMAGES ; do
 	completed=$((completed+3))
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
-	unset CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
+	unset TEST_JUNIT_RESULTS CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
 
 	conf=$x/docker-build.conf
 	if [ -f $conf ] ; then
@@ -186,15 +185,31 @@ for x in $IMAGES ; do
 
 	if [ -n "$TEST_CMD" ] ; then
 		status Running test command inside container: $TEST_CMD
-		echo "<testcase name=\"test-$x\">" >> /archive/junit.xml
-		echo "   docker run --rm --entrypoint=\"\" ${ct_base}:$TAG-$ARCH $TEST_CMD"
-		if ! docker run --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$x-test.log 2>&1 ; then
-			status "Testing for $x failed"
-			echo "<failure>" >> /archive/junit.xml
-			cat /archive/$x-test.log | sed -e 's/</\&lt;/g' -e 's/>/\&gt;/g' >> /archive/junit.xml
-			echo "</failure>" >> /archive/junit.xml
+		if [ -n "$TEST_JUNIT_RESULTS" ] ; then
+			# The test command produce junit xml file(s)
+			testdir="/tmp/$x-test"
+			mkdir $testdir
+			docker run -v ${testdir}:${TEST_JUNIT_RESULTS} --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$x-test.log 2>&1
+			# we need to copy these to /archive in a way they won't
+			# collide with a junit.xml from another test run:
+			for result in $(ls $testdir) ; do
+				# Jobserv will look at all /archive/junit.xml* files
+				cp $testdir/$result /archive/$result.$x
+			done
+		else
+			if [ ! -f /archive/junit.xml ] ; then
+				echo '<testsuite name="unit-tests">' > /archive/junit.xml
+			fi
+			echo "<testcase name=\"test-$x\">" >> /archive/junit.xml
+			echo "   docker run --rm --entrypoint=\"\" ${ct_base}:$TAG-$ARCH $TEST_CMD"
+			if ! docker run --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$x-test.log 2>&1 ; then
+				status "Testing for $x failed"
+				echo "<failure>" >> /archive/junit.xml
+				cat /archive/$x-test.log | sed -e 's/</\&lt;/g' -e 's/>/\&gt;/g' >> /archive/junit.xml
+				echo "</failure>" >> /archive/junit.xml
+			fi
+			echo "</testcase>" >> /archive/junit.xml
 		fi
-		echo "</testcase>" >> /archive/junit.xml
 	fi
 	echo "Build step $((completed+3)) of $total is complete"
 done
