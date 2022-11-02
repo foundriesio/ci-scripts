@@ -129,11 +129,6 @@ for x in $IMAGES ; do
 	if [ -f /secrets/osftok ] ; then
 		status "Doing docker-login to hub.foundries.io with secret"
 		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
-		# sanity check and pull in a cached image if it exists. if it can't be pulled set no_op_tag to 0.
-		run docker pull ${ct_base}:${LATEST} || no_op_tag=0
-		if [ $no_op_tag -eq 0 ] && [ -z "$CHANGED" ] && [ -z "$DOCKER_BUILDX" ] ; then
-			status "WARNING - no cached image found, forcing a rebuild"
-		fi
 		auth=1
 	fi
 
