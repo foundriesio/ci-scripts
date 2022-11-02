@@ -179,13 +179,6 @@ for x in $IMAGES ; do
 	echo "Build step $((completed+1)) of $total is complete"
 
 	if [ $auth -eq 1 ] ; then
-		if [[ -z "$DOCKER_BUILDX" ]] || [[ $no_op_tag -eq 1 ]] ; then
-			# if docker secrets doesn't exist, we aren't using buildx - we need to push
-			# if secrets are defined but no_op_tag is 1, then we didn't build with
-			# buildx and need to push
-			run docker push ${ct_base}:$TAG-$ARCH
-		fi
-
 		run docker manifest create ${ct_base}:${H_BUILD}_$TAG ${ct_base}:$TAG-$ARCH
 		run docker manifest create ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
 
