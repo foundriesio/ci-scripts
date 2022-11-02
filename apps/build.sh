@@ -90,22 +90,6 @@ for x in $IMAGES ; do
 		. $conf
 	fi
 
-	# If NOCACHE is not set, only build images that have changed.
-	if [ -z "$NOCACHE" ] ; then
-		no_op_tag=0
-		# If we are using buildx, don't try to guess what has changed
-		if [ -z "$DOCKER_BUILDX" ] ; then
-			# If we cannot obtain the diff, force the build
-			CHANGED=$(git diff --name-only $GIT_OLD_SHA..$GIT_SHA $x/${BUILD_CONTEXT} || echo FORCE_BUILD)
-			if [[ ! -z "$CHANGED" ]]; then
-				status "Detected changes to $x"
-			else
-				status "No changes to $x, tagging only"
-				no_op_tag=1
-			fi
-		fi
-	fi
-
 	# check to see if we should skip building this image`
 	found=0
 	for a in $SKIP_ARCHS ; do
