@@ -117,49 +117,44 @@ for x in $IMAGES ; do
 		auth=1
 	fi
 
-	if [ $no_op_tag -eq 1 ] ; then
-		status Tagging docker image $x for $ARCH
-		run docker tag ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
+	docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH -t ${ct_base}:$LATEST-$ARCH --force-rm"
+	if [ -z "$NOCACHE" ] ; then
+		status Building docker image $x for $ARCH with cache
+		docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
+		docker_cmd="${docker_cmd}-${ARCH}_cache"
 	else
-		docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH -t ${ct_base}:$LATEST-$ARCH --force-rm"
-		if [ -z "$NOCACHE" ] ; then
-			status Building docker image $x for $ARCH with cache
-			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
-			docker_cmd="${docker_cmd}-${ARCH}_cache"
-		else
-			status Building docker image $x for $ARCH with no cache
-			docker_cmd="$docker_cmd  --no-cache"
-		fi
-
-		docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
-
-		if [ -n "$DOCKER_SECRETS" ] ; then
-			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
-			for secret in `ls /secrets` ; do
-				docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
-			done
-		fi
-
-		db_args_file="$REPO_ROOT/$x/.docker_build_args"
-		if [ -f $db_args_file ] ; then
-			status "Adding .docker_build_args"
-			docker_cmd="$docker_cmd $(cat $db_args_file | sed '/^[[:space:]]*$/d' | sed '/^#/d' | sed 's/^/--build-arg /' | paste -s -d " ")"
-		fi
-
-		DOCKERFILE="$REPO_ROOT/$x/${DOCKERFILE-Dockerfile}"
-		if [ -n "$BUILD_CONTEXT" ] ; then
-			status "Using custom build context $BUILD_CONTEXT"
-			BUILD_CONTEXT="$REPO_ROOT/$x/${BUILD_CONTEXT}"
-		else
-			BUILD_CONTEXT="$REPO_ROOT/$x/"
-		fi
-		# we have to use eval because the some parts of docker_cmd are
-		# variables quotes with spaces: --build-arg "foo=bar blah"
-		run eval "$docker_cmd -f $DOCKERFILE $BUILD_CONTEXT"
-
-	        # Publish a list of md5sum checksums for the source code of each image build
-	        find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
+		status Building docker image $x for $ARCH with no cache
+		docker_cmd="$docker_cmd  --no-cache"
 	fi
+
+	docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+
+	if [ -n "$DOCKER_SECRETS" ] ; then
+		status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
+		for secret in `ls /secrets` ; do
+			docker_cmd="$docker_cmd --secret id=${secret},src=/secrets/${secret}"
+		done
+	fi
+
+	db_args_file="$REPO_ROOT/$x/.docker_build_args"
+	if [ -f $db_args_file ] ; then
+		status "Adding .docker_build_args"
+		docker_cmd="$docker_cmd $(cat $db_args_file | sed '/^[[:space:]]*$/d' | sed '/^#/d' | sed 's/^/--build-arg /' | paste -s -d " ")"
+	fi
+
+	DOCKERFILE="$REPO_ROOT/$x/${DOCKERFILE-Dockerfile}"
+	if [ -n "$BUILD_CONTEXT" ] ; then
+		status "Using custom build context $BUILD_CONTEXT"
+		BUILD_CONTEXT="$REPO_ROOT/$x/${BUILD_CONTEXT}"
+	else
+		BUILD_CONTEXT="$REPO_ROOT/$x/"
+	fi
+	# we have to use eval because the some parts of docker_cmd are
+	# variables quotes with spaces: --build-arg "foo=bar blah"
+	run eval "$docker_cmd -f $DOCKERFILE $BUILD_CONTEXT"
+
+	# Publish a list of md5sum checksums for the source code of each image build
+	find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
 	echo "Build step $((completed+1)) of $total is complete"
 
 	if [ $auth -eq 1 ] ; then
