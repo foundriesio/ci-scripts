@@ -16,6 +16,7 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
+export DOCKER_BUILDKIT=1
 BUILDKIT_VERSION="${BUILDKIT_VERSION-v0.10.3}"
 
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
@@ -140,18 +141,13 @@ for x in $IMAGES ; do
 		if [ -z "$NOCACHE" ] ; then
 			status Building docker image $x for $ARCH with cache
 			docker_cmd="$docker_cmd  --cache-from ${ct_base}:${LATEST}"
-			if [ -n "$DOCKER_BUILDX" ] ; then
-				docker_cmd="${docker_cmd}-${ARCH}_cache"
-			fi
+			docker_cmd="${docker_cmd}-${ARCH}_cache"
 		else
 			status Building docker image $x for $ARCH with no cache
 			docker_cmd="$docker_cmd  --no-cache"
 		fi
 
-		if [ -n "$DOCKER_BUILDX" ] ; then
-			export DOCKER_BUILDKIT=1
-			docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
-		fi
+		docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 
 		if [ -n "$DOCKER_SECRETS" ] ; then
 			status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
