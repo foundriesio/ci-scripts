@@ -42,14 +42,8 @@ for i in `seq 12` ; do
 	fi
 done
 
-docker_build="docker build"
-if [ -n "$DOCKER_SECRETS" ] ; then
-	# secrets require buildx
-	DOCKER_BUILDX="1"
-fi
-if [ -n "$DOCKER_BUILDX" ] ; then
-	docker_build="docker buildx build"
-fi
+DOCKER_BUILDX="1"
+docker_build="docker buildx build"
 
 TAG=$(git log -1 --format=%h)
 LATEST=${OTA_LITE_TAG-"latest"}
