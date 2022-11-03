@@ -205,7 +205,8 @@ for x in $IMAGES ; do
 			if ! docker run --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$x-test.log 2>&1 ; then
 				status "Testing for $x failed"
 				echo "<failure>" >> /archive/junit.xml
-				cat /archive/$x-test.log | sed -e 's/</\&lt;/g' -e 's/>/\&gt;/g' >> /archive/junit.xml
+				# convert < and > to &lt and &gt and decolorize the output (remove ansi escapes for color)
+				cat /archive/$x-test.log | sed -e 's/</\&lt;/g' -e 's/>/\&gt;/g' | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,3})*)?[mGK]//g" >> /archive/junit.xml
 				echo "</failure>" >> /archive/junit.xml
 			fi
 			echo "</testcase>" >> /archive/junit.xml
