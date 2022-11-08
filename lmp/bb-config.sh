@@ -135,14 +135,16 @@ EOFEOF
 sed -e "s|@@ARCHIVE@@|${archive}|" ${HERE}/bb_logconfig.json > bb_logconfig.json
 
 # Additional packages based on the CI job used
-if [ "$CONF_VERSION" == "1" ]; then
-	cat << EOFEOF >> conf/local.conf
+if [ -n "${EXTRA_IMAGE_INSTALL}" ]; then
+	if [ "$CONF_VERSION" == "1" ]; then
+		cat << EOFEOF >> conf/local.conf
 IMAGE_INSTALL_append = " ${EXTRA_IMAGE_INSTALL}"
 EOFEOF
-else
-	cat << EOFEOF >> conf/local.conf
+	else
+		cat << EOFEOF >> conf/local.conf
 IMAGE_INSTALL:append = " ${EXTRA_IMAGE_INSTALL}"
 EOFEOF
+	fi
 fi
 
 # Ptest-based builds require the same build settings and variables,
