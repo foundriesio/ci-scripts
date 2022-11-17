@@ -229,8 +229,6 @@ EOFEOF
 fi
 
 cat << EOFEOF >> conf/auto.conf
-# get build stats to make sure that we use sstate properly
-INHERIT += "buildstats buildstats-summary"
 
 # archive sources for target recipes (for license compliance)
 INHERIT += "archiver"
