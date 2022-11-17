@@ -237,6 +237,15 @@ ARCHIVER_MODE[src] = "original"
 ARCHIVER_MODE[diff] = "1"
 EOFEOF
 
+# spdx is support since kirkstone so check if this oe-core have support
+if [ -f ../layers/openembedded-core/meta/classes/create-spdx.bbclass ]; then
+	cat << EOFEOF >> conf/auto.conf
+
+# create SPDX (SBOM) documents
+INHERIT += "create-spdx"
+EOFEOF
+fi
+
 if [ $(ls ../sstate-cache | wc -l) -ne 0 ] ; then
 	status "Found existing sstate cache, using local copy"
 	echo 'SSTATE_MIRRORS = ""' >> conf/auto.conf
