@@ -69,6 +69,7 @@ triggers:
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
+              - stm32mp15-eval-sec
               - kv260
               - kv260-ebbr
               - vck190-versal
@@ -115,6 +116,24 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # STM32 mfgtool
+      - name: mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - stm32mp15-eval-sec
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: stm32-mfgtool-files
+          EXTRA_ARTIFACTS: "stm32-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -191,6 +210,7 @@ triggers:
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
+              - stm32mp15-eval-sec
               - kv260
               - kv260-ebbr
               - vck190-versal
@@ -237,6 +257,24 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # STM32 mfgtool
+      - name: mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - stm32mp15-eval-sec
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: stm32-mfgtool-files
+          EXTRA_ARTIFACTS: "stm32-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -290,6 +328,7 @@ triggers:
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
+              - stm32mp15-eval-sec
               - kv260
               - kv260-ebbr
               - vck190-versal
@@ -336,6 +375,24 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # STM32 mfgtool
+      - name: mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - stm32mp15-eval-sec
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: stm32-mfgtool-files
+          EXTRA_ARTIFACTS: "stm32-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -403,6 +460,7 @@ triggers:
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
+              - stm32mp15-eval-sec
               - kv260
               - kv260-ebbr
               - vck190-versal
@@ -512,6 +570,24 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # STM32 mfgtool
+      - name: build-mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-osf
+        loop-on:
+          - param: MACHINE
+            values:
+              - stm32mp15-eval-sec
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: stm32-mfgtool-files
+          EXTRA_ARTIFACTS: "stm32-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
