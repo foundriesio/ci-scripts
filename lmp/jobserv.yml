@@ -489,6 +489,8 @@ triggers:
               - raspberrypi4-64
               - apalis-imx6
               - apalis-imx8
+              - imx6ulevk
+              - imx6ullevk
               - imx8mm-lpddr4-evk
               - imx8mn-ddr4-evk
               - imx8mp-lpddr4-evk
