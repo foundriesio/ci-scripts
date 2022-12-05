@@ -18,7 +18,7 @@ triggers:
       # images that have ptest
       - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -36,7 +36,7 @@ triggers:
       # images with no OTA
       - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -88,7 +88,7 @@ triggers:
       # mfgtool / uuu related build files
       - name: mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -122,7 +122,7 @@ triggers:
       # STM32 mfgtool
       - name: mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -156,7 +156,7 @@ triggers:
       # images that have ptest
       - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -174,7 +174,7 @@ triggers:
       # images with no OTA
       - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -226,7 +226,7 @@ triggers:
       # mfgtool / uuu related build files
       - name: mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -260,7 +260,7 @@ triggers:
       # STM32 mfgtool
       - name: mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -289,7 +289,7 @@ triggers:
     runs:
       - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -341,7 +341,7 @@ triggers:
       # mfgtool / uuu related build files
       - name: mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -375,7 +375,7 @@ triggers:
       # STM32 mfgtool
       - name: mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -398,7 +398,7 @@ triggers:
     runs:
       - name: build-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -416,7 +416,7 @@ triggers:
 
       - name: build-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -470,7 +470,7 @@ triggers:
 
       - name: build-lmp-base-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -496,7 +496,7 @@ triggers:
 
       - name: build-lmp-wayland-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -515,7 +515,7 @@ triggers:
 
       - name: build-lmp-xwayland-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -535,7 +535,7 @@ triggers:
       # mfgtool / uuu related build files
       - name: build-mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -569,7 +569,7 @@ triggers:
       # STM32 mfgtool
       - name: build-mfgtool-{loop}
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
             values:
@@ -589,7 +589,7 @@ triggers:
     runs:
       - name: build-intel-corei7-64-ptest
         container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-osf
+        host-tag: amd64-partner-gcp-nocache
         params:
           IMAGE: lmp-base-console-image
           MACHINE: intel-corei7-64
@@ -605,6 +605,7 @@ params:
   DISTRO: lmp
   SOTA_CLIENT: aktualizr-lite
   OSTREE_BRANCHNAME: lmp
+  SSTATE_CACHE_MIRROR: https://storage.googleapis.com/lmp-cache
 
 script-repos:
   fio:
