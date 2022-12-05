@@ -209,6 +209,11 @@ if [ -d $SSTATE_CACHE_MIRROR ]; then
 SSTATE_MIRRORS = "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
 EOFEOF
 fi
+if [[ "$SSTATE_CACHE_MIRROR" == "https://"* ]]  ; then
+	cat << EOFEOF >> conf/local.conf
+SSTATE_MIRRORS = "file://.* ${SSTATE_CACHE_MIRROR}/v$LMP_VER-sstate-cache/PATH"
+EOFEOF
+fi
 
 # Add build id H_BUILD to output files names
 if [ "$CONF_VERSION" == "1" ]; then
