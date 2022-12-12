@@ -71,7 +71,6 @@ triggers:
               - stm32mp15-eval
               - stm32mp15-eval-sec
               - kv260
-              - kv260-ebbr
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
@@ -212,7 +211,6 @@ triggers:
               - stm32mp15-eval
               - stm32mp15-eval-sec
               - kv260
-              - kv260-ebbr
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
@@ -330,7 +328,6 @@ triggers:
               - stm32mp15-eval
               - stm32mp15-eval-sec
               - kv260
-              - kv260-ebbr
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
@@ -462,7 +459,6 @@ triggers:
               - stm32mp15-eval
               - stm32mp15-eval-sec
               - kv260
-              - kv260-ebbr
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
