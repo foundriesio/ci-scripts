@@ -74,8 +74,6 @@ triggers:
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
-              - uz3eg-iocc-ebbr
-              - uz3eg-iocc-ebbr-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
@@ -214,8 +212,6 @@ triggers:
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
-              - uz3eg-iocc-ebbr
-              - uz3eg-iocc-ebbr-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
@@ -331,8 +327,6 @@ triggers:
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
-              - uz3eg-iocc-ebbr
-              - uz3eg-iocc-ebbr-sec
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
@@ -462,8 +456,6 @@ triggers:
               - vck190-versal
               - uz3eg-iocc
               - uz3eg-iocc-sec
-              - uz3eg-iocc-ebbr
-              - uz3eg-iocc-ebbr-sec
         params:
           BITBAKE_EXTRA_ARGS: --continue
           IMAGE: lmp-base-console-image
