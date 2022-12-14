@@ -37,7 +37,8 @@ run git --git-dir .repo/manifests.git fetch --tags https://github.com/foundriesi
 export LMP_VER=$(git --git-dir .repo/manifests.git describe --tags --abbrev=0)
 if [[ "$(git --git-dir .repo/manifests.git remote get-url origin)" == "https://github.com/foundriesio/"* ]] ; then
 	# Public LmP build - we are building for the *next* release
-	LMP_VER=$(( $LMP_VER + 1 ))
+	# LMP_VER=$(( $LMP_VER + 1 ))
+	echo "ANDY tmp doign lmp v89 caching"
 fi
 status "Base LmP version detected as: $LMP_VER"
 
