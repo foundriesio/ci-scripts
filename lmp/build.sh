@@ -62,6 +62,11 @@ touch ${archive}/bitbake_debug.log ${archive}/bitbake_warning.log ${archive}/bit
 touch ${archive}/bitbake_global_env.txt ${archive}/bitbake_image_env.txt && chown builder ${archive}/bitbake_*_env.txt
 touch ${archive}/app-preload.log && chown builder ${archive}/app-preload.log
 touch ${archive}/tuf-root-fetch.log && chown builder ${archive}/tuf-root-fetch.log
+if [ -n "$OS_SELFTEST" ]; then
+	mkdir ${archive}/selftest && chown builder ${archive}/selftest
+	su builder -c $HERE/bb-selftest.sh
+	exit
+fi
 su builder -c $HERE/bb-build.sh
 
 DEPLOY_DIR="$(grep "^DEPLOY_DIR=" ${archive}/bitbake_global_env.txt | cut -d'=' -f2 | tr -d '"')"
