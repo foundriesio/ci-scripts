@@ -137,7 +137,7 @@ DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
 MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
 
 # Bitbake custom logconfig
-BB_LOGCONFIG = "bb_logconfig.json"
+BB_LOGCONFIG = "${PWD}/bb_logconfig.json"
 EOFEOF
 
 # Configure path for the debug/warning logs
