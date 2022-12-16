@@ -32,15 +32,8 @@ fi
 cat /root/.gitconfig >>  /home/builder/.gitconfig
 cp /root/.netrc /home/builder/.netrc || true
 
-# Detect the base LmP version we are building on
-run git --git-dir .repo/manifests.git remote add upstream https://github.com/foundriesio/lmp-manifest
-run git --git-dir .repo/manifests.git fetch --tags upstream
-export LMP_VER=$(git --git-dir .repo/manifests.git describe upstream/main --tags --abbrev=0)
-if [[ "${H_PROJECT}" == "lmp" ]] ; then
-	# Public LmP build - we are building for the *next* release
-	LMP_VER=$(( $LMP_VER + 1 ))
-fi
-status "Base LmP version detected as: $LMP_VER"
+
+set_base_lmp_version
 
 mkdir build conf
 cache="/var/cache/bitbake/v${LMP_VER}-downloads"
