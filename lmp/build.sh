@@ -33,8 +33,9 @@ cat /root/.gitconfig >>  /home/builder/.gitconfig
 cp /root/.netrc /home/builder/.netrc || true
 
 # Detect the base LmP version we are building on
-run git --git-dir .repo/manifests.git fetch --tags https://github.com/foundriesio/lmp-manifest
-export LMP_VER=$(git --git-dir .repo/manifests.git describe --tags --abbrev=0)
+run git --git-dir .repo/manifests.git remote add upstream https://github.com/foundriesio/lmp-manifest
+run git --git-dir .repo/manifests.git fetch --tags upstream
+export LMP_VER=$(git --git-dir .repo/manifests.git describe upstream/main --tags --abbrev=0)
 if [[ "$(git --git-dir .repo/manifests.git remote get-url origin)" == "https://github.com/foundriesio/"* ]] ; then
 	# Public LmP build - we are building for the *next* release
 	LMP_VER=$(( $LMP_VER + 1 ))
