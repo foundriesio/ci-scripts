@@ -17,7 +17,11 @@ ENABLE_PTEST="${ENABLE_PTEST-0}"
 DOCKER_MAX_CONCURRENT_DOWNLOADS="${DOCKER_MAX_CONCURRENT_DOWNLOADS-3}"
 DOCKER_MAX_DOWNLOAD_ATTEMPTS="${DOCKER_MAX_DOWNLOAD_ATTEMPTS-5}"
 MFGTOOL_FLASH_IMAGE="${MFGTOOL_FLASH_IMAGE-lmp-factory-image}"
-SSTATE_CACHE_MIRROR="${SSTATE_CACHE_MIRROR-/sstate-cache-mirror}"
+SSTATE_CACHE_MIRROR="${SSTATE_CACHE_MIRROR-/sstate-cache-mirror/v$LMP_VER-sstate-cache}"
+if [[ "$SSTATE_CACHE_MIRROR" == "/sstate-cache-mirror/v$LMP_VER-sstate-cache" && ! -d "$SSTATE_CACHE_MIRROR" ]]  ; then
+	# TODO remove this logic once we've migrated all workers to new cache layout
+	SSTATE_CACHE_MIRROR=/sstate-cache-mirror
+fi
 USE_FIOTOOLS="${USE_FIOTOOLS-1}"
 FIO_CHECK_CMD="${FIO_CHECK_CMD-/usr/bin/fiocheck}"
 FIO_PUSH_CMD="${FIO_PUSH_CMD-/usr/bin/fiopush}"
@@ -203,6 +207,11 @@ fi
 if [ -d $SSTATE_CACHE_MIRROR ]; then
 	cat << EOFEOF >> conf/local.conf
 SSTATE_MIRRORS = "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
+EOFEOF
+fi
+if [[ "$SSTATE_CACHE_MIRROR" == "https://"* ]]  ; then
+	cat << EOFEOF >> conf/local.conf
+SSTATE_MIRRORS = "file://.* ${SSTATE_CACHE_MIRROR}/v$LMP_VER-sstate-cache/PATH"
 EOFEOF
 fi
 

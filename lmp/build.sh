@@ -32,12 +32,32 @@ fi
 cat /root/.gitconfig >>  /home/builder/.gitconfig
 cp /root/.netrc /home/builder/.netrc || true
 
+# Detect the base LmP version we are building on
+run git --git-dir .repo/manifests.git fetch --tags https://github.com/foundriesio/lmp-manifest
+export LMP_VER=$(git --git-dir .repo/manifests.git describe --tags --abbrev=0)
+if [[ "$(git --git-dir .repo/manifests.git remote get-url origin)" == "https://github.com/foundriesio/"* ]] ; then
+	# Public LmP build - we are building for the *next* release
+	# LMP_VER=$(( $LMP_VER + 1 ))
+	echo "ANDY tmp doign lmp v89 caching"
+fi
+status "Base LmP version detected as: $LMP_VER"
+
 mkdir build conf
-cache="/var/cache/bitbake/downloads"
+cache="/var/cache/bitbake/v${LMP_VER}-downloads"
+if [ -d /var/cache/bitbake/downloads ] ; then
+	# TODO remove once we've migrated everyone
+	status Migrating to new downloads cache layout
+	mv /var/cache/bitbake/downloads $cache
+fi
 [ -d $cache ] || (mkdir $cache; chown builder $cache)
 ln -s $cache downloads
 
-cache="/var/cache/bitbake/sstate-cache-${DISTRO}"
+cache="/var/cache/bitbake/v${LMP_VER}-sstate-cache"
+if [ -d /var/cache/bitbake/sstate-cache-${DISTRO} ] ; then
+	# TODO remove once we've migrated everyone
+	status Migrating to new sstate cache layout
+	mv /var/cache/bitbake/sstate-cache-$DISTRO $cache
+fi
 [ -d $cache ] || (mkdir $cache; chown builder $cache)
 ln -s $cache sstate-cache
 
