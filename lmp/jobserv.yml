@@ -58,6 +58,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
@@ -106,6 +108,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
@@ -196,6 +200,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
@@ -244,6 +250,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
@@ -311,6 +319,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
@@ -359,6 +369,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
@@ -440,6 +452,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
@@ -481,6 +495,7 @@ triggers:
               - imx6ullevk
               - imx8mm-lpddr4-evk
               - imx8mn-ddr4-evk
+              - imx8mn-lpddr4-evk
               - imx8mp-lpddr4-evk
               - imx8qm-mek
               - stm32mp15-disco
@@ -553,6 +568,8 @@ triggers:
               - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
               - imx8mn-ddr4-evk-sec
+              - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx8qm-mek
               - imx8qm-mek-sec
