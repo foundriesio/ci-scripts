@@ -75,29 +75,25 @@ function repo_sync {
 }
 
 function set_base_lmp_version {
-	# Detect the base LmP version we are building on
-	# A user may have place arbitrary tags into their lmp-manifest and we
-	# don't want to accidentally pick one of them up. Git doesn't really
-	# distinguish where tags come from, so:
+	# 1: Work on a copy
+	WORKCOPY="$PWD/.repo/manifests.git.tmp"
+	cp -R .repo/manifests.git $WORKCOPY
+	pushd $WORKCOPY >/dev/null
 
-	# 1: Delete all tags
-	git --git-dir .repo/manifests.git tag | xargs git --git-dir .repo/manifests.git tag -d > /dev/null
-
-	# 2: Get the LMP tags
-	run git --git-dir .repo/manifests.git remote add upstream https://github.com/foundriesio/lmp-manifest
-	run git --git-dir .repo/manifests.git fetch --tags upstream
+	# 2: Replace all tags
+	git tag --delete $(git tag) >/dev/null
+	git remote set-url origin https://github.com/foundriesio/lmp-manifest
+	git fetch origin --tags --quiet
 
 	# 3: Find our base LMP version based on the HEAD
-	export LMP_VER=$(git --git-dir .repo/manifests.git describe HEAD --tags --abbrev=0)
+	export LMP_VER=$(git describe --tags --abbrev=0 HEAD)
 	if [[ "${H_PROJECT}" == "lmp" ]] ; then
 		# Public LmP build - we are building for the *next* release
 		LMP_VER=$(( $LMP_VER + 1 ))
 	fi
-
-	# 4: Delete all tags again
-	git --git-dir .repo/manifests.git tag | xargs git --git-dir .repo/manifests.git tag -d > /dev/null
-
-	# 5: Restore orginal tags - the build may need them
-	run git --git-dir .repo/manifests.git fetch --tags
 	status "Base LmP version detected as: $LMP_VER"
+
+	# 4: cleanup
+	popd >/dev/null
+	rm -rf $WORKCOPY
 }
