@@ -86,12 +86,12 @@ function set_base_lmp_version {
 	git fetch origin --tags --quiet
 
 	# 3: Find our base LMP version based on the HEAD
-	export LMP_VER=$(git describe --tags --abbrev=0 HEAD)
+	export LMP_VERSION_CACHE=$(git describe --tags --abbrev=0 HEAD)
 	if [[ "${H_PROJECT}" == "lmp" ]] ; then
 		# Public LmP build - we are building for the *next* release
-		LMP_VER=$(( $LMP_VER + 1 ))
+		LMP_VERSION_CACHE=$(( $LMP_VERSION_CACHE + 1 ))
 	fi
-	status "Base LmP version detected as: $LMP_VER"
+	status "Base LmP cache version detected as: $LMP_VERSION_CACHE"
 
 	# 4: cleanup
 	popd >/dev/null
