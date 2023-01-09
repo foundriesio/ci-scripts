@@ -22,8 +22,8 @@ mv .repo/manifests/.git .repo/manifests.git
 
 export H_PROJECT="andy-corp/lmp"
 set_base_lmp_version
-if [[ "$LMP_VER" != "88" ]] ; then
-	echo "ERROR: LMP_VER != 88 - ${LMP_VER}"
+if [[ "$LMP_VERSION_CACHE" != "88" ]] ; then
+	echo "ERROR: LMP_VERSION_CACHE != 88 - ${LMP_VERSION_CACHE}"
 	exit 1
 fi
 
@@ -36,7 +36,7 @@ fi
 run git --git-dir .repo/manifests.git remote remove upstream
 export H_PROJECT="lmp"
 set_base_lmp_version
-if [[ "$LMP_VER" != "89" ]] ; then
-	echo "ERROR: LMP_VER != 89 - ${LMP_VER}"
+if [[ "$LMP_VERSION_CACHE" != "89" ]] ; then
+	echo "ERROR: LMP_VERSION_CACHE != 89 - ${LMP_VERSION_CACHE}"
 	exit 1
 fi

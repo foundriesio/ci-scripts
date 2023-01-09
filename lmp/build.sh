@@ -36,7 +36,7 @@ cp /root/.netrc /home/builder/.netrc || true
 set_base_lmp_version
 
 mkdir build conf
-cache="/var/cache/bitbake/v${LMP_VER}-downloads"
+cache="/var/cache/bitbake/v${LMP_VERSION_CACHE}-downloads"
 if [ -d /var/cache/bitbake/downloads ] ; then
 	# TODO remove once we've migrated everyone
 	status Migrating to new downloads cache layout
@@ -45,7 +45,7 @@ fi
 [ -d $cache ] || (mkdir $cache; chown builder $cache)
 ln -s $cache downloads
 
-cache="/var/cache/bitbake/v${LMP_VER}-sstate-cache"
+cache="/var/cache/bitbake/v${LMP_VERSION_CACHE}-sstate-cache"
 if [ -d /var/cache/bitbake/sstate-cache-${DISTRO} ] ; then
 	# TODO remove once we've migrated everyone
 	status Migrating to new sstate cache layout
