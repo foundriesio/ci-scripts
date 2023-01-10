@@ -95,7 +95,7 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
 
 echo "Signing local TUF targets"
-run garage-sign targets sign --repo "${TUF_REPO}" --key-name targets
+run garage-sign targets sign --repo "${TUF_REPO}" --key-name targets --expire-after 1M
 
 if [ "${PUSH_TARGETS}" ]; then
   echo "Publishing local TUF targets to the remote TUF repository"
