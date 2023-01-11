@@ -241,11 +241,6 @@ INHERIT += "create-spdx"
 EOFEOF
 fi
 
-if [ $(ls ../sstate-cache | wc -l) -ne 0 ] ; then
-	status "Found existing sstate cache, using local copy"
-	echo 'SSTATE_MIRRORS = ""' >> conf/auto.conf
-fi
-
 for x in $(ls conf/*.conf) ; do
 	status "$x"
 	cat $x | indent
