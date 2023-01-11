@@ -623,7 +623,6 @@ params:
   SOTA_CLIENT: aktualizr-lite
   SOTA_TUF_ROOT_PROVISION: "0"
   OSTREE_BRANCHNAME: lmp
-  SSTATE_CACHE_MIRROR: https://storage.googleapis.com/lmp-cache
 
 script-repos:
   fio:
