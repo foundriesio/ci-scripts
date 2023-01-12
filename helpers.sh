@@ -54,7 +54,13 @@ function repo_sync {
 		status "Adding git config extraheader for $domain"
 		git config --global http.https://${domain}.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
-	run repo init --repo-rev=v2.29.4 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
+	for i in $(seq 4); do
+		run repo init --repo-rev=v2.29.4 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES} && break
+		status "repo init failed with error $?"
+		[ $i -eq 4 ] && exit 1
+		status "sleeping and trying again"
+		sleep $(($i*2))
+	done
 	for i in $(seq 4); do
 		run timeout 4m repo sync && break
 		if [ $? -eq 124 ] ; then
