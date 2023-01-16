@@ -196,6 +196,8 @@ if [ -d "${archive}" ] ; then
 	mv ${archive}/other/lmp-*.tegraflash.tar.gz ${archive}/ || true
 	# Telechips targets use a fai image
 	mv ${archive}/other/lmp-*.fai ${archive}/ || true
+	# Mediatek targets use aiotflash images
+	mv ${archive}/other/lmp-*.aiotflash.tar ${archive}/ || true
 
 	# Move bootloader / boot firmware to the root of the archive
 	## Intel (used by Qemu)
