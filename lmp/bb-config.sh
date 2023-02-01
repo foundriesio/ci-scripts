@@ -208,7 +208,7 @@ fi
 
 if [ -d "$SSTATE_CACHE_MIRROR" ]; then
 	cat << EOFEOF >> conf/local.conf
-SSTATE_MIRRORS = "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
+SSTATE_MIRRORS ?= "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
 EOFEOF
 fi
 
