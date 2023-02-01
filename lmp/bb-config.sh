@@ -208,11 +208,11 @@ fi
 
 if [ -d $SSTATE_CACHE_MIRROR ]; then
 	cat << EOFEOF >> conf/local.conf
-SSTATE_MIRRORS = "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
+SSTATE_MIRRORS ?= "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
 EOFEOF
 elif [[ "$SSTATE_CACHE_MIRROR" == "https://"* ]]  ; then
 	cat << EOFEOF >> conf/local.conf
-SSTATE_MIRRORS = "file://.* ${SSTATE_CACHE_MIRROR}/v$LMP_VERSION_CACHE-sstate-cache/PATH"
+SSTATE_MIRRORS ?= "file://.* ${SSTATE_CACHE_MIRROR}/v$LMP_VERSION_CACHE-sstate-cache/PATH"
 EOFEOF
 fi
 
