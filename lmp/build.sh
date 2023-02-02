@@ -151,6 +151,7 @@ if [ -d "${archive}" ] ; then
 	find ${DEPLOY_DIR_IMAGE}/* -maxdepth 0 -type d -exec cp -r '{}' ${archive}/other/ \;
 	# Copy the ovmf firmware files used by virtual machines
 	cp ${DEPLOY_DIR_IMAGE}/ovmf.* ${archive}/other/ || true
+	cp ${DEPLOY_DIR_IMAGE}/QEMU*.fd ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/SBSA_FLASH*.fd ${archive}/other/ || true
 	# Copy the bootloader used by RISC-V targets
 	cp ${DEPLOY_DIR_IMAGE}/bbl* ${archive}/other/ || true
@@ -205,6 +206,7 @@ if [ -d "${archive}" ] ; then
 	mv ${archive}/other/ovmf.qcow2 ${archive}/ || true
 	mv ${archive}/other/ovmf.secboot.qcow2 ${archive}/ || true
 	## QEMU Generic ARM64
+	mv ${archive}/other/QEMU*.fd ${archive}/ || true
 	mv ${archive}/other/SBSA_FLASH*.fd ${archive}/ || true
 	## Only move files consumed by iMX if not mfgtool to avoid confusion
 	if [ "${DISTRO}" != "lmp-mfgtool" ]; then
