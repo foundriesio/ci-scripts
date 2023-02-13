@@ -265,10 +265,10 @@ def get_args():
     args = parser.parse_args()
 
     if args.targets:
-        args.targets = args.targets.split(',')
+        args.targets = [x.strip() for x in args.targets.split(',') if x]
 
     if args.app_shortlist:
-        args.app_shortlist = args.app_shortlist.split(',')
+        args.app_shortlist = [x.strip() for x in args.app_shortlist.split(',') if x]
 
     return args
 
