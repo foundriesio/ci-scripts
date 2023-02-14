@@ -192,8 +192,9 @@ if [ -d "${archive}" ] ; then
 		rm -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4
 	fi
 
-	# Make the main img.gz be in the root of the archive
+	# Make the main img.gz and respective bmap file be in the root of the archive
 	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
+	mv ${archive}/other/lmp-*.wic.bmap ${archive}/ || true
 	# NVIDIA targets use a tegraflash tarball
 	mv ${archive}/other/lmp-*.tegraflash.tar.gz ${archive}/ || true
 	# Telechips targets use a fai image
