@@ -206,7 +206,7 @@ IMAGE_LICENSE_CHECKER_NON_ROOTFS_DENYLIST = "GPL-3.0-only GPL-3.0-or-later LGPL-
 EOFEOF
 fi
 
-if [ -d $SSTATE_CACHE_MIRROR ]; then
+if [ -d "$SSTATE_CACHE_MIRROR" ]; then
 	cat << EOFEOF >> conf/local.conf
 SSTATE_MIRRORS = "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
 EOFEOF
