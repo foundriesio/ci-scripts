@@ -94,7 +94,7 @@ function set_base_lmp_version {
 	# 3: Find our base LMP version based on the HEAD
 	export LMP_VERSION=$(git describe --tags --abbrev=0 HEAD)
 	export LMP_VERSION_CACHE="$LMP_VERSION"
-	if [[ "${H_PROJECT}" == "lmp" ]] ; then
+	if [[ "${H_PROJECT}" == "lmp" ]] || [ -v LMP_VERSION_CACHE_DEV ] ; then
 		# Public LmP build - we are building for the *next* release
 		LMP_VERSION_CACHE=$(( $LMP_VERSION_CACHE + 1 ))
 	fi
