@@ -2,6 +2,11 @@
 
 source setup-environment build
 
+# The oe-selftest reproducible is build in two step (A and B) and sharing
+# the same deploy dir will cause some colisions when creating the packages
+# so use the default bitbake settings that is inside the TMP dir
+sed -i -e 's/^DEPLOY_DIR/#&/' conf/site.conf
+
 cat << EOFEOF >> conf/auto.conf
 
 # Disable non compatible classes for oe-selftest
