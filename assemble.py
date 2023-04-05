@@ -11,6 +11,7 @@ import logging
 import shutil
 from math import ceil
 from time import sleep
+from typing import NamedTuple
 
 from helpers import cmd, Progress
 from apps.target_apps_fetcher import TargetAppsFetcher, SkopeAppFetcher
@@ -208,17 +209,17 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
     p.tick()
 
 
-def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, token: str, apps_shortlist: list,
-                                fetch_dir: str, progress: Progress) -> str:
-    p = Progress(4, progress)
-    apps_fetcher = SkopeAppFetcher(token, fetch_dir)
-    apps_fetcher.fetch_target(target, shortlist=apps_shortlist, force=True)
-    p.tick()
-    apps_size_b = apps_fetcher.get_target_apps_size(target)
-    p.tick()
+class AppsDesc(NamedTuple):
+    dir: str
+    size: int
+    tag: str = None
 
-    logger.info('Restorable Apps require extra {} bytes of storage'.format(apps_size_b))
-    with WicImage(wic_image, apps_size_b) as wic_image:
+
+def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, apps: AppsDesc, progress: Progress):
+    p = Progress(3, progress)
+    logger.info('Restorable Apps require extra {} bytes of storage'.format(apps.size))
+    with WicImage(wic_image, apps.size) as wic_image:
+        p.tick()
         if os.path.exists(wic_image.docker_data_root):
             # wic image was populated by container images data during LmP build (/var/lib/docker)
             # let's remove it and populate with the given images data
@@ -237,11 +238,16 @@ def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, to
             logger.info('Removing existing preloaded app images from the system image')
             shutil.rmtree(wic_image.restorable_apps_root)
 
-        cmd('cp', '-r', apps_fetcher.target_dir(target.name), wic_image.restorable_apps_root)
         p.tick()
+        cmd('cp', '-r', apps.dir, wic_image.restorable_apps_root)
         wic_image.update_target(target)
     p.tick()
-    return apps_fetcher.target_dir(target.name)
+
+
+def fetch_restorable_apps(target: FactoryClient.Target, dst_dir: str, shortlist: [str], token: str) -> AppsDesc:
+    apps_fetcher = SkopeAppFetcher(token, dst_dir)
+    apps_fetcher.fetch_target(target, shortlist=shortlist, force=True)
+    return AppsDesc(apps_fetcher.target_dir(target.name), apps_fetcher.get_target_apps_size(target), target.tags[0])
 
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
@@ -275,6 +281,7 @@ def get_args():
 
 if __name__ == '__main__':
     exit_code = 0
+    fetched_apps = {}
 
     try:
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(module)s: %(message)s', level=logging.INFO)
@@ -295,8 +302,23 @@ if __name__ == '__main__':
             logger.warning(err_msg)
             exit(1)
 
-        p = Progress(len(targets))
+        p = Progress(2 * len(targets))
         logger.info('Found {} Targets to assemble image for'.format(found_targets_number))
+
+        apps_root_dir = args.fetch_dir + "/restorable"
+        for target in targets:
+            logger.info(f"Getting info about Target's Lmp release...")
+            release_info = factory_client.get_target_release_info(target)
+            if release_info.lmp_version > 0:
+                logger.info(
+                    f"Target's LmP version: {release_info.lmp_version}, yocto version: {release_info.yocto_version}")
+
+            if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
+                logger.info('Fetching Restorable Apps...')
+                apps_desc = fetch_restorable_apps(target, apps_root_dir, args.app_shortlist, args.token)
+                fetched_apps[target.name] = (apps_desc, os.path.join(args.out_image_dir, target.tags[0]))
+            p.tick(complete=True)
+
         for target in targets:
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
             subprog = Progress(3, p)
@@ -305,17 +327,10 @@ if __name__ == '__main__':
                 subprog.tick(complete=True)
                 continue
 
-            logger.info(f"Getting info about Target's Lmp release...")
-            release_info = factory_client.get_target_release_info(target)
-            if release_info.lmp_version > 0:
-                logger.info(f"Target's LmP version: {release_info.lmp_version}, yocto version: {release_info.yocto_version}")
-
             image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
-            apps_dir = None
-            if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
+            if target.name in fetched_apps:
                 logger.info('Preloading Restorable Apps...')
-                apps_dir = copy_restorable_apps_to_wic(target, image_file_path, args.token, args.app_shortlist,
-                                                       args.fetch_dir + "/restorable", subprog)
+                copy_restorable_apps_to_wic(target, image_file_path, fetched_apps[target.name][0], subprog)
 
             logger.info('Preloading Compose Apps...')
             copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image_file_path, args.token, args.app_shortlist, subprog)
@@ -325,13 +340,15 @@ if __name__ == '__main__':
             # known as and also match what's in the target name.
             archive_dir = os.path.join(args.out_image_dir, target.tags[0])
             os.makedirs(archive_dir, exist_ok=True)
-            if apps_dir:
-                cmd('tar', '-cf', os.path.join(archive_dir, target.name + '-apps.tar'), '-C', apps_dir, '.')
             archive_and_output_assembled_wic(image_file_path, archive_dir)
             subprog.tick(complete=True)
 
     except Exception as exc:
         logger.exception('Failed to assemble a system image')
         exit_code = 1
+
+    for target, (apps_desc, dst_dir) in fetched_apps.items():
+        os.makedirs(dst_dir, exist_ok=True)
+        cmd('tar', '-cf', os.path.join(dst_dir, target + '-apps.tar'), '-C', apps_desc.dir, '.')
 
     exit(exit_code)
