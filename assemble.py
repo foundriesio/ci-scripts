@@ -304,8 +304,13 @@ if __name__ == '__main__':
                 logger.info("Target has no apps, skipping preload")
                 subprog.tick(complete=True)
                 continue
-            image_file_path, release_info = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
 
+            logger.info(f"Getting info about Target's Lmp release...")
+            release_info = factory_client.get_target_release_info(target)
+            if release_info.lmp_version > 0:
+                logger.info(f"Target's LmP version: {release_info.lmp_version}, yocto version: {release_info.yocto_version}")
+
+            image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
             apps_dir = None
             if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
                 logger.info('Preloading Restorable Apps...')

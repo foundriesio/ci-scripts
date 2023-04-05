@@ -140,7 +140,6 @@ class FactoryClient:
 
         base_url = image_base_url.replace('https://ci.foundries.io', self.api_base_url)
         image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
-        os_release_url = os.path.join(base_url, 'runs', image_machine, 'os-release')
 
         image_file_path = os.path.join(out_dir, image_filename)
         extracted_image_file_path = image_file_path.rstrip('.gz')
@@ -163,18 +162,21 @@ class FactoryClient:
         else:
             logger.info('Target system image has been already downloaded: {}'.format(extracted_image_file_path))
 
-        release_resp = requests.get(os_release_url, headers=self._auth_headers)
-        if release_resp.ok:
-            try:
-                release_info = self.Release.parse(dict([line.split('=') for line in release_resp.content.decode().splitlines()]))
-            except Exception as exc:
-                logger.error('Failed to parse a received information about LmP release: ' + str(exc))
-                release_info = self.Release(0, '') # or just `raise` ???
-        else:
-            release_info = self.Release(0, '')
-            logger.info('Missing info about LmP release.')
+        return extracted_image_file_path
 
-        return extracted_image_file_path, release_info
+    def get_target_release_info(self, target: Target):
+        image_base_url = target['custom']['origUri'] if 'origUri' in target['custom'] else target['custom']['uri']
+        base_url = image_base_url.replace('https://ci.foundries.io', self.api_base_url)
+        image_machine = target['custom']['hardwareIds'][0]
+        os_release_url = os.path.join(base_url, 'runs', image_machine, 'os-release')
+        release_info = self.Release(0, '')
+        try:
+            release_resp = http_get(os_release_url, headers=self._auth_headers)
+            release_info = self.Release.parse(dict([line.split('=') for line in release_resp.content.decode().splitlines()]))
+        except Exception as exc:
+                logger.error(f"Failed to get info about Target's LmP release; target: {target.name},"
+                             " err: " + str(exc))
+        return release_info
 
     def _get_targets(self):
         target_resp = http_get(self.targets_endpoint, headers=self._auth_headers)
