@@ -171,15 +171,15 @@ def _mk_parent_dir(path: str):
 
 def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_image: str, token: str,
                              apps_shortlist: list, progress: Progress):
-    p = Progress(4, progress)
+    p = Progress(3, progress)
     apps_fetcher = TargetAppsFetcher(token, fetch_dir)
     apps_fetcher.fetch_target(target, shortlist=apps_shortlist, force=True)
     p.tick()
     apps_size_b = apps_fetcher.get_target_apps_size(target)
-    p.tick()
 
     logger.info('Compose Apps require extra {} bytes of storage'.format(apps_size_b))
     with WicImage(wic_image, apps_size_b) as wic_image:
+        p.tick()
         if os.path.exists(wic_image.docker_data_root):
             # wic image was populated by container images data during LmP build (/var/lib/docker)
             # let's remove it and populate with the given images data
@@ -204,19 +204,17 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
         # copy <fetch-dir>/<target-name>/images/* to /var/lib/docker/
         cmd('cp', '-a', apps_fetcher.images_dir(target.name), wic_image.docker_data_root)
 
-        p.tick()
         wic_image.update_target(target)
-    p.tick()
+    p.tick(complete=True)
 
 
 class AppsDesc(NamedTuple):
     dir: str
     size: int
-    tag: str = None
 
 
 def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, apps: AppsDesc, progress: Progress):
-    p = Progress(3, progress)
+    p = Progress(2, progress)
     logger.info('Restorable Apps require extra {} bytes of storage'.format(apps.size))
     with WicImage(wic_image, apps.size) as wic_image:
         p.tick()
@@ -238,16 +236,15 @@ def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, ap
             logger.info('Removing existing preloaded app images from the system image')
             shutil.rmtree(wic_image.restorable_apps_root)
 
-        p.tick()
         cmd('cp', '-r', apps.dir, wic_image.restorable_apps_root)
         wic_image.update_target(target)
-    p.tick()
+    p.tick(complete=True)
 
 
 def fetch_restorable_apps(target: FactoryClient.Target, dst_dir: str, shortlist: [str], token: str) -> AppsDesc:
     apps_fetcher = SkopeAppFetcher(token, dst_dir)
     apps_fetcher.fetch_target(target, shortlist=shortlist, force=True)
-    return AppsDesc(apps_fetcher.target_dir(target.name), apps_fetcher.get_target_apps_size(target), target.tags[0])
+    return AppsDesc(apps_fetcher.target_dir(target.name), apps_fetcher.get_target_apps_size(target))
 
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
@@ -282,6 +279,8 @@ def get_args():
 if __name__ == '__main__':
     exit_code = 0
     fetched_apps = {}
+    preloaded_images = []
+    p = Progress(total=3)  # fetch apps, preload images, move app&images to the archive dir
 
     try:
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(module)s: %(message)s', level=logging.INFO)
@@ -300,12 +299,12 @@ if __name__ == '__main__':
         found_targets_number = len(targets)
         if found_targets_number == 0:
             logger.warning(err_msg)
+            p.tick(complete=True)
             exit(1)
 
-        p = Progress(2 * len(targets))
         logger.info('Found {} Targets to assemble image for'.format(found_targets_number))
-
         apps_root_dir = args.fetch_dir + "/restorable"
+        fetch_progress = Progress(len(targets), p)
         for target in targets:
             logger.info(f"Getting info about Target's Lmp release...")
             release_info = factory_client.get_target_release_info(target)
@@ -317,31 +316,28 @@ if __name__ == '__main__':
                 logger.info('Fetching Restorable Apps...')
                 apps_desc = fetch_restorable_apps(target, apps_root_dir, args.app_shortlist, args.token)
                 fetched_apps[target.name] = (apps_desc, os.path.join(args.out_image_dir, target.tags[0]))
-            p.tick(complete=True)
+            fetch_progress.tick()
 
+        preload_progress = Progress(2 * len(targets) + len(fetched_apps), p)
         for target in targets:
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
-            subprog = Progress(3, p)
             if not target.has_apps():
                 logger.info("Target has no apps, skipping preload")
-                subprog.tick(complete=True)
+                preload_progress.tick(complete=True)
                 continue
 
-            image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, subprog)
+            image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, preload_progress)
             if target.name in fetched_apps:
                 logger.info('Preloading Restorable Apps...')
-                copy_restorable_apps_to_wic(target, image_file_path, fetched_apps[target.name][0], subprog)
+                copy_restorable_apps_to_wic(target, image_file_path, fetched_apps[target.name][0], preload_progress)
 
             logger.info('Preloading Compose Apps...')
-            copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image_file_path, args.token, args.app_shortlist, subprog)
+            copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image_file_path, args.token, args.app_shortlist, preload_progress)
 
             # Don't think its possible to have more than one tag at the time
             # we assemble, but the first tag will be the primary thing its
             # known as and also match what's in the target name.
-            archive_dir = os.path.join(args.out_image_dir, target.tags[0])
-            os.makedirs(archive_dir, exist_ok=True)
-            archive_and_output_assembled_wic(image_file_path, archive_dir)
-            subprog.tick(complete=True)
+            preloaded_images.append((image_file_path, os.path.join(args.out_image_dir, target.tags[0])))
 
     except Exception as exc:
         logger.exception('Failed to assemble a system image')
@@ -351,4 +347,9 @@ if __name__ == '__main__':
         os.makedirs(dst_dir, exist_ok=True)
         cmd('tar', '-cf', os.path.join(dst_dir, target + '-apps.tar'), '-C', apps_desc.dir, '.')
 
+    for image_file, dst_dir in preloaded_images:
+        os.makedirs(dst_dir, exist_ok=True)
+        archive_and_output_assembled_wic(image_file, dst_dir)
+
+    p.tick(complete=True)
     exit(exit_code)

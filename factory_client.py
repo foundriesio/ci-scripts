@@ -145,7 +145,6 @@ class FactoryClient:
         extracted_image_file_path = image_file_path.rstrip('.gz')
 
         p = Progress(2, progress)
-
         if not os.path.exists(extracted_image_file_path):
             logger.info('Downloading Target system image...; Target: {}, image: {}'
                         .format(target.name, image_filename))
@@ -155,13 +154,12 @@ class FactoryClient:
                 for data_chunk in image_resp.iter_content(chunk_size=65536):
                     image_file.write(data_chunk)
             p.tick()
-
             logger.info('Extracting Target system image: {}'.format(image_file_path))
             subprocess.check_call(['gunzip', '-f', image_file_path])
-            p.tick()
         else:
             logger.info('Target system image has been already downloaded: {}'.format(extracted_image_file_path))
 
+        p.tick(complete=True)
         return extracted_image_file_path
 
     def get_target_release_info(self, target: Target):
