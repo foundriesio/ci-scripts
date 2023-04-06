@@ -198,14 +198,18 @@ class Progress:
         elif self.cur < self.total:
             self.cur += 1
 
-        percent = round(self.cur / self.total * 100)
+        percent = self._get_cur_progress()[0]
         if self.parent:
-            parent_total = round(self.parent.cur / self.parent.total * 100)
-            percent = parent_total + round(percent / self.parent.total)
-
             if self.cur == self.total:
                 self.parent.cur += 1
         self.show_progress(percent)
 
     def show_progress(self, percent_complete: int):
         status('Run is %d%% complete' % percent_complete, prefix='##')
+
+    def _get_cur_progress(self):
+        if self.parent:
+            parent_progress, parent_total = self.parent._get_cur_progress()
+            return parent_progress + round(100 * (self.cur/(self.total * parent_total))), (self.total * parent_total)
+        else:
+            return round(100 * (self.cur / self.total)), self.total
