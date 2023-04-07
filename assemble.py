@@ -9,6 +9,8 @@ import json
 import argparse
 import logging
 import shutil
+
+import requests
 from math import ceil
 from time import sleep
 from typing import NamedTuple
@@ -342,7 +344,24 @@ if __name__ == '__main__':
                 preload_progress.tick(complete=True)
                 continue
 
-            image = factory_client.get_target_system_image(target, args.out_image_dir, preload_progress)
+            try:
+                image = factory_client.get_target_system_image(target, args.out_image_dir,
+                                                               preload_progress)
+            except requests.HTTPError as exc:
+                if exc.response.status_code == 404:
+                    # try to download `ota-ext4` image
+                    logger.info("Target's system image in `.wic` format was not found,"
+                                " trying to get an `.ota-ext4` image;"
+                                " not found path: " + exc.response.url)
+                    image = \
+                        factory_client.get_target_system_image(target, args.out_image_dir,
+                                                               preload_progress, format=".ota-ext4")
+                else:
+                    raise requests.exceptions.\
+                        HTTPError('Failed to get {}: HTTP_{}\n{}'.format(exc.response.url,
+                                                                         exc.response.status_code,
+                                                                         exc.response.text))
+
             if target.name in fetched_apps:
                 logger.info('Preloading Restorable Apps...')
                 copy_restorable_apps_to_wic(target, image, fetched_apps[target.name][0], preload_progress)
