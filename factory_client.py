@@ -149,7 +149,8 @@ class FactoryClient:
             logger.info('Downloading Target system image...; Target: {}, image: {}'
                         .format(target.name, image_filename))
 
-            image_resp = http_get(image_url, headers=self._auth_headers)
+            image_resp = requests.get(image_url, headers=self._auth_headers)
+            image_resp.raise_for_status()
             with open(image_file_path, 'wb') as image_file:
                 for data_chunk in image_resp.iter_content(chunk_size=65536):
                     image_file.write(data_chunk)
