@@ -47,20 +47,26 @@ def losetup(path: str) -> str:
     # up, thus the "No such file or directory". When this happens, we need to
     # remount /dev in order to see the new device.
     try:
-        cmd('losetup', '-P', '-f', path)
+        # get the next available loop device
+        loop_device = cmd('losetup', '-f', capture=True).decode().rstrip()
+        cmd('losetup', '-P', loop_device, path)
     except subprocess.CalledProcessError:
         logger.error('losetup bug found, remounting /dev to work around')
         remount_dev()
-        cmd('losetup', '-P', '-f', path)
+        # get the next available loop device
+        loop_device = cmd('losetup', '-f', capture=True).decode().rstrip()
+        cmd('losetup', '-P', loop_device, path)
 
     # The -P in losetup scans for partitions and will create entries like:
     # /dev/loopXp1. Since these are new /dev entries, we have to remount /dev
     remount_dev()
 
+    # make sure that the most recently created loop device represents a given system image (`path`)
     out = cmd('losetup', '-a', capture=True).decode()
     for line in out.splitlines():
         if path in line:
-            return line.split(':', 1)[0]
+            if loop_device == line.split(':', 1)[0]:
+                return loop_device
     raise RuntimeError(f'Unable to find loop device for {path}')
 
 
