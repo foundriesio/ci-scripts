@@ -70,17 +70,18 @@ def losetup(path: str) -> str:
     raise RuntimeError(f'Unable to find loop device for {path}')
 
 
-class WicImage:
+class ImageVolume:
     ComposeAppsRootDir = 'ostree/deploy/lmp/var/sota/compose-apps/'
     DockerDataRootDir = 'ostree/deploy/lmp/var/lib/docker/'
     RestorableAppsRoot = 'ostree/deploy/lmp/var/sota/reset-apps'
     InstalledTargetFile = 'ostree/deploy/lmp/var/sota/import/installed_versions'
 
-    def __init__(self, wic_image_path: str, increase_bytes=None, extra_space=0.2):
-        self._path = wic_image_path
-        self._mnt_dir = os.path.join('/mnt', 'wic_image_rootfs')
+    def __init__(self, image_path: str, increase_bytes=None, extra_space=0.2):
+        self._path = image_path
+        self._mnt_dir = os.path.join('/mnt', 'image_rootfs')
         self._installer_mount = None
-        self._last_part = 2
+        self._part_numb, self._gpt = self._get_last_part(self._path)
+        logger.info(f'Detected last partition is {self._part_numb}, going to preload apps into it')
         self._resized_image = False
         if increase_bytes:
             self._resize_wic_file(increase_bytes, extra_space)
@@ -93,15 +94,16 @@ class WicImage:
 
     def __enter__(self):
         self._loop_device = losetup(self._path)
-        self._wic_device = self._loop_device + 'p' + str(self._last_part)
+        self._part_device = \
+            self._loop_device if self._part_numb == 1 else f"{self._loop_device}p{self._part_numb}"
 
-        cmd('e2fsck', '-y', '-f', self._wic_device)
+        cmd('e2fsck', '-y', '-f', self._part_device)
 
         if self._resized_image:
-            cmd('resize2fs', self._wic_device)
+            cmd('resize2fs', self._part_device)
 
         os.mkdir(self._mnt_dir)
-        cmd('mount', self._wic_device, self._mnt_dir)
+        cmd('mount', self._part_device, self._mnt_dir)
 
         installer = os.path.join(self._mnt_dir, 'rootfs.img')
         if os.path.exists(installer):
@@ -134,6 +136,21 @@ class WicImage:
             target.json['is_current'] = True
             json.dump({target.name: target.json}, installed_target_file, indent=2)
 
+    @staticmethod
+    def _get_last_part(path: str) -> tuple[int, str]:
+        parted_out = subprocess.check_output(['parted', path, 'print'])
+        is_gpt = False
+        if parted_out.find(b'Partition Table: gpt') != -1:
+            is_gpt = True
+        # save last partition # for resizing and apps preloading.  Example line for GPT:
+        #  5      33.6MB  1459MB  1425MB  ext4         primary
+        # and like this for msdos:
+        #  2      50.3MB  688MB   638MB   primary  ext4
+        # either way we can capture the first column as the last partition #
+        # NOTE: use -3 index as parted_out will have 2x b'' items at the end
+        last_part = int(parted_out.split(b'\n')[-3].split()[0])
+        return last_part, is_gpt
+
     def _resize_wic_file(self, increase_bytes: int, extra_space=0.2):
         bs = 1024
         increase_k = ceil((increase_bytes + increase_bytes * extra_space) / bs) + 1
@@ -142,19 +159,11 @@ class WicImage:
         cmd('dd', 'if=/dev/zero', 'bs=' + str(bs), 'of=' + self._path,
             'conv=notrunc,fsync', 'oflag=append', 'count=' + str(increase_k),
             'seek=' + str(wic_k))
-
-        parted_out = subprocess.check_output(['parted', self._path, 'print'])
-        if parted_out.find(b'Partition Table: gpt') != -1:
+        if self._gpt:
+            # The following command has to be executed to make `parted resizepart` work
+            # in non-interactive mode ("Warning: Not all of the space available to...")
             subprocess.check_call(['sgdisk', '-e', self._path])
-        # save last partition # for resizing.  Example line for GPT:
-        #  5      33.6MB  1459MB  1425MB  ext4         primary
-        # and like this for msdos:
-        #  2      50.3MB  688MB   638MB   primary  ext4
-        # either way we can capture the first column as the last partition #
-        # NOTE: use -3 index as parted_out will have 2x b'' items at the end
-        self._last_part = int(parted_out.split(b'\n')[-3].split()[0])
-        logger.info('last partition: %d' % self._last_part)
-        subprocess.check_call(['parted', self._path, 'resizepart', str(self._last_part), '100%'])
+        subprocess.check_call(['parted', self._path, 'resizepart', str(self._part_numb), '100%'])
         os.sync()
 
     def _resize_rootfs_img(self, path, increase_bytes: int):
@@ -175,8 +184,8 @@ def _mk_parent_dir(path: str):
     os.makedirs(path, exist_ok=True)
 
 
-def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_image: str, token: str,
-                             apps_shortlist: list, progress: Progress):
+def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, image_path: str,
+                             token: str, apps_shortlist: list, progress: Progress):
     p = Progress(3, progress)
     apps_fetcher = TargetAppsFetcher(token, fetch_dir)
     apps_fetcher.fetch_target(target, shortlist=apps_shortlist, force=True)
@@ -184,33 +193,33 @@ def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, wic_i
     apps_size_b = apps_fetcher.get_target_apps_size(target)
 
     logger.info('Compose Apps require extra {} bytes of storage'.format(apps_size_b))
-    with WicImage(wic_image, apps_size_b) as wic_image:
+    with ImageVolume(image_path, apps_size_b) as image_volume:
         p.tick()
-        if os.path.exists(wic_image.docker_data_root):
+        if os.path.exists(image_volume.docker_data_root):
             # wic image was populated by container images data during LmP build (/var/lib/docker)
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded app images from the system image')
-            shutil.rmtree(wic_image.docker_data_root)
+            shutil.rmtree(image_volume.docker_data_root)
         else:
             # intel installer images won't have this directory
-            _mk_parent_dir(wic_image.docker_data_root)
+            _mk_parent_dir(image_volume.docker_data_root)
 
 
-        if os.path.exists(wic_image.compose_apps_root):
+        if os.path.exists(image_volume.compose_apps_root):
             # wic image was populated by container images data during LmP build (/var/sota/compose-apps)
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded compose apps from the system image')
-            shutil.rmtree(wic_image.compose_apps_root)
+            shutil.rmtree(image_volume.compose_apps_root)
         else:
             # intel installer images won't have this directory
-            _mk_parent_dir(wic_image.compose_apps_root)
+            _mk_parent_dir(image_volume.compose_apps_root)
 
         # copy <fetch-dir>/<target-name>/apps/* to /var/sota/compose-apps/
-        cmd('cp', '-a', apps_fetcher.apps_dir(target.name), wic_image.compose_apps_root)
+        cmd('cp', '-a', apps_fetcher.apps_dir(target.name), image_volume.compose_apps_root)
         # copy <fetch-dir>/<target-name>/images/* to /var/lib/docker/
-        cmd('cp', '-a', apps_fetcher.images_dir(target.name), wic_image.docker_data_root)
+        cmd('cp', '-a', apps_fetcher.images_dir(target.name), image_volume.docker_data_root)
 
-        wic_image.update_target(target)
+        image_volume.update_target(target)
     p.tick(complete=True)
 
 
@@ -219,31 +228,32 @@ class AppsDesc(NamedTuple):
     size: int
 
 
-def copy_restorable_apps_to_wic(target: FactoryClient.Target, wic_image: str, apps: AppsDesc, progress: Progress):
+def copy_restorable_apps_to_wic(target: FactoryClient.Target, image_path: str, apps: AppsDesc,
+                                progress: Progress):
     p = Progress(2, progress)
     logger.info('Restorable Apps require extra {} bytes of storage'.format(apps.size))
-    with WicImage(wic_image, apps.size) as wic_image:
+    with ImageVolume(image_path, apps.size) as image_volume:
         p.tick()
-        if os.path.exists(wic_image.docker_data_root):
+        if os.path.exists(image_volume.docker_data_root):
             # wic image was populated by container images data during LmP build (/var/lib/docker)
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded app images from the system image')
-            shutil.rmtree(wic_image.docker_data_root)
+            shutil.rmtree(image_volume.docker_data_root)
 
-        if os.path.exists(wic_image.compose_apps_root):
+        if os.path.exists(image_volume.compose_apps_root):
             # wic image was populated by container images data during LmP build (/var/sota/compose-apps)
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded compose apps from the system image')
-            shutil.rmtree(wic_image.compose_apps_root)
+            shutil.rmtree(image_volume.compose_apps_root)
 
-        if os.path.exists(wic_image.restorable_apps_root):
+        if os.path.exists(image_volume.restorable_apps_root):
             # wic image was populated by container images data during LmP build (/var/sota/reset-apps)
             # let's remove it and populate with the given images data
             logger.info('Removing existing preloaded app images from the system image')
-            shutil.rmtree(wic_image.restorable_apps_root)
+            shutil.rmtree(image_volume.restorable_apps_root)
 
-        cmd('cp', '-r', apps.dir, wic_image.restorable_apps_root)
-        wic_image.update_target(target)
+        cmd('cp', '-r', apps.dir, image_volume.restorable_apps_root)
+        image_volume.update_target(target)
     p.tick(complete=True)
 
 
@@ -254,7 +264,7 @@ def fetch_restorable_apps(target: FactoryClient.Target, dst_dir: str, shortlist:
 
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
-    logger.info('Gzip and move resultant WIC image to the specified destination folder: {}'.format(out_image_dir))
+    logger.info('Gzip and move resultant system image to the specified destination folder: {}'.format(out_image_dir))
     subprocess.check_call(['gzip', wic_image])
     subprocess.check_call(['mv', '-f', wic_image + '.gz', out_image_dir])
 
@@ -332,18 +342,18 @@ if __name__ == '__main__':
                 preload_progress.tick(complete=True)
                 continue
 
-            image_file_path = factory_client.get_target_system_image(target, args.out_image_dir, preload_progress)
+            image = factory_client.get_target_system_image(target, args.out_image_dir, preload_progress)
             if target.name in fetched_apps:
                 logger.info('Preloading Restorable Apps...')
-                copy_restorable_apps_to_wic(target, image_file_path, fetched_apps[target.name][0], preload_progress)
+                copy_restorable_apps_to_wic(target, image, fetched_apps[target.name][0], preload_progress)
 
             logger.info('Preloading Compose Apps...')
-            copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image_file_path, args.token, args.app_shortlist, preload_progress)
+            copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image, args.token, args.app_shortlist, preload_progress)
 
             # Don't think its possible to have more than one tag at the time
             # we assemble, but the first tag will be the primary thing its
             # known as and also match what's in the target name.
-            preloaded_images.append((image_file_path, os.path.join(args.out_image_dir, target.tags[0])))
+            preloaded_images.append((image, os.path.join(args.out_image_dir, target.tags[0])))
 
     except Exception as exc:
         logger.exception('Failed to assemble a system image')

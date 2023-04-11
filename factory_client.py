@@ -131,7 +131,7 @@ class FactoryClient:
 
         return res_targets
 
-    def get_target_system_image(self, target: Target, out_dir: str, progress: Progress):
+    def get_target_system_image(self, target: Target, out_dir: str, progress: Progress, format=".wic"):
         # https://api.foundries.io/projects/<factory>/lmp/builds/<build-numb>/runs/<machine>/<image-name>-<machine>.wic.gz
 
         image_base_url = target['custom']['origUri'] if 'origUri' in target['custom'] else target['custom']['uri']
@@ -139,7 +139,13 @@ class FactoryClient:
         image_filename = target['custom']['image-file']
 
         base_url = image_base_url.replace('https://ci.foundries.io', self.api_base_url)
-        image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
+        if format == ".wic":
+            image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
+        elif format == ".ota-ext4":
+            image_filename = image_filename.replace('wic.gz', 'ota-ext4.gz')
+            image_url = os.path.join(base_url, 'runs', image_machine, "other", image_filename)
+        else:
+            raise Exception('Unsupported system image format: ' + format)
 
         image_file_path = os.path.join(out_dir, image_filename)
         extracted_image_file_path = image_file_path.rstrip('.gz')
