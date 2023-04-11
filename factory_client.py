@@ -140,7 +140,7 @@ class FactoryClient:
 
         base_url = image_base_url.replace('https://ci.foundries.io', self.api_base_url)
         if format == ".wic":
-            image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
+            image_url = os.path.join(base_url, 'runs1', image_machine, image_filename)
         elif format == ".ota-ext4":
             image_filename = image_filename.replace('wic.gz', 'ota-ext4.gz')
             image_url = os.path.join(base_url, 'runs', image_machine, "other", image_filename)
