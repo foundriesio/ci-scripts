@@ -53,6 +53,14 @@ class FactoryClient:
         def shortlist(self, shortlist: []):
             self['custom']['shortlist'] = shortlist
 
+        @property
+        def lmp_version(self):
+            return self['custom'].get('lmp_version')
+
+        @lmp_version.setter
+        def lmp_version(self, version: int):
+            self['custom']['lmp_version'] = version
+
         def apps(self):
             apps = self['custom'].get('docker_compose_apps')
             if not apps:

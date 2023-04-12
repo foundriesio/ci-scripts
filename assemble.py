@@ -329,7 +329,7 @@ if __name__ == '__main__':
             if release_info.lmp_version > 0:
                 logger.info(
                     f"Target's LmP version: {release_info.lmp_version}, yocto version: {release_info.yocto_version}")
-
+            target.lmp_version = release_info.lmp_version
             if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
                 logger.info('Fetching Restorable Apps...')
                 apps_desc = fetch_restorable_apps(target, apps_root_dir, args.app_shortlist, args.token)
@@ -366,8 +366,13 @@ if __name__ == '__main__':
                 logger.info('Preloading Restorable Apps...')
                 copy_restorable_apps_to_wic(target, image, fetched_apps[target.name][0], preload_progress)
 
-            logger.info('Preloading Compose Apps...')
-            copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image, args.token, args.app_shortlist, preload_progress)
+            if target.name not in fetched_apps or target.lmp_version < 87:
+                # Preload compose Apps if restorable one were not preloaded
+                # or LmP version is lower than 87 (no early startup of restorable Apps,
+                # so compose one should be preloaded too to make early startup working)
+                logger.info('Preloading Compose Apps...')
+                copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image, args.token,
+                                         args.app_shortlist, preload_progress)
 
             # Don't think its possible to have more than one tag at the time
             # we assemble, but the first tag will be the primary thing its
