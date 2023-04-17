@@ -167,7 +167,8 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/lk.bin ${archive}/other/ || true
 	# BSP specific files
 	cp ${DEPLOY_DIR_IMAGE}/rity.json ${archive}/other/ || true
-	# Copy boot.itb (signed boot script) if available
+	# Copy boot.cmd and boot.itb (signed boot script) if available
+	cp ${DEPLOY_DIR_IMAGE}/boot.cmd ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/boot.itb ${archive}/other/ || true
 	# Flash layout for STM32 devices
 	cp ${DEPLOY_DIR_IMAGE}/flashlayouts*.tar.gz ${archive}/other/ || true
