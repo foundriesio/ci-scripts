@@ -64,6 +64,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm
@@ -115,6 +116,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -208,6 +210,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm
@@ -259,6 +262,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -329,6 +333,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm
@@ -380,6 +385,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
@@ -464,6 +470,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm
@@ -581,6 +588,7 @@ triggers:
               - imx8qm-mek
               - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
+              - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
