@@ -297,8 +297,7 @@ def get_args():
 if __name__ == '__main__':
     exit_code = 0
     fetched_apps = {}
-    preloaded_images = []
-    p = Progress(total=3)  # fetch apps, preload images, move app&images to the archive dir
+    p = Progress(total=3)  # fetch apps, preload images, move apps to the archive dir
 
     try:
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(module)s: %(message)s', level=logging.INFO)
@@ -336,7 +335,7 @@ if __name__ == '__main__':
                 fetched_apps[target.name] = (apps_desc, os.path.join(args.out_image_dir, target.tags[0]))
             fetch_progress.tick()
 
-        preload_progress = Progress(2 * len(targets) + len(fetched_apps), p)
+        preload_progress = Progress(3 * len(targets) + len(fetched_apps), p)
         for target in targets:
             logger.info('Assembling image for {}, shortlist: {}'.format(target.name, args.app_shortlist))
             if not target.has_apps():
@@ -377,7 +376,10 @@ if __name__ == '__main__':
             # Don't think its possible to have more than one tag at the time
             # we assemble, but the first tag will be the primary thing its
             # known as and also match what's in the target name.
-            preloaded_images.append((image, os.path.join(args.out_image_dir, target.tags[0])))
+            dst_dir = os.path.join(args.out_image_dir, target.tags[0])
+            os.makedirs(dst_dir, exist_ok=True)
+            archive_and_output_assembled_wic(image, dst_dir)
+            preload_progress.tick()
 
     except Exception as exc:
         logger.exception('Failed to assemble a system image')
@@ -386,10 +388,6 @@ if __name__ == '__main__':
     for target, (apps_desc, dst_dir) in fetched_apps.items():
         os.makedirs(dst_dir, exist_ok=True)
         cmd('tar', '-cf', os.path.join(dst_dir, target + '-apps.tar'), '-C', apps_desc.dir, '.')
-
-    for image_file, dst_dir in preloaded_images:
-        os.makedirs(dst_dir, exist_ok=True)
-        archive_and_output_assembled_wic(image_file, dst_dir)
 
     p.tick(complete=True)
     exit(exit_code)
