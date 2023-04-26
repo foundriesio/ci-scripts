@@ -21,7 +21,7 @@ from helpers import (
 
 
 class Delta(NamedTuple):
-    to: List[Tuple[str, str]]
+    to: Tuple[str, str]
     froms: List[Tuple[str, str]]
 
 
@@ -65,7 +65,7 @@ def _download_extract(progress: Progress, tarurls: List[str], dst: str):
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
         for r in responses:
-            futures.append(executor.submit(drain, progress, r, cb.cb, "./"))
+            futures.append(executor.submit(drain, progress, r, cb.cb, dst))
         for f in futures:
             f.result()
 
