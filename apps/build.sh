@@ -55,9 +55,7 @@ if [ -f $pbc ] ; then
   . $pbc
 fi
 
-if [ -f /secrets/container-registries ] ; then
-	PYTHONPATH=$HERE/.. $HERE/login_registries /secrets/container-registries
-fi
+docker_login
 
 if [ -z "$IMAGES" ] ; then
 	# Look through the first level of subdirectories for Dockerfile
@@ -108,13 +106,6 @@ for x in $IMAGES ; do
 
 	ct_base="hub.foundries.io/${FACTORY}/$x"
 
-	auth=0
-	if [ -f /secrets/osftok ] ; then
-		status "Doing docker-login to hub.foundries.io with secret"
-		docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
-		auth=1
-	fi
-
 	docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH -t ${ct_base}:$LATEST-$ARCH --force-rm"
 	if [ -z "$NOCACHE" ] ; then
 		status Building docker image $x for $ARCH with cache
@@ -155,28 +146,23 @@ for x in $IMAGES ; do
 	find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
 	echo "Build step $((completed+1)) of $total is complete"
 
-	if [ $auth -eq 1 ] ; then
-		run docker manifest create ${ct_base}:${H_BUILD}_$TAG ${ct_base}:$TAG-$ARCH
-		run docker manifest create ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
+	run docker manifest create ${ct_base}:${H_BUILD}_$TAG ${ct_base}:$TAG-$ARCH
+	run docker manifest create ${ct_base}:${LATEST} ${ct_base}:$TAG-$ARCH
 
-		var="EXTRA_TAGS_$ARCH"
-		for t in $(eval echo "\$$var") ; do
-			status "Handling manifest logic for $var"
+	var="EXTRA_TAGS_$ARCH"
+	for t in $(eval echo "\$$var") ; do
+		status "Handling manifest logic for $var"
 
-			tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${H_BUILD}_${TAG}
-			cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
-			run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t
+		tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${H_BUILD}_${TAG}
+		cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
+		run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t
 
-			tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${LATEST}
-			cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
-			run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t
-		done
+		tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${LATEST}
+		cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
+		run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t
+	done
 
-		echo "Build step $((completed+2)) of $total is complete"
-
-	else
-		echo "osftoken not provided, skipping publishing step"
-	fi
+	echo "Build step $((completed+2)) of $total is complete"
 
 	status "Doing a syft SBOM scan"
 	sbom_dst=/archive/sboms/${ct_base}/${ARCH}.spdx.json

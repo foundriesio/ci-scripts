@@ -42,12 +42,7 @@ if [ -f $pbc ] ; then
   . $pbc
 fi
 
-if [ -f /secrets/container-registries ] ; then
-	PYTHONPATH=$HERE/.. $HERE/login_registries /secrets/container-registries
-fi
-
-status Doing docker-login to hub.foundries.io with secret
-docker login hub.foundries.io --username=doesntmatter --password="$(cat "${SECRETS}/osftok")" | indent
+docker_login
 
 if [ ! -f "${PUBLISH_TOOL}" ]; then
   status Dowloading "compose-ref (aka compose-publish)" for publishing apps
