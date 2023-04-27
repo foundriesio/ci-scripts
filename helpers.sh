@@ -26,6 +26,13 @@ function require_params {
 	done
 }
 
+function load_extra_certs {
+	if [ -d /usr/local/share/ca-certificates ] ; then
+		status "Loading extra ca certificates"
+		update-ca-certificates
+	fi
+}
+
 function git_config {
 	git config user.email 2>/dev/null || git config --global user.email "gavin@foundries.io"
 	git config user.name 2>/dev/null || git config --global user.name "cibot"

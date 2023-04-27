@@ -28,6 +28,8 @@ if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then
   exit 1
 fi
 
+load_extra_certs
+
 if [ -f /secrets/container-registries ] ; then
 	PYTHONPATH=$HERE $HERE/apps/login_registries /secrets/container-registries
 fi

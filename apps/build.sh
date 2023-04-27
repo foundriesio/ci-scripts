@@ -22,6 +22,8 @@ BUILDKIT_VERSION="${BUILDKIT_VERSION-v0.10.3}"
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
+load_extra_certs
+
 if [ -f /secrets/docker_host_config.json ] ; then
 	mkdir -p $HOME/.docker
 	cp /secrets/docker_host_config.json $HOME/.docker/config.json
