@@ -10,7 +10,9 @@ AKLITE_TAG="${AKLITE_TAG-promoted}"
 H_BUILD="${H_BUILD-lmp-localdev}"
 LMP_VERSION="${LMP_VERSION-unknown}"
 FACTORY="${FACTORY-lmp}"
-LMP_DEVICE_API="${LMP_DEVICE_API-https://api.foundries.io/ota/devices/}"
+LMP_DEVICE_API="${LMP_DEVICE_API-https://api.${dns_base}/ota/devices/}"
+LMP_OAUTH_API="${LMP_OAUTH_API-https://app.${dns_base}/oauth}"
+FIO_HUB_URL="${FIO_HUB_URL-${hub_fio}}"
 UBOOT_SIGN_ENABLE="${UBOOT_SIGN_ENABLE-0}"
 DISABLE_GPLV3="${DISABLE_GPLV3-0}"
 ENABLE_PTEST="${ENABLE_PTEST-0}"
@@ -48,6 +50,15 @@ EULA_stm32mp1disco="1"
 EULA_stm32mp15disco="1"
 EULA_stm32mp1eval="1"
 EULA_stm32mp15eval="1"
+
+# meta-lmp requires this value to be a script and not a script with arguments.
+# This creates a wrapper that handles the arguments
+fetch_creds="${PWD}/fetch-root-meta-ci-helper.sh"
+cat << EOFEOF > ${fetch_creds}
+#!/bin/sh -e
+H_RUN_URL=${H_RUN_URL} ${HERE}/fetch-root-meta.sh
+EOFEOF
+chmod +x ${fetch_creds}
 
 source setup-environment build
 
@@ -94,7 +105,7 @@ OSTREE_BRANCHNAME = "${MACHINE}-${OSTREE_BRANCHNAME}"
 GARAGE_TARGET_VERSION = "${H_BUILD}"
 GARAGE_TARGET_EXPIRE_AFTER = "${TUF_TARGETS_EXPIRE}"
 GARAGE_TARGET_URL = "https://ci.foundries.io/projects/${H_PROJECT}/builds/${H_BUILD}"
-GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target.sh ${FACTORY} ${OTA_LITE_TAG} ${GARAGE_CUSTOMIZE_TARGET_PARAMS}"
+GARAGE_CUSTOMIZE_TARGET = "${HERE}/customize-target.sh ${H_RUN_URL} ${FACTORY} ${OTA_LITE_TAG} ${GARAGE_CUSTOMIZE_TARGET_PARAMS}"
 GARAGE_PUSH_RETRIES = "${GARAGE_PUSH_RETRIES-5}"
 GARAGE_PUSH_RETRIES_SLEEP = "${GARAGE_PUSH_RETRIES_SLEEP-10}"
 DOCKER_COMPOSE_APP = "${DOCKER_COMPOSE_APP}"
@@ -115,7 +126,7 @@ COMPOSE_APP_TYPE="${COMPOSE_APP_TYPE-restorable}"
 
 # TUF root meta provisioning parameters
 SOTA_TUF_ROOT_PROVISION = "${SOTA_TUF_ROOT_PROVISION-1}"
-SOTA_TUF_ROOT_FETCHER = "${HERE}/fetch-root-meta.sh"
+SOTA_TUF_ROOT_FETCHER = "${fetch_creds}"
 SOTA_TUF_ROOT_DIR = "usr/lib/sota/tuf"
 SOTA_TUF_ROOT_LOG_FILE = "/archive/tuf-root-fetch.log"
 
@@ -187,6 +198,8 @@ cat << EOFEOF >> conf/local.conf
 LMP_DEVICE_REGISTER_TAG = "$(echo ${OTA_LITE_TAG} | cut -d: -f1 | cut -d, -f1)"
 LMP_DEVICE_FACTORY = "${FACTORY}"
 LMP_DEVICE_API = "${LMP_DEVICE_API}"
+LMP_OAUTH_API = "${LMP_OAUTH_API}"
+FIO_HUB_URL = "${FIO_HUB_URL}"
 EOFEOF
 
 if [ -z "$SOTA_PACKED_CREDENTIALS" ] || [ ! -f $SOTA_PACKED_CREDENTIALS ] ; then

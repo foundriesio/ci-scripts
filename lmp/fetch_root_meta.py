@@ -10,6 +10,8 @@ import traceback
 import argparse
 import requests
 
+from helpers import fio_dnsbase
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +26,8 @@ def get_params():
 
 
 def fetch_all_root_meta(factory: str, token: str, dst: str, prod: bool = False):
-    api_base_url = f'https://api.foundries.io/ota/repo/{factory}/api/v1/user_repo/'
+    base = fio_dnsbase()
+    api_base_url = f'https://api.{base}/ota/repo/{factory}/api/v1/user_repo/'
     ver = 1
     while True:
         meta_file = f"{ver}.root.json"

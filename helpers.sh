@@ -7,7 +7,8 @@ function status { echo == $(date "+%F %T") $* ; }
 
 function run { set -o pipefail; status "Running: $*"; $* 2>&1 | indent ; }
 
-hub_fio=$(echo $H_RUN_URL | cut -d/ -f3 | sed -e 's/api./hub./')
+dns_base=$(echo $H_RUN_URL | cut -d/ -f3 | sed -e 's/api.//')
+hub_fio="hub.${dns_base}"
 
 function docker_login {
 	status "hub url is: $hub_fio"
