@@ -106,7 +106,7 @@ for x in $IMAGES ; do
 	# allow the docker-build.conf to override our manifest platforms
 	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-${MANIFEST_PLATFORMS_DEFAULT}}"
 
-	ct_base="hub.foundries.io/${FACTORY}/$x"
+	ct_base="${hub_fio}/${FACTORY}/$x"
 
 	docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH -t ${ct_base}:$LATEST-$ARCH --force-rm"
 	if [ -z "$NOCACHE" ] ; then
@@ -155,12 +155,12 @@ for x in $IMAGES ; do
 	for t in $(eval echo "\$$var") ; do
 		status "Handling manifest logic for $var"
 
-		tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${H_BUILD}_${TAG}
-		cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
+		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${H_BUILD}_${TAG}
+		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
 		run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t
 
-		tmp=$HOME/.docker/manifests/hub.foundries.io_${FACTORY}_${x}-${LATEST}
-		cp ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/hub.foundries.io_${FACTORY}_${x}-${TAG}-${t}
+		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${LATEST}
+		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
 		run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t
 	done
 
