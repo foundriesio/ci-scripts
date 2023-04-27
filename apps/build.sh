@@ -23,7 +23,6 @@ MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,l
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
 load_extra_certs
-
 if [ -f /secrets/docker_host_config.json ] ; then
 	mkdir -p $HOME/.docker
 	cp /secrets/docker_host_config.json $HOME/.docker/config.json
@@ -58,6 +57,16 @@ if [ -f $pbc ] ; then
 fi
 
 docker_login
+buildx_create_args="--driver-opt image=moby/buildkit:${BUILDKIT_VERSION} --use"
+if [ -d /usr/local/share/ca-certificates ] ; then
+	# We need to pass these certs into the buildkit container
+	bkconf="/buildkit.toml"
+	cat >${bkconf} <<EOF
+[registry."${hub_fio}"]
+ca=["/etc/ssl/certs/ca-certificates.crt"]
+EOF
+	buildx_create_args="--config ${bkconf} ${buildx_create_args}"
+fi
 
 if [ -z "$IMAGES" ] ; then
 	# Look through the first level of subdirectories for Dockerfile
@@ -101,7 +110,7 @@ for x in $IMAGES ; do
 	[ $found -eq 1 ] && continue
 
 	# We need a new context for each container we build
-	run docker buildx create --driver-opt image=moby/buildkit:${BUILDKIT_VERSION} --use
+	run docker buildx create ${buildx_create_args}
 
 	# allow the docker-build.conf to override our manifest platforms
 	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-${MANIFEST_PLATFORMS_DEFAULT}}"
