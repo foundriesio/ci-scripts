@@ -7,7 +7,7 @@ import logging
 import argparse
 
 
-from helpers import status
+from helpers import fio_dnsbase, status
 from apps.target_manager import create_target
 from apps.compose_apps import ComposeApps
 from apps.apps_publisher import AppsPublisher
@@ -28,7 +28,9 @@ def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [],
 
     status('Compose Apps has been validated: {}'.format(apps.str))
 
-    apps_to_add_to_target = AppsPublisher(factory, publish_tool, ','.join(platforms) if platforms else '').publish(apps, apps_version)
+    reg_host = "hub." + fio_dnsbase()
+    archs = ','.join(platforms) if platforms else ''
+    apps_to_add_to_target = AppsPublisher(factory, publish_tool, archs, reg_host).publish(apps, apps_version)
 
     status('Creating Targets that refer to the published Apps; tag: {}, version: {}, machines: {}, platforms: {} '
            .format(target_tag, target_version, ','.join(machines) if machines else '[]',

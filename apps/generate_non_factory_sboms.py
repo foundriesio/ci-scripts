@@ -4,12 +4,13 @@ import os
 import subprocess
 
 from apps.compose_apps import ComposeApps
-from helpers import status
+from helpers import fio_dnsbase, status
 
 
 def main(args):
     status("Loading docker-compose files to find non-factory containers")
-    factory_prefix = f"hub.foundries.io/{args.factory}/"
+    base = fio_dnsbase()
+    factory_prefix = f"hub.{base}/{args.factory}/"
 
     apps = ComposeApps(args.apps_root, quiet=True)
     analyzed = {}

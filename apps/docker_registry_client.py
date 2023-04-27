@@ -161,7 +161,7 @@ class DockerRegistryClient:
         # this is kind of useless verification because login at hub.foundries.io is successful
         # for any value of username and/or password
         if -1 == (str(output)).find('Login Succeeded'):
-            raise Exception('Failed to login at {}'.format('hub.foundries.io'))
+            raise Exception(f'Failed to login at {self.registry_host}')
 
 
 # TODO: Refactor this implementation, subclass for each Registry type, and inheritance from DockerRegistryClient

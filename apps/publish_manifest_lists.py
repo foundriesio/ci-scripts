@@ -2,15 +2,16 @@ import json
 import os
 from os.path import expanduser
 
-from helpers import cmd, jobserv_get, status
+from helpers import cmd, fio_dnsbase, jobserv_get, status
 from tag_manager import TagMgr
 
 
 def compose_tagged_uri(factory: str, org_uri: str, build_num: str, latest_tag: str) -> str:
-    if -1 == org_uri.find(f"hub.foundries.io_{factory}_"):
+    base = fio_dnsbase()
+    if -1 == org_uri.find(f"{base}_{factory}_"):
         raise RuntimeError(f"Invalid format of an input URI: {org_uri}")
 
-    uri = org_uri.replace(f"hub.foundries.io_{factory}_", f"hub.foundries.io/{factory}/")
+    uri = org_uri.replace(f"{base}_{factory}_", f"{base}/{factory}/")
 
     latest_tag_case = f"-{latest_tag}"
     latest_tag_indx = uri.rfind(latest_tag_case, len(uri) - len(latest_tag_case))
