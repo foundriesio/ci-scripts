@@ -1,18 +1,16 @@
 #!/usr/bin/python3
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
-from tempfile import TemporaryDirectory, mkstemp
+from tempfile import mkstemp
 from shutil import rmtree
 from subprocess import Popen, PIPE
-import sys
-from typing import List, NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Tuple
 
 from helpers import (
     Progress,
     cmd,
     generate_credential_tokens,
-    require_env,
     require_secrets,
     secret,
     secret_get,
