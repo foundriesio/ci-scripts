@@ -2,7 +2,10 @@
 from concurrent.futures import ThreadPoolExecutor
 import json
 import os
+import pty
+import sys
 from tempfile import mkstemp
+import requests
 from shutil import rmtree
 from subprocess import Popen, PIPE
 from typing import List, NamedTuple, Tuple
@@ -11,6 +14,7 @@ from helpers import (
     Progress,
     cmd,
     generate_credential_tokens,
+    require_env,
     require_secrets,
     secret,
     secret_get,
@@ -68,17 +72,59 @@ def _download_extract(progress: Progress, tarurls: List[str], dst: str):
             f.result()
 
 
-def main(creds_zip_file: str, deltas: List[Delta]):
+def pull_ostree_commit(factory: str, commit_hash: str, ostree_repo_dir: str, tok_secret_name: str,
+                       base_url: str = "https://api.foundries.io/ota/ostreehub"):
+    auth_url = f"{base_url}/{factory}/v2/repos/lmp/download-urls"
+    r = requests.post(auth_url, headers={"osf-token": secret(tok_secret_name)})
+    r.raise_for_status()
+
+    pull_base_url = r.json()[0]["download_url"]
+    pull_token = r.json()[0]["access_token"]
+
+    if not os.path.exists(os.path.join(ostree_repo_dir, "config")):
+        cmd("ostree", "init", "--repo", ostree_repo_dir, "--mode", "archive")
+
+    cmd("ostree", "remote", "add", "--force", "--repo", ostree_repo_dir,
+        "--no-gpg-verify", "gcs", pull_base_url)
+
+    def read_progress(fd):
+        data = os.read(fd, 70)
+        line = data.decode()
+        start_indx = line.find("Receiving")
+        if start_indx == -1:
+            return "\n".encode("ascii")
+        res = "|--" + line[start_indx:].rstrip()
+        sys.stdout.buffer.flush()
+        return res.replace('\xa0', "%").encode("ascii")
+
+    pty.spawn(["ostree", "pull", "--repo", ostree_repo_dir, "--update-frequency=5000",
+               f"--http-header=Authorization=Bearer {pull_token}", "gcs", commit_hash],
+              read_progress)
+
+
+def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str):
     work = 1  # 1 for the fiopush
     downloads = []
+    pulls = []
     for d in deltas:
-        downloads.append(d.to[1])
-        downloads.extend([x[1] for x in d.froms])
-        # 1 for "to" download, 2 for the "from" download and static delta
-        work += 1 + (2 * len(d.froms))
+        downloads.append(d.to[1]) if d.to[1] else pulls.append(d.to[0])
+        work += 1
+        for x in d.froms:
+            if x[1]:
+                downloads.append(x[1])
+            else:
+                pulls.append(x[0])
+            # 2 for the "from":  download | pull, and generate delta
+            work += 2
 
     prog = Progress(work)
-    _download_extract(prog, downloads, "./")
+    if len(downloads) > 0:
+        _download_extract(prog, downloads, "./")
+
+    if len(pulls) > 0:
+        status(f"Pulling: {pulls} -> ./ostree_repo")
+        for commit in pulls:
+            pull_ostree_commit(factory, commit, "./ostree_repo", tok_secret_name)
 
     for d in deltas:
         for f in d.froms:
@@ -109,6 +155,7 @@ def main(creds_zip_file: str, deltas: List[Delta]):
 
 
 if __name__ == "__main__":
+    require_env("FACTORY")
     require_secrets("osftok", "triggered-by", "deltas", "targets.sec", 'root.json', 'targets.pub')
     _, creds_tmp = mkstemp()
     generate_credential_tokens(creds_tmp)
@@ -117,6 +164,7 @@ if __name__ == "__main__":
     for d in json.loads(secret("deltas")):
         deltas.append(Delta(**d))
 
+    factory = os.environ["FACTORY"]
     repo_parent = os.environ.get("OSTREE_REPO_ROOT", "/")
     os.chdir(repo_parent)
-    main(creds_tmp, deltas)
+    main(creds_tmp, deltas, factory, "osftok")
