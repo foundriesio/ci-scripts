@@ -23,8 +23,8 @@ if [[ "$SSTATE_CACHE_MIRROR" == "/sstate-cache-mirror/v$LMP_VERSION_CACHE-sstate
 	SSTATE_CACHE_MIRROR=/sstate-cache-mirror
 fi
 USE_FIOTOOLS="${USE_FIOTOOLS-1}"
-FIO_CHECK_CMD="${FIO_CHECK_CMD-/usr/bin/fiocheck}"
-FIO_PUSH_CMD="${FIO_PUSH_CMD-/usr/bin/fiopush}"
+FIO_CHECK_CMD="/usr/bin/fiocheck1"
+FIO_PUSH_CMD="/usr/bin/fiopush1"
 OSTREE_API_VERSION="${OSTREE_API_VERSION-v2}"
 DEV_MODE="${DEV_MODE-0}"
 BUILD_SDK="${BUILD_SDK-0}"
