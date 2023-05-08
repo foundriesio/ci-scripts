@@ -16,12 +16,13 @@ from helpers import http_get, status
 
 class DockerRegistryClient:
     DefaultRegistryHost = 'hub.foundries.io'
+    DefaultRegistryAuthHost = 'hub-auth.foundries.io'
 
     def __init__(self, token: str, registry_host=DefaultRegistryHost, schema='https', client='docker'):
         self._token = token
         self.registry_url = '{}://{}'.format(schema, registry_host)
         self.registry_host = registry_host
-        self.auth_endpoint = os.path.join(self.registry_url, 'token-auth/')
+        self.auth_endpoint = os.path.join(f'{schema}://{self.DefaultRegistryAuthHost}', 'token-auth/')
         self._client = client
 
         self._jwt_token = None
