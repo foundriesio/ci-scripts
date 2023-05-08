@@ -8,6 +8,7 @@ import tarfile
 import subprocess
 import json
 import hashlib
+import requests
 from io import BytesIO as BIO
 from pathlib import Path
 
@@ -16,13 +17,11 @@ from helpers import http_get, status
 
 class DockerRegistryClient:
     DefaultRegistryHost = 'hub.foundries.io'
-    DefaultRegistryAuthHost = 'hub-auth.foundries.io'
 
     def __init__(self, token: str, registry_host=DefaultRegistryHost, schema='https', client='docker'):
         self._token = token
         self.registry_url = '{}://{}'.format(schema, registry_host)
         self.registry_host = registry_host
-        self.auth_endpoint = os.path.join(f'{schema}://{self.DefaultRegistryAuthHost}', 'token-auth/')
         self._client = client
 
         self._jwt_token = None
@@ -37,11 +36,12 @@ class DockerRegistryClient:
             return compose_app_archive
 
     def pull_manifest(self, uri, format='application/vnd.oci.image.manifest.v1+json'):
+        manifest_url = '{}/v2/{}/manifests/{}'.format(self.registry_url, uri.name, uri.digest)
         req_headers = {'accept': format}
         if uri.factory:
-            registry_jwt_token = self.__get_registry_jwt_token(uri.factory, uri.app)
+            registry_jwt_token = self.__get_registry_jwt_token(manifest_url)
             req_headers['authorization'] = 'bearer {}'.format(registry_jwt_token['token'])
-        manifest_url = '{}/v2/{}/manifests/{}'.format(self.registry_url, uri.name, uri.digest)
+
         manifest_resp = http_get(manifest_url, headers=req_headers)
         rec_hash = hashlib.sha256(manifest_resp.content).hexdigest()
         if rec_hash != uri.hash:
@@ -53,11 +53,12 @@ class DockerRegistryClient:
         return json.loads(self.pull_manifest(uri))
 
     def pull_layer(self, image_uri, layer_digest, token=None):
+        layer_url = '{}/v2/{}/blobs/{}'.format(self.registry_url, image_uri.name, layer_digest)
+
         if not token and image_uri.factory:
-            registry_jwt_token = self.__get_registry_jwt_token(image_uri.factory, image_uri.app)
+            registry_jwt_token = self.__get_registry_jwt_token(layer_url)
             token = registry_jwt_token['token']
 
-        layer_url = '{}/v2/{}/blobs/{}'.format(self.registry_url, image_uri.name, layer_digest)
         archive_resp = http_get(layer_url, headers={'authorization': 'bearer {}'.format(token)})
         layer_hash = layer_digest[len('sha256:'):]
         rec_hash = hashlib.sha256(archive_resp.content).hexdigest()
@@ -73,7 +74,9 @@ class DockerRegistryClient:
         uri = self.parse_image_uri(image_uri)
         token = None
         if uri.factory:
-            registry_jwt_token = self.__get_registry_jwt_token(uri.factory, uri.app)
+            layer_url = '{}/v2/{}/blobs/{}'.format(self.registry_url, uri.name,
+                                                   manifest['layers'][0]['digest'])
+            registry_jwt_token = self.__get_registry_jwt_token(layer_url)
             token = registry_jwt_token['token']
 
         layer_archives = []
@@ -113,16 +116,40 @@ class DockerRegistryClient:
 
         return URI(image_uri)
 
-    def __get_registry_jwt_token(self, repo, app):
+    def __get_registry_jwt_token(self, uri):
+        r = requests.get(uri)
+        if r.status_code != 401:
+            raise Exception('No expected status code `401` is received;'
+                            f' uri: {uri}, code: {r.status_code}, status: {r.text}')
+
+        auth_header = r.headers.get("www-authenticate")
+        if not auth_header:
+            raise Exception('No expected auth header `www-authenticate` is received;'
+                            f' uri: {uri}, code: {r.status_code}, status: {r.text}')
+
+        auth_header = auth_header.lower()
+        auth_type = 'bearer'
+        if not auth_header.startswith(auth_type):
+            raise Exception('Unexpected auth header `www-authenticate` value;'
+                            f' uri: {uri}, www-authenticate: {auth_header},  expected: {auth_type}')
+
+        auth_header_value = auth_header[len(auth_type):].strip()
+        auth_params = {}
+        for p in auth_header_value.split(','):
+            k, v = p.split('=')
+            auth_params[k.strip()] = v.strip().strip('"')
+
+        auth_endpoint = auth_params.get('realm')
+        if not auth_endpoint:
+            raise Exception('No `realm` is found in `www-authenticate` value;'
+                            f' uri: {uri}, www-authenticate: {auth_header}')
+
+        del auth_params['realm']
+
         user_pass = '{}:{}'.format('ci-script-client', self._token)
         headers = {'Authorization': 'Basic ' + base64.b64encode(user_pass.encode()).decode()}
 
-        params = {
-            'service': 'registry',
-            'scope': 'repository:{}/{}:pull'.format(repo, app)
-        }
-
-        token_req = http_get(self.auth_endpoint, headers=headers, params=params)
+        token_req = http_get(auth_endpoint, headers=headers, params=auth_params)
         return token_req.json()
 
     def login(self):
