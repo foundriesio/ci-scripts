@@ -165,6 +165,7 @@ for x in $IMAGES ; do
 	echo "Build step $((completed+2)) of $total is complete"
 
 	status "Doing a syft SBOM scan"
+	df -h /tmp
 	sbom_dst=/archive/sboms/${ct_base}/${ARCH}.spdx.json
 	mkdir -p $(dirname $sbom_dst)
 	syft ${ct_base}:$TAG-$ARCH -o spdx-json > $sbom_dst
