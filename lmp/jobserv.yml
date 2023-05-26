@@ -44,7 +44,6 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -56,15 +55,11 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
-              - qemuarm
               - qemuarm64-secureboot
-              - qemuriscv64
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
@@ -89,7 +84,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -101,8 +95,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
@@ -178,7 +170,6 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -190,15 +181,11 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
-              - qemuarm
               - qemuarm64-secureboot
-              - qemuriscv64
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
@@ -223,7 +210,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -235,8 +221,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
@@ -289,7 +273,6 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -301,15 +284,11 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
-              - qemuarm
               - qemuarm64-secureboot
-              - qemuriscv64
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
@@ -334,7 +313,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -346,8 +324,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
@@ -412,7 +388,6 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -424,15 +399,11 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
-              - qemuarm
               - qemuarm64-secureboot
-              - qemuriscv64
               - raspberrypi4-64
               - stm32mp15-disco
               - stm32mp15-eval
@@ -458,13 +429,11 @@ triggers:
           - param: MACHINE
             values:
               - raspberrypi4-64
-              - imx6ulevk
               - imx6ullevk
               - imx8mm-lpddr4-evk
               - imx8mn-ddr4-evk
               - imx8mn-lpddr4-evk
               - imx8mp-lpddr4-evk
-              - imx8qm-mek
               - stm32mp15-disco
         params:
           BITBAKE_EXTRA_ARGS: --continue
@@ -521,7 +490,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx6ulevk
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -533,8 +501,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8qm-mek
-              - imx8qm-mek-sec
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
