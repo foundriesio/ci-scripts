@@ -297,6 +297,7 @@ def get_args():
 if __name__ == '__main__':
     exit_code = 0
     fetched_apps = {}
+    image = ""
     p = Progress(total=3)  # fetch apps, preload images, move apps to the archive dir
 
     try:
@@ -383,6 +384,9 @@ if __name__ == '__main__':
 
     except Exception as exc:
         logger.exception('Failed to assemble a system image')
+        # Avoid uploading a bad wic image
+        if os.path.isfile(image):
+            os.remove(image)
         exit_code = 1
 
     for target, (apps_desc, dst_dir) in fetched_apps.items():
