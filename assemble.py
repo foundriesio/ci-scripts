@@ -267,8 +267,10 @@ def fetch_restorable_apps(target: FactoryClient.Target, dst_dir: str, shortlist:
 
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
     logger.info('Gzip and move resultant system image to the specified destination folder: {}'.format(out_image_dir))
+    subprocess.check_call(['bmaptool', 'create', wic_image, '-o', wic_image + '.bmap'])
     subprocess.check_call(['gzip', wic_image])
     subprocess.check_call(['mv', '-f', wic_image + '.gz', out_image_dir])
+    subprocess.check_call(['mv', '-f', wic_image + '.bmap', out_image_dir])
 
 
 def get_args():
