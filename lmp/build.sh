@@ -42,7 +42,7 @@ if [ -d /var/cache/bitbake/downloads ] ; then
 	status Migrating to new downloads cache layout
 	mv /var/cache/bitbake/downloads $cache
 fi
-[ -d $cache ] || (mkdir $cache; chown builder $cache)
+[ -d $cache ] || (mkdir -p $cache; chown builder $cache)
 ln -s $cache downloads
 
 cache="/var/cache/bitbake/v${LMP_VERSION_CACHE}-sstate-cache"
