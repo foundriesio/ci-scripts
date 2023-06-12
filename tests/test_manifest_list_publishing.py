@@ -1,9 +1,12 @@
+import os
 import unittest
+from unittest.mock import patch
 
 from apps.publish_manifest_lists import compose_tagged_uri
 
 
 class ManifestListPublishing(unittest.TestCase):
+    @patch.dict(os.environ, {"H_RUN_URL": "https://api.foundries.io/projects/blah/lmp/builds/459/runs/foo/"})
     def test_tagged_uri_composing(self):
         factory = "_devel-arduino_"
         app_name = "python-_devel-arduino_"
