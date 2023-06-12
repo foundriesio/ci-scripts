@@ -368,13 +368,9 @@ if __name__ == '__main__':
                 logger.info('Preloading Restorable Apps...')
                 copy_restorable_apps_to_wic(target, image, fetched_apps[target.name][0], preload_progress)
 
-            if target.name not in fetched_apps or target.lmp_version < 87:
-                # Preload compose Apps if restorable one were not preloaded
-                # or LmP version is lower than 87 (no early startup of restorable Apps,
-                # so compose one should be preloaded too to make early startup working)
-                logger.info('Preloading Compose Apps...')
-                copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image, args.token,
-                                         args.app_shortlist, preload_progress)
+            logger.info('Preloading Compose Apps...')
+            copy_compose_apps_to_wic(target, args.fetch_dir + "/compose", image, args.token,
+                                     args.app_shortlist, preload_progress)
 
             # Don't think its possible to have more than one tag at the time
             # we assemble, but the first tag will be the primary thing its
