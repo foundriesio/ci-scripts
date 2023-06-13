@@ -47,7 +47,7 @@ class ContainerDaemon:
 
 
 class DockerDaemon:
-    def __init__(self, dst_dir: str, graphdriver='overlay2', output_logs=False):
+    def __init__(self, dst_dir: str, graphdriver='overlay2', output_logs=True):
         self.data_root = dst_dir
         self._graphdriver = graphdriver
 

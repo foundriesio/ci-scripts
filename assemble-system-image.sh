@@ -35,7 +35,7 @@ fi
 export PYTHONPATH=${HERE}
 status Running: Assemble System Image script
 
-/usr/local/bin/dind "${HERE}/assemble.py" \
+CI_BUILD_PRESERVE_TMP="${CI_BUILD_PRESERVE_TMP-1}" /usr/local/bin/dind "${HERE}/assemble.py" \
   --factory "${FACTORY}" \
   --token "$(cat "${SECRETS}/osftok")" \
   --target-version "${TARGET_VERSION}" \

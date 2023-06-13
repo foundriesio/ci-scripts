@@ -189,6 +189,8 @@ def _mk_parent_dir(path: str):
 def copy_compose_apps_to_wic(target: FactoryClient.Target, fetch_dir: str, image_path: str,
                              token: str, apps_shortlist: list, progress: Progress):
     p = Progress(3, progress)
+    logger.info(f'Avalaible space at the destination volume {fetch_dir}')
+    cmd('df', '-h', '/tmp')
     apps_fetcher = TargetAppsFetcher(token, fetch_dir)
     apps_fetcher.fetch_target(target, shortlist=apps_shortlist, force=True)
     p.tick()
