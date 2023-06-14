@@ -20,7 +20,7 @@ OUT_IMAGE_DIR="${OUT_IMAGE_DIR-/archive}"
 APP_SHORTLIST="${APP_SHORTLIST-""}"
 COMPOSE_APP_TYPE=${COMPOSE_APP_TYPE-""}
 # directory to preload/dump/snapshot apps images to
-FETCH_DIR="${FETCH_DIR-$(mktemp -u -d)}"
+FETCH_DIR="${FETCH_DIR-$(mktemp -u -d -p /var/cache/apps)}"
 
 require_params FACTORY OUT_IMAGE_DIR
 if [ -z "${TARGETS}" ] && [ -z "${TARGET_VERSION}" ]; then

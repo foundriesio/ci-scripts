@@ -299,6 +299,7 @@ def get_args():
 if __name__ == '__main__':
     exit_code = 0
     fetched_apps = {}
+    fetch_dir = ""
     image = ""
     p = Progress(total=3)  # fetch apps, preload images, move apps to the archive dir
 
@@ -306,6 +307,7 @@ if __name__ == '__main__':
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(module)s: %(message)s', level=logging.INFO)
         args = get_args()
 
+        fetch_dir = args.fetch_dir
         factory_client = FactoryClient(args.factory, args.token)
         if args.targets:
             logger.info('Getting Targets for {}'.format(args.targets))
@@ -390,6 +392,11 @@ if __name__ == '__main__':
     for target, (apps_desc, dst_dir) in fetched_apps.items():
         os.makedirs(dst_dir, exist_ok=True)
         cmd('tar', '-cf', os.path.join(dst_dir, target + '-apps.tar'), '-C', apps_desc.dir, '.')
+
+    # Cleanup the fetched images
+    if os.path.exists(fetch_dir):
+        logger.info(f'Removing `{fetch_dir}` directory Apps were fetched to...')
+        shutil.rmtree(fetch_dir, ignore_errors=True)
 
     p.tick(complete=True)
     exit(exit_code)
