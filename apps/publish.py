@@ -68,7 +68,7 @@ if __name__ == '__main__':
     try:
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(module)s: %(message)s', level=logging.INFO)
         args = get_args()
-        machines = args.machines.split(',') if args.machines else None
+        machines = [x.strip() for x in args.machines.split(',') if x.strip()] if args.machines else None
         platforms = None
         if args.platforms:
             # linux/amd64,linux/arm64  (list of archs/platforms defined in the old format)
