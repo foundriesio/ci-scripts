@@ -13,7 +13,7 @@ triggers:
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
         refs/heads/main
-      OTA_LITE_TAG: postmerge
+      OTA_LITE_TAG: main
     runs:
       # images that have ptest
       - name: "{loop}"
@@ -138,7 +138,7 @@ triggers:
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
         refs/heads/main-next
-      OTA_LITE_TAG: 'postmerge-next:postmerge'
+      OTA_LITE_TAG: 'main-next:main'
       AKLITE_TAG: promoted-next
     runs:
       # images that have ptest
@@ -260,7 +260,7 @@ triggers:
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
         refs/heads/kirkstone
-      OTA_LITE_TAG: 'postmerge-stable:postmerge'
+      OTA_LITE_TAG: 'main-stable:main'
       AKLITE_TAG: promoted-stable
     runs:
       - name: "{loop}"
@@ -357,7 +357,7 @@ triggers:
   - name: Code Review
     type: github_pr
     params:
-      OTA_LITE_TAG: 'premerge:postmerge'
+      OTA_LITE_TAG: 'premerge:main'
       AKLITE_TAG: premerge
     runs:
       - name: build-{loop}
