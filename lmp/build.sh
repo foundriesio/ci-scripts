@@ -8,6 +8,7 @@ DISTRO="${DISTRO-lmp}"
 
 start_ssh_agent
 git_config
+load_extra_certs
 
 if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
 	status "Build triggered by change to lmp-manifest"

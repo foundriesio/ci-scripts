@@ -2,6 +2,7 @@
 
 HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
+load_extra_certs
 
 apk add curl
 

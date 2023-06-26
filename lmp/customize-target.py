@@ -11,6 +11,7 @@ import subprocess
 import urllib.request
 
 from copy import deepcopy
+from helpers import fio_dnsbase
 from tag_manager import TagMgr
 
 logging.basicConfig(level='INFO')
@@ -30,9 +31,8 @@ def targets_from_api(factory):
     We need to get the targets from the API so that we can help find the
        current docker-apps.
     """
-    url = 'https://api.foundries.io/ota/repo/'
-    url += factory
-    url += '/api/v1/user_repo/targets.json'
+    base = fio_dnsbase()
+    url = f'https://api.{base}/ota/repo/{factory}/api/v1/user_repo/targets.json'
     try:
         with open('/secrets/osftok') as f:
             token = f.read().strip()
@@ -143,6 +143,7 @@ def get_args():
         '''Do LMP customiziations of the current build target. Including
            copying Compose Apps defined in the previous build target.''')
 
+    parser.add_argument('run_url')
     parser.add_argument('factory')
     parser.add_argument('ota_lite_tag')
     parser.add_argument('machine')
@@ -162,6 +163,7 @@ def get_args():
 
 if __name__ == '__main__':
     args = get_args()
+    os.environ["H_RUN_URL"] = args.run_url  # allows fio_dnsbase helper to function
 
     if os.path.exists(args.meta_sub_overrides_repo):
         overrides_sha = git_hash(args.meta_sub_overrides_repo)

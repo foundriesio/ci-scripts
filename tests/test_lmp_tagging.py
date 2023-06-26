@@ -67,7 +67,8 @@ def temp_json_file(data):
 
 
 def customize_target(tag, targets_file, target_name):
-    args = ['./lmp/customize-target.sh', 'lmp', tag, 'machine_name',
+    runurl = "https://api.foundries.io/projects/blah/lmp/builds/459/runs/foo/"
+    args = ['./lmp/customize-target.sh', runurl, 'lmp', tag, 'machine_name',
             'lmp-factory-image', 'amd64', targets_file, target_name,
             '--manifest-repo=./', '--meta-sub-overrides-repo=./']
     subprocess.check_call(args)

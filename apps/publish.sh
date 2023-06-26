@@ -36,6 +36,8 @@ TUF_TARGETS_EXPIRE=${TUF_TARGETS_EXPIRE-1Y}
 require_params FACTORY ARCHIVE TARGET_TAG TUF_TARGETS_EXPIRE
 #-- END: Input params
 
+load_extra_certs
+
 pbc=pre-build.conf
 if [ -f $pbc ] ; then
   echo "Sourcing pre-build.conf."

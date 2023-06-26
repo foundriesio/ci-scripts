@@ -7,9 +7,13 @@ function status { echo == $(date "+%F %T") $* ; }
 
 function run { set -o pipefail; status "Running: $*"; $* 2>&1 | indent ; }
 
+dns_base=$(echo $H_RUN_URL | cut -d/ -f3 | sed -e 's/api.//')
+hub_fio="hub.${dns_base}"
+
 function docker_login {
-	status "Doing docker-login to hub.foundries.io with secret"
-	docker login hub.foundries.io --username=doesntmatter --password=$(cat /secrets/osftok) | indent
+	status "hub url is: $hub_fio"
+	status "Doing docker-login to ${hub_fio} with secret"
+	docker login ${hub_fio} --username=doesntmatter --password=$(cat /secrets/osftok) | indent
 
 	if [ -f /secrets/container-registries ] ; then
 		PYTHONPATH=$HERE/.. $HERE/login_registries /secrets/container-registries
@@ -24,6 +28,13 @@ function require_params {
 			exit 1
 		fi
 	done
+}
+
+function load_extra_certs {
+	if [ -d /usr/local/share/ca-certificates ] ; then
+		status "Loading extra ca certificates"
+		update-ca-certificates
+	fi
 }
 
 function git_config {

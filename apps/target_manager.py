@@ -6,6 +6,7 @@ import os
 import json
 from copy import deepcopy
 
+from helpers import fio_dnsbase
 from tag_manager import TagMgr
 
 
@@ -16,6 +17,7 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines, p
                   in_version=None, new_target_dest_file=None) -> dict:
     tagmgr = TagMgr(ota_lite_tag)
     logging.info('Doing Target tagging for: %s', tagmgr)
+    dnsbase = fio_dnsbase()
 
     latest_targets = {x: {} for x in tagmgr.target_tags}
 
@@ -117,7 +119,7 @@ def create_target(targets_json, compose_apps, ota_lite_tag, git_sha, machines, p
                 target['custom']['origUri'] = uri
             proj = os.environ['H_PROJECT']
             build = os.environ['H_BUILD']
-            target['custom']['uri'] = f'https://ci.foundries.io/projects/{proj}/builds/{build}'
+            target['custom']['uri'] = f'https://ci.{dnsbase}/projects/{proj}/builds/{build}'
 
             target['custom']['version'] = version
             if tag:

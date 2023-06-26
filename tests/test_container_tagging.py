@@ -4,6 +4,7 @@
 import json
 import os
 import unittest
+from unittest.mock import patch
 
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
@@ -104,6 +105,7 @@ def create_target(tag, version, targets_file, apps, machines=None, platforms=Non
         return json.load(f)
 
 
+@patch.dict(os.environ, {"H_RUN_URL": "https://api.foundries.io/projects/blah/lmp/builds/459/runs/foo/"})
 class TestTagging(unittest.TestCase):
     def setUp(self):
         os.environ['H_PROJECT'] = 'ci-test'

@@ -7,6 +7,7 @@ import subprocess
 import sys
 import traceback
 from typing import Optional
+from urllib.parse import urlparse
 
 import requests
 
@@ -115,10 +116,20 @@ def secret_delete(url, secret_name, header_name, **kwargs):
     return r
 
 
+def fio_dnsbase():
+    '''Find the dns base hosting jobserv. For example when running under
+       api.foundries.io, this would return foundries.io
+    '''
+    parts = urlparse(os.environ["H_RUN_URL"])
+    _, base = parts.netloc.split(".", 1)
+    return base
+
+
 def jobserv_get(url):
     '''Does an HTTP get using the jobserv credentials'''
     if url[0] == '/':
-        url = 'https://api.foundries.io/' + url
+        base = fio_dnsbase()
+        url = f'https://api.{base}{url}'
     return secret_get(url, 'osftok', 'OSF-TOKEN').json()
 
 
@@ -126,7 +137,8 @@ def jobserv_post(url, data, dryrun, status_code=201):
     headers = {'OSF-TOKEN': secret('osftok')}
 
     if url[0] == '/':
-        url = 'https://api.foundries.io' + url
+        base = fio_dnsbase()
+        url = f'https://api.{base}{url}'
 
     if dryrun:
         print('== dryrun post to: ' + url)
@@ -164,16 +176,17 @@ def generate_credential_tokens(creds_zip_out: str):
         factory = 'lmp'
     else:
         raise ValueError('Unexpected CI project: ' + os.environ['H_PROJECT'])
+    base = fio_dnsbase()
     treehub = {
       "oauth2" : {
-        "server" : "https://api.foundries.io/faux-auth2",
+        "server" : f"https://api.{base}/ota/ostreehub/{factory}/oauth2",
         "client_id" : secret('triggered-by'),
         "client_secret" : secret('osftok'),
         "scope" : "none"
       },
       "no_auth" : False,
       "ostree" : {
-        "server" : f"https://api.foundries.io/ota/treehub/{factory}/api/v3/"
+        "server" : f"https://api.{base}/ota/treehub/{factory}/api/v3/"
       }
     }
     with ZipFile(creds_zip_out, mode='w') as zout:
@@ -181,7 +194,7 @@ def generate_credential_tokens(creds_zip_out: str):
         zout.writestr('targets.pub', secret("targets.pub"))
         zout.writestr('targets.sec', secret("targets.sec"))
         zout.writestr('treehub.json', json.dumps(treehub))
-        zout.writestr('tufrepo.url', f'https://api.foundries.io/ota/repo/{factory}')
+        zout.writestr('tufrepo.url', f'https://api.{base}/ota/repo/{factory}')
 
 
 class Progress:
