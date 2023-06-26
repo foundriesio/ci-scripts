@@ -166,7 +166,7 @@ def generate_credential_tokens(creds_zip_out: str):
         raise ValueError('Unexpected CI project: ' + os.environ['H_PROJECT'])
     treehub = {
       "oauth2" : {
-        "server" : "https://api.foundries.io/faux-auth2",
+        "server" : f"https://api.foundries.io/ota/ostreehub/{factory}/oauth2",
         "client_id" : secret('triggered-by'),
         "client_secret" : secret('osftok'),
         "scope" : "none"
