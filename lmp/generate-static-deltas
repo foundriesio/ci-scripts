@@ -15,6 +15,7 @@ from helpers import (
     cmd,
     fio_dnsbase,
     generate_credential_tokens,
+    load_extra_certs,
     require_env,
     require_secrets,
     secret,
@@ -104,6 +105,8 @@ def pull_ostree_commit(factory: str, commit_hash: str, ostree_repo_dir: str, tok
 
 
 def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str):
+    load_extra_certs()
+
     work = 1  # 1 for the fiopush
     downloads = []
     pulls = []

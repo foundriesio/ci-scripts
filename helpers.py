@@ -197,6 +197,12 @@ def generate_credential_tokens(creds_zip_out: str):
         zout.writestr('tufrepo.url', f'https://api.{base}/ota/repo/{factory}')
 
 
+def load_extra_certs():
+    if os.path.exists("/usr/local/share/ca-certificates"):
+        status("Loading extra ca ca certificates")
+        cmd("update-ca-certificates")
+
+
 class Progress:
     def __init__(self, total: int, parent: Optional["Progress"] = None):
         if total == 0:
