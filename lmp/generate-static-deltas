@@ -13,6 +13,7 @@ from typing import List, NamedTuple, Tuple
 from helpers import (
     Progress,
     cmd,
+    fio_dnsbase,
     generate_credential_tokens,
     require_env,
     require_secrets,
@@ -73,7 +74,7 @@ def _download_extract(progress: Progress, tarurls: List[str], dst: str):
 
 
 def pull_ostree_commit(factory: str, commit_hash: str, ostree_repo_dir: str, tok_secret_name: str,
-                       base_url: str = "https://api.foundries.io/ota/ostreehub"):
+                       base_url: str):
     auth_url = f"{base_url}/{factory}/v2/repos/lmp/download-urls"
     r = requests.post(auth_url, headers={"osf-token": secret(tok_secret_name)})
     r.raise_for_status()
@@ -117,6 +118,9 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
             # 2 for the "from":  download | pull, and generate delta
             work += 2
 
+    base = fio_dnsbase()
+    ostree_url = f"https://api.{base}/ota/ostreehub"
+
     prog = Progress(work)
     if len(downloads) > 0:
         _download_extract(prog, downloads, "./")
@@ -124,7 +128,7 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
     if len(pulls) > 0:
         status(f"Pulling: {pulls} -> ./ostree_repo")
         for commit in pulls:
-            pull_ostree_commit(factory, commit, "./ostree_repo", tok_secret_name)
+            pull_ostree_commit(factory, commit, "./ostree_repo", tok_secret_name, ostree_url)
 
     for d in deltas:
         for f in d.froms:
