@@ -187,16 +187,11 @@ triggers:
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
               - raspberrypi4-64
-              - stm32mp15-disco
-              - stm32mp15-eval
-              - stm32mp15-eval-sec
               - kv260
               - vck190-versal
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
-          EULA_stm32mp1eval: "1"
-          EULA_stm32mp1disco: "1"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -227,24 +222,6 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # STM32 mfgtool
-      - name: mfgtool-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-partner-gcp-nocache
-        loop-on:
-          - param: MACHINE
-            values:
-              - stm32mp15-eval-sec
-        params:
-          DISTRO: lmp-mfgtool
-          IMAGE: stm32-mfgtool-files
-          EXTRA_ARTIFACTS: "stm32-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
