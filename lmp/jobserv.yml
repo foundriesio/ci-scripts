@@ -356,6 +356,10 @@ triggers:
 
   - name: Code Review
     type: github_pr
+    webhooks:
+      - url: https://conductor.infra.foundries.io/api/lmp/
+        only_failures: false
+        secret_name: lava-webhook-key
     params:
       OTA_LITE_TAG: 'premerge:main'
       AKLITE_TAG: premerge
