@@ -211,6 +211,10 @@ INHERIT += "archiver"
 COPYLEFT_RECIPE_TYPES = "target"
 ARCHIVER_MODE[src] = "original"
 ARCHIVER_MODE[diff] = "1"
+
+# instead of removing what we no longer need at the end of each bitbake task we
+# can drop everything at the end, the time reduced it's not much but it's about 5 minutes.
+INHERIT:remove = "rm_work"
 EOFEOF
 
 # spdx is support since kirkstone so check if this oe-core have support
