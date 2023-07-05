@@ -217,3 +217,7 @@ done
 [ -d $HOME/.docker/manifests ] && mv $HOME/.docker/manifests /archive/manifests || echo 'no manifests to archive'
 
 PYTHONPATH=${HERE}/.. python3 ${HERE}/generate_non_factory_sboms.py --arch=$ARCH
+# 1. Parse the local docker store (the one where the built images are stored).
+# 2. Extract layers metadata (size, usage) of all Apps' images
+# 3. Store the gathered layers metadata as a CI artifact
+PYTHONPATH="${HERE}"/.. python3 "${HERE}"/get_layers_meta.py --apps-root "${REPO_ROOT}" --tag "${TAG}-${ARCH}" --out-file "/archive/layers_meta.json"
