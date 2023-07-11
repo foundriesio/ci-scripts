@@ -31,6 +31,12 @@ BUILDSTATS_PATH="$(bitbake-getvar --value TMPDIR | tail -n 1)/buildstats"
 if [ -d $BUILDSTATS_PATH ]; then
     # get the most recent folder
     BUILDSTATS_PATH="$(ls -td -- $BUILDSTATS_PATH/*/ | head -n 1)"
+    # we need to check that because it can't be available in old containers
+    if command -v xvfb-run >/dev/null 2>&1 ; then
+        # producing bootchart.svg
+        run xvfb-run ../layers/openembedded-core/scripts/pybootchartgui/pybootchartgui.py \
+            --minutes --format=svg --output=${archive} $BUILDSTATS_PATH
+    fi
     # write a summary of the buildstats to the terminal
     BUILDSTATS_SUMMARY="../layers/openembedded-core/scripts/buildstats-summary"
     # we need to check that because it is only available in the kirkstone branch
