@@ -3,11 +3,12 @@
 # Copyright (c) 2020 Foundries.io
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 import logging
 import argparse
 
 
-from helpers import fio_dnsbase, status
+from helpers import fio_dnsbase, status, jobserv_get
 from apps.target_manager import create_target
 from apps.compose_apps import ComposeApps
 from apps.apps_publisher import AppsPublisher
@@ -16,6 +17,16 @@ from apps.publish_manifest_lists import publish_manifest_lists
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_layers_metadata(factory: str, ver: str, archs: []) -> dict:
+    layers_meta = {}
+    project = f"{factory}/lmp" if factory != "lmp" else "lmp"
+    for a in archs:
+        run_name = {"amd64": "build-amd64", "arm64": "build-aarch64", "arm": "build-armhf"}[a]
+        status(f"Downloading layers metadata built by `{run_name}` run", prefix="=== ")
+        layers_meta[a] = jobserv_get(f"/projects/{project}/builds/{ver}/runs/{run_name}/layers_meta.json")
+    return layers_meta
 
 
 def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [], app_root_dir: str,
@@ -28,9 +39,13 @@ def main(factory: str, sha: str, targets_json: str, machines: [], platforms: [],
 
     status('Compose Apps has been validated: {}'.format(apps.str))
 
+    status('Downloading Apps\' layers metadata...')
+    layers_meta = get_layers_metadata(factory, target_version, platforms)
+    status('Apps\' layers metadata have been downloaded')
+
     reg_host = "hub." + fio_dnsbase()
     archs = ','.join(platforms) if platforms else ''
-    apps_to_add_to_target = AppsPublisher(factory, publish_tool, archs, reg_host).publish(apps, apps_version)
+    apps_to_add_to_target = AppsPublisher(factory, publish_tool, archs, reg_host, layers_meta).publish(apps, apps_version)
 
     status('Creating Targets that refer to the published Apps; tag: {}, version: {}, machines: {}, platforms: {} '
            .format(target_tag, target_version, ','.join(machines) if machines else '[]',

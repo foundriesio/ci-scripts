@@ -1,6 +1,7 @@
 # Copyright (c) 2020 Foundries.io
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 import logging
 from tempfile import NamedTemporaryFile
 
@@ -15,11 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 class AppsPublisher:
-    def __init__(self, factory, publish_tool: str, archs: str, registry_host=DockerRegistryClient.DefaultRegistryHost):
+    def __init__(self, factory, publish_tool: str, archs: str,
+                 registry_host=DockerRegistryClient.DefaultRegistryHost, layers_meta: dict = None):
         self._factory = factory
         self._publish_tool = publish_tool
         self._archs = archs
         self._registry_host = registry_host
+        self._layers_meta = layers_meta
 
         self._image_base_url = '{}/{}'.format(registry_host, self._factory)
         self._allowed_tags = ['${TAG}', 'latest']
@@ -83,6 +86,10 @@ class AppsPublisher:
         app_base_url = self._image_base_url + '/' + app.name
         self._app_tagged_url = app_base_url + ':app-' + tag
         # TODO: Consider implementation of the "publish tool" in DockerRegistryClient
-        with NamedTemporaryFile(mode="w+") as f:
-            cmd_exe(self._publish_tool, '-d', f.name, self._app_tagged_url, self._archs, cwd=app.dir)
-            return app_base_url + '@' + f.read().strip()
+        with NamedTemporaryFile(mode="w+") as layers_meta_file:
+            json.dump(self._layers_meta, layers_meta_file)
+            layers_meta_file.flush()
+            with NamedTemporaryFile(mode="w+") as f:
+                cmd_exe(self._publish_tool, '-d', f.name, '-l',  layers_meta_file.name,
+                        self._app_tagged_url, self._archs, cwd=app.dir)
+                return app_base_url + '@' + f.read().strip()
