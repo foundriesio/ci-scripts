@@ -116,7 +116,7 @@ function set_base_lmp_version {
 	export LMP_VERSION_CACHE="$LMP_VERSION"
 	if [[ "${H_PROJECT}" == "lmp" ]] || [ -v LMP_VERSION_CACHE_DEV ] ; then
 		# Public LmP build - we are building for the *next* release
-		LMP_VERSION_CACHE=$(( $LMP_VERSION_CACHE + 1 ))
+		LMP_VERSION_CACHE=$(( $LMP_VERSION_CACHE + 2 ))
 	fi
 	status "Base LmP cache version detected as: $LMP_VERSION_CACHE"
 
