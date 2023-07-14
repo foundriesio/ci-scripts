@@ -1,6 +1,5 @@
 import argparse
 import json
-import os.path
 
 from helpers import status
 from apps.docker_store import DockerStore
@@ -51,7 +50,16 @@ if __name__ == '__main__':
         for img in app.images(expand_env=True):
             img_uri = img
             if img_uri.startswith("hub.foundries.io"):
-                img_uri += ":" + args.tag
+                # Find out if the image reference is tagged
+                end_pos = img_uri.rfind(":")
+                # The image should be referenced with the tag that the builder has tagged
+                # the built image with.
+                # The `img_uri` is the image reference found in the `docker-compose.yml` file.
+                # If it's not tagged, then append the builder tag to it.
+                # If it's tagged, then replace it with the builder tag. Effectively, only `latest`
+                # tag is allowed for images built by the foundries' CI. The following CI publish run
+                # will fail if tha tag is not `latest`.
+                img_uri = img_uri[0:end_pos if end_pos != -1 else len(img_uri)] + ":" + args.tag
 
             image = docker_store.images_by_ref.get(img_uri)
             if not image:
