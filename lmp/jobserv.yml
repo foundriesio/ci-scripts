@@ -44,6 +44,7 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
+              - intel-corei7-64
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -170,6 +171,7 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
+              - intel-corei7-64
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -250,6 +252,7 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
+              - intel-corei7-64
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
@@ -369,6 +372,7 @@ triggers:
               - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
+              - intel-corei7-64
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
