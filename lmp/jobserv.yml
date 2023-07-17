@@ -354,7 +354,6 @@ triggers:
               - raspberrypi4-64
               - imx6ullevk
               - imx8mm-lpddr4-evk
-              - imx8mn-ddr4-evk
               - imx8mn-lpddr4-evk
               - imx8mp-lpddr4-evk
               - stm32mp15-disco
