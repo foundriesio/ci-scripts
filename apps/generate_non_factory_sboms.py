@@ -16,7 +16,11 @@ def main(args):
     analyzed = {}
     for app in apps:
         for img in app.images(expand_env=True):
-            if not img.startswith(factory_prefix) and img not in analyzed:
+            # Pull and analyze all non-factory images, and factory images that are referenced
+            # by a pinned/sha256 digest (a factory image is built by one of the previous CI builds,
+            # not current one)
+            if (not img.startswith(factory_prefix) or -1 != img.find("@sha256:")) \
+                    and img not in analyzed:
                 status(f"Doing a syft SBOM scan for {img}")
                 analyzed[img] = 1
                 path = os.path.join(args.archive, img, f"{args.arch}.spdx.json")
