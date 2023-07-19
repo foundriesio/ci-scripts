@@ -49,7 +49,8 @@ if __name__ == '__main__':
         status(f"Processing App metadata: {app.name}", prefix="=== ")
         for img in app.images(expand_env=True):
             img_uri = img
-            if img_uri.startswith("hub.foundries.io"):
+            # if it's a factory image and is not pinned then we need to figure out its tag
+            if img_uri.startswith("hub.foundries.io") and -1 == img_uri.find("@sha256:"):
                 # Find out if the image reference is tagged
                 end_pos = img_uri.rfind(":")
                 # The image should be referenced with the tag that the builder has tagged
