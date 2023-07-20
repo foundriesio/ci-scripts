@@ -19,7 +19,7 @@ PyYAML==6.0.1
 redis==3.5.3
 requests==2.25.0
 toml==0.10.2
-Werkzeug==0.16.1
+Werkzeug==2.2.3
 # https://itsdangerous.palletsprojects.com/en/2.1.x/changes/#version-2-1-0
 itsdangerous==2.0.1
 # https://markupsafe.palletsprojects.com/en/2.1.x/changes/#version-2-1-0
