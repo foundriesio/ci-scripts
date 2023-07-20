@@ -3,7 +3,7 @@ click==7.1.2
 cryptography==3.3.2
 Flask-restplus==0.13.0
 Flask-Testing==0.7.1
-Flask==1.1.2
+Flask==2.2.5
 google-api-python-client==2.42.0
 google-cloud-pubsub==2.11.0
 google_cloud_storage==1.29.0
