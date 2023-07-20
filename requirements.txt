@@ -1,6 +1,6 @@
 canonicaljson==1.4.0
 click==7.1.2
-cryptography==3.3.2
+cryptography==41.0.2
 Flask-restplus==0.13.0
 Flask-Testing==0.7.1
 Flask==1.1.2
