@@ -47,7 +47,7 @@ def targets_from_api(factory):
 
 
 def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
-          machine, factory, ota_lite_tag, meta_subscriber_overrides_sha):
+          machine, factory, ota_lite_tag, meta_subscriber_overrides_sha, lmp_ver):
     with open(targets_json) as f:
         data = json.load(f)
 
@@ -83,6 +83,7 @@ def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
     updates = []
     for idx, (tgt_tag, apps_tag) in enumerate(tagmgr.tags):
         tgt = targets[args.target_name]
+        tgt['custom']['lmp-ver'] = lmp_ver
         tgt['custom']['lmp-manifest-sha'] = lmp_manifest_sha
         tgt['custom']['arch'] = arch
         tgt['custom']['image-file'] = '{}-{}.wic.gz'.format(image_name, machine)
@@ -149,6 +150,7 @@ def get_args():
     parser.add_argument('machine')
     parser.add_argument('image_name')
     parser.add_argument('image_arch')
+    parser.add_argument('lmp_ver')
 
     parser.add_argument('targets_json')
     parser.add_argument('target_name')
@@ -172,4 +174,4 @@ if __name__ == '__main__':
         overrides_sha = None
     merge(args.targets_json, args.target_name, git_hash(args.manifest_repo),
           args.image_arch, args.image_name, args.machine, args.factory,
-          args.ota_lite_tag, overrides_sha)
+          args.ota_lite_tag, overrides_sha, args.lmp_ver)
