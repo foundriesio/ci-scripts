@@ -59,7 +59,6 @@ chown -R builder .
 
 su builder -c $HERE/bb-config.sh
 touch ${archive}/customize-target.log && chown builder ${archive}/customize-target.log
-touch ${archive}/bootchart.svg && chown builder ${archive}/bootchart.svg
 touch ${archive}/bitbake_debug.log ${archive}/bitbake_warning.log ${archive}/bitbake_buildstats.log && chown builder ${archive}/bitbake_*.log
 touch ${archive}/bitbake_global_env.txt ${archive}/bitbake_image_env.txt && chown builder ${archive}/bitbake_*_env.txt
 touch ${archive}/app-preload.log && chown builder ${archive}/app-preload.log
