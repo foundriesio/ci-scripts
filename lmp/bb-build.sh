@@ -26,15 +26,13 @@ if [ "$BUILD_SDK" == "1" ] && [ "${DISTRO}" != "lmp-mfgtool" ]; then
 fi
 bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE}
 
-# Check if the buildstats was enabled
-BUILDSTATS_PATH="$(bitbake-getvar --value TMPDIR | tail -n 1)/buildstats"
-if [ -d $BUILDSTATS_PATH ]; then
-    # get the most recent folder
-    BUILDSTATS_PATH="$(ls -td -- $BUILDSTATS_PATH/*/ | head -n 1)"
-    # write a summary of the buildstats to the terminal
-    BUILDSTATS_SUMMARY="../layers/openembedded-core/scripts/buildstats-summary"
-    # we need to check that because it is only available in the kirkstone branch
-    if [ -f $BUILDSTATS_SUMMARY ]; then
+# write a summary of the buildstats to the terminal
+BUILDSTATS_SUMMARY="../layers/openembedded-core/scripts/buildstats-summary"
+if [ -f $BUILDSTATS_SUMMARY ]; then
+    BUILDSTATS_PATH="$(bitbake-getvar --value TMPDIR | tail -n 1)/buildstats"
+    if [ -d $BUILDSTATS_PATH ]; then
+        # get the most recent folder
+        BUILDSTATS_PATH="$(ls -td -- $BUILDSTATS_PATH/*/ | head -n 1)"
         # common arguments with bold disabled
         BUILDSTATS_SUMMARY="$BUILDSTATS_SUMMARY --sort duration --highlight 0"
         # log all task
