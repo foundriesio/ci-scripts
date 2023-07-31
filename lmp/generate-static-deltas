@@ -8,7 +8,7 @@ from tempfile import mkstemp
 import requests
 from shutil import rmtree
 from subprocess import Popen, PIPE
-from typing import List, NamedTuple, Tuple
+from typing import List
 
 from helpers import (
     Progress,
@@ -22,11 +22,7 @@ from helpers import (
     secret_get,
     status,
 )
-
-
-class Delta(NamedTuple):
-    to: Tuple[str, str]
-    froms: List[Tuple[str, str]]
+from static_deltas import Delta, generate_deltas
 
 
 class ProgressCb:
@@ -133,12 +129,7 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
         for commit in pulls:
             pull_ostree_commit(factory, commit, "./ostree_repo", tok_secret_name, ostree_url)
 
-    for d in deltas:
-        for f in d.froms:
-            sha, _ = f
-            status("Generating delta", with_ts=True)
-            cmd("ostree", "static-delta", "generate", "--repo=./ostree_repo", "--from", sha, "--to", d.to[0])
-            prog.tick()
+    generate_deltas(prog, deltas, "./ostree_repo")
 
     # update summary and generate a new type of delta indexes
     cmd("ostree", "summary", "-u", "--repo=./ostree_repo")
