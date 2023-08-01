@@ -100,7 +100,7 @@ def pull_ostree_commit(factory: str, commit_hash: str, ostree_repo_dir: str, tok
               read_progress)
 
 
-def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str):
+def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str, out_dir: str):
     load_extra_certs()
 
     work = 1  # 1 for the fiopush
@@ -116,6 +116,11 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
                 pulls.append(x[0])
             # 2 for the "from":  download | pull, and generate delta
             work += 2
+        # 2 for the "to":
+        # 1. storing the delta stats to a file as a CI artifact
+        # 2. TODO: uploading to ostreehub
+        work += 1
+    # TODO: work += 1 - updating targets
 
     base = fio_dnsbase()
     ostree_url = f"https://api.{base}/ota/ostreehub"
@@ -129,7 +134,7 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
         for commit in pulls:
             pull_ostree_commit(factory, commit, "./ostree_repo", tok_secret_name, ostree_url)
 
-    generate_deltas(prog, deltas, "./ostree_repo")
+    delta_stats = generate_deltas(prog, deltas, "./ostree_repo")
 
     # update summary and generate a new type of delta indexes
     cmd("ostree", "summary", "-u", "--repo=./ostree_repo")
@@ -151,6 +156,14 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
     cmd("fiopush", "-summary", "-repo=./ostree_repo", "-creds", creds_zip_file)
     prog.tick()
 
+    for to_sha, s in delta_stats.items():
+        with open(os.path.join(out_dir, f"{to_sha}.json"), "wb") as f:
+            f.write(s["canonical-json"])
+        prog.tick()
+
+    # TODO: uploading to ostreehub for each `to`
+    # TODO: updating targets.json
+
 
 if __name__ == "__main__":
     require_env("FACTORY")
@@ -165,4 +178,4 @@ if __name__ == "__main__":
     factory = os.environ["FACTORY"]
     repo_parent = os.environ.get("OSTREE_REPO_ROOT", "/")
     os.chdir(repo_parent)
-    main(creds_tmp, deltas, factory, "osftok")
+    main(creds_tmp, deltas, factory, "osftok", os.environ.get("ARCHIVE", "/archive"))

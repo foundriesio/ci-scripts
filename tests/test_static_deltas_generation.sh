@@ -9,6 +9,8 @@ H_BUILD=$5
 
 WORK_DIR=${6-"$(mktemp -d -t generate-static-deltas-XXXXXXXXXX)"}
 echo ">> Work dir: ${WORK_DIR}"
+ARCHIVE="${WORK_DIR}/archive"
+mkdir -p "${ARCHIVE}"
 
 echo -n "${OSF_TOKEN}" > "${SECRETS_DIR}/osftok"
 echo -n "${USER_ID}" > "${SECRETS_DIR}/triggered-by"
@@ -24,5 +26,6 @@ docker run -v -it --rm \
   -e H_BUILD="${H_BUILD}" \
   -v $PWD:/ci-scripts \
   -v $SECRETS_DIR:/secrets \
+  -v $ARCHIVE:/archive \
   -w /ci-scripts \
   foundries/lmp-image-tools "${CMD}"
