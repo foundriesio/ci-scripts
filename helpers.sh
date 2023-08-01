@@ -75,7 +75,7 @@ function repo_sync {
 		git config --global http.https://${domain}.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
 	for i in $(seq 4); do
-		run repo init --repo-rev=v2.29.4 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES} && break
+		run repo init --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES} && break
 		status "repo init failed with error $?"
 		[ $i -eq 4 ] && exit 1
 		status "sleeping and trying again"
