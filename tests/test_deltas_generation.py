@@ -21,6 +21,7 @@
 
 import argparse
 import json
+import os.path
 
 from typing import List
 
@@ -32,6 +33,7 @@ def get_args():
     parser = argparse.ArgumentParser('''Publish Target Compose Apps''')
     parser.add_argument('-f', '--deltas', help='File with ostree hashes to generate delta for')
     parser.add_argument('-t', '--repo', help='Path to an ostree repo with commits to generate delta for')
+    parser.add_argument('-o', '--output-dir', help='Path to a dir to store generated delta stat files')
     return parser.parse_args()
 
 
@@ -46,6 +48,11 @@ if __name__ == "__main__":
     work = 0
     for d in deltas:
         work += len(d.froms)
+        work += 1
 
     prog = Progress(work)
-    generate_deltas(prog, deltas, args.repo)
+    delta_stats = generate_deltas(prog, deltas, args.repo)
+    for to_sha, s in delta_stats.items():
+        with open(os.path.join(args.output_dir, f"{to_sha}.json"), "wb") as f:
+            f.write(s["canonical-json"])
+        prog.tick()
