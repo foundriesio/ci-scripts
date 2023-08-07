@@ -100,6 +100,53 @@ def pull_ostree_commit(factory: str, commit_hash: str, ostree_repo_dir: str, tok
               read_progress)
 
 
+def upload_delta_stats(progress: Progress, factory: str, delta_stats: dict, tok_secret_name: str):
+    ostreehub_uri = f"https://api.foundries.io/ota/ostreehub/{factory}/v2/repos/lmp/delta-stats"
+    for to_sha, s in delta_stats.items():
+        status(f"Uploading delta stats for {to_sha}...")
+        r = requests.put(ostreehub_uri,
+                         headers={
+                             "osf-token": secret(tok_secret_name),
+                             "content-type": "application/json"
+                         },
+                         params={"sha256": s["sha256"]},
+                         data=s["canonical-json"])
+        if not r.ok:
+            raise requests.exceptions.HTTPError("Failed to upload delta stats to ostreehub; "
+                                                f"{r.status_code}, err: {r.text}")
+        # make sure the `sha` and `size` received from ostreehub matches with the original one
+        if r.json()["sha256"] != s["sha256"]:
+            raise Exception("invalid content hash is received from ostreehub; "
+                            f"expected: {s['sha256']}, received: {r.json()['sha256']}")
+        if int(r.json()["size"]) != len(s["canonical-json"]):
+            raise Exception("invalid content size is received from ostreehub; "
+                            f"expected: {len(s['canonical-json'])}, received: {r.json()['size']}")
+        progress.tick()
+
+
+def add_delta_stat_refs_to_targets(creds_zip_file: str, delta_stats: dict):
+    status("Updating Factory TUF Targets with references to delta statistics...")
+    tur_repo_path = "./tuf-repo"
+    cmd("garage-sign", "init", "--repo", tur_repo_path, "--credentials", creds_zip_file)
+    cmd("garage-sign", "targets", "pull", "--repo", tur_repo_path)
+    targets_file = f"./tuf/{tur_repo_path}/roles/unsigned/targets.json"
+    with open(targets_file) as f:
+        targets = json.load(f)
+
+    for target_name, target_value in targets["targets"].items():
+        if target_value["hashes"]["sha256"] in delta_stats:
+            target_value["custom"]["delta-stats"] = {
+                "sha256": delta_stats[target_value["hashes"]["sha256"]]["sha256"],
+                "size": len(delta_stats[target_value["hashes"]["sha256"]]["canonical-json"])
+            }
+
+    with open(targets_file, "w") as f:
+        json.dump(targets, f)
+
+    cmd("garage-sign", "targets", "sign", "--repo", tur_repo_path, "--key-name", "targets")
+    cmd("garage-sign", "targets", "push", "--repo", tur_repo_path)
+
+
 def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str, out_dir: str):
     load_extra_certs()
 
@@ -117,10 +164,11 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
             # 2 for the "from":  download | pull, and generate delta
             work += 2
         # 2 for the "to":
-        # 1. storing the delta stats to a file as a CI artifact
-        # 2. TODO: uploading to ostreehub
-        work += 1
-    # TODO: work += 1 - updating targets
+        #   1. storing the delta stats to a file as a CI artifact
+        #   2. uploading to ostreehub
+        work += 2
+    # updating targets
+    work += 1
 
     base = fio_dnsbase()
     ostree_url = f"https://api.{base}/ota/ostreehub"
@@ -161,8 +209,10 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
             f.write(s["canonical-json"])
         prog.tick()
 
-    # TODO: uploading to ostreehub for each `to`
-    # TODO: updating targets.json
+    upload_delta_stats(prog, factory, delta_stats, tok_secret_name)
+
+    add_delta_stat_refs_to_targets(creds_zip_file, delta_stats)
+    prog.tick()
 
 
 if __name__ == "__main__":
