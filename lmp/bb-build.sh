@@ -9,22 +9,24 @@ start_ssh_agent
 source setup-environment build
 
 # Parsing first, to stop in case of parsing issues
-run bitbake -p
+status "Run bitbake (parsing)"
+bitbake -p
 
 # Global and image specific envs
-status "Save the global and image specific environments"
+status "Run bitbake (save the global and image specific environments)"
 bitbake -e > ${archive}/bitbake_global_env.txt
 bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt
 
 # Setscene (cache), failures not critical
-set +e
-run bitbake --setscene-only ${IMAGE}
-set -e
+status "Run bitbake (setscene tasks only)"
+bitbake --setscene-only ${IMAGE} || true
 
 if [ "$BUILD_SDK" == "1" ] && [ "${DISTRO}" != "lmp-mfgtool" ]; then
-    run bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE} -c populate_sdk
+    status "Run bitbake (populate sdk)"
+    bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE} -c populate_sdk
 fi
-run bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE}
+status "Run bitbake"
+bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE}
 
 # we need to check that because it is not available before kirkstone
 if command -v bitbake-getvar >/dev/null 2>&1; then
