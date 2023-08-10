@@ -8,7 +8,7 @@ from tempfile import mkstemp
 import requests
 from shutil import rmtree
 from subprocess import Popen, PIPE
-from typing import List, Tuple
+from typing import List
 
 from helpers import (
     Progress,
@@ -19,7 +19,7 @@ from helpers import (
     require_env,
     require_secrets,
     secret,
-    secret_get,
+    http_get,
     status,
 )
 from static_deltas import Delta, generate_deltas
@@ -39,33 +39,39 @@ class ProgressCb:
             self.next_percent += 5
 
 
-def drain(progress: Progress, response, prog_cb: ProgressCb, dst: str):
+def drain(progress: Progress, u, prog_cb: ProgressCb, dst: str, tok_secret_name: str):
+    r = http_get(u, headers={
+        "OSF-TOKEN": secret(tok_secret_name),
+        "Connection": "keep-alive",
+        "Keep-Alive": "timeout=1200, max=1"  # keep connection alive for 1 request for 20m
+    }, stream=True)
     p = Popen(["tar", "-xj"], cwd=dst, stdin=PIPE)
-    for chunk in response.iter_content(chunk_size=1024 * 1024):
+    for chunk in r.iter_content(chunk_size=1024 * 1024):
         if chunk:
             p.stdin.write(chunk)
             prog_cb(len(chunk))
     p.stdin.close()
     p.wait()
+    status(f"Downloaded and extracted: {u}")
     progress.tick()
 
 
-def _download_extract(progress: Progress, tarurls: set[str], dst: str):
+def _download_extract(progress: Progress, tarurls: set[str], dst: str, tok_secret_name: str):
     status("Downloading the following {} ostree repos into the single one -> {}ostree_repo\n\t{}"
            .format(len(tarurls), dst, "\n\t".join(tarurls)))
     total_length = 0
-    responses = []
     for u in tarurls:
-        r = secret_get(u, "osftok", "OSF-TOKEN", stream=True)
+        r = requests.head(u, headers={"OSF-TOKEN": secret(tok_secret_name)}, allow_redirects=True)
+        if r.status_code != 200:
+            sys.exit('Unable to find %s: %d\n%s' % (u, r.status_code, r.text))
         total_length += int(r.headers["content-length"])
-        responses.append(r)
 
     cb = ProgressCb(total_length)
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
-        for r in responses:
-            futures.append(executor.submit(drain, progress, r, cb.cb, dst))
+        for u in tarurls:
+            futures.append(executor.submit(drain, progress, u, cb.cb, dst, tok_secret_name))
         for f in futures:
             f.result()
 
@@ -122,7 +128,7 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
 
     prog = Progress(work)
     if len(downloads) > 0:
-        _download_extract(prog, downloads, "./")
+        _download_extract(prog, downloads, "./", tok_secret_name)
 
     if len(pulls) > 0:
         status(f"Pulling: {pulls} -> ./ostree_repo")
