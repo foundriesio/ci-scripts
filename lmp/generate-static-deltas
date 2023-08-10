@@ -26,7 +26,8 @@ from helpers import (
 from static_deltas import (
     Delta,
     generate_deltas,
-    save_delta_stats
+    save_delta_stats,
+    upload_delta_stats
 )
 
 
@@ -114,7 +115,7 @@ def pull_ostree_commit(factory: str, commit_hash: str, ostree_repo_dir: str, tok
 def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str, out_dir: str):
     load_extra_certs()
 
-    work = 2  # 1 for the fiopush + 1 for saving delta stats files
+    work = 3  # 1 for the fiopush + 2 for saving and uploading delta stats files
     downloads = set()  # a set of URLs to ostree repo archives to download from Jobserv
     pulls = set()  # a set of ostree commit hashes to pull from ostreehub (if no URL to archive)
     for d in deltas:
@@ -165,6 +166,9 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
 
     status(f"Saving delta statistics files to {out_dir}...")
     save_delta_stats(delta_stats, out_dir)
+    prog.tick()
+
+    upload_delta_stats(factory, delta_stats, tok_secret_name)
     prog.tick()
 
 

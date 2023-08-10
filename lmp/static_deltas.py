@@ -1,11 +1,14 @@
 import os
 import hashlib
 import canonicaljson
+import requests
 from typing import List, NamedTuple, Tuple
 
 from helpers import (
     Progress,
-    cmd
+    cmd,
+    status,
+    secret
 )
 
 
@@ -47,6 +50,29 @@ def save_delta_stats(delta_stats: dict, out_dir: str):
     for to_sha, s in delta_stats.items():
         with open(os.path.join(out_dir, f"{to_sha}.json"), "wb") as f:
             f.write(s["canonical-json"])
+
+
+def upload_delta_stats(factory: str, delta_stats: dict, tok_secret_name: str):
+    ostreehub_uri = f"https://api.foundries.io/ota/ostreehub/{factory}/v2/repos/lmp/delta-stats"
+    for to_sha, s in delta_stats.items():
+        status(f"Uploading delta stats for {to_sha}...")
+        r = requests.put(ostreehub_uri,
+                         headers={
+                             "osf-token": secret(tok_secret_name),
+                             "content-type": "application/json",
+                             "content-digest": f"sha-256=:{s['sha256']}:"
+                         },
+                         data=s["canonical-json"])
+        if not r.ok:
+            raise requests.exceptions.HTTPError("Failed to upload delta stats to ostreehub; "
+                                                f"{r.status_code}, err: {r.text}")
+        # make sure the `sha` and `size` received from ostreehub matches with the original one
+        if r.json()["size"] != len(s["canonical-json"]):
+            raise Exception("invalid content size is received from ostreehub; "
+                            f"expected: {len(s['canonical-json'])}, received: {r.json()['size']}")
+        if r.json()["sha256"] != s["sha256"]:
+            raise Exception("invalid content hash is received from ostreehub; "
+                            f"expected: {s['sha256']}, received: {r.json()['sha256']}")
 
 
 def _get_delta_stats(repo: str, from_sha: str, to_sha: str) -> dict:
