@@ -27,7 +27,8 @@ from static_deltas import (
     Delta,
     generate_deltas,
     save_delta_stats,
-    upload_delta_stats
+    upload_delta_stats,
+    add_delta_stat_refs_to_targets
 )
 
 
@@ -169,6 +170,10 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
     prog.tick()
 
     upload_delta_stats(factory, delta_stats, tok_secret_name)
+    prog.tick()
+
+    status("Updating Factory's TUF Targets with references to delta statistics...")
+    add_delta_stat_refs_to_targets(creds_zip_file, delta_stats)
     prog.tick()
 
 

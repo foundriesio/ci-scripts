@@ -2,6 +2,7 @@ import os
 import hashlib
 import canonicaljson
 import requests
+import json
 from typing import List, NamedTuple, Tuple
 
 from helpers import (
@@ -73,6 +74,31 @@ def upload_delta_stats(factory: str, delta_stats: dict, tok_secret_name: str):
         if r.json()["sha256"] != s["sha256"]:
             raise Exception("invalid content hash is received from ostreehub; "
                             f"expected: {s['sha256']}, received: {r.json()['sha256']}")
+
+
+def add_delta_stat_refs_to_targets(creds_zip_file: str, delta_stats: dict,
+                                   tuf_repo: str = "./tuf-repo"):
+    cmd("garage-sign", "init", "--repo", tuf_repo, "--credentials", creds_zip_file)
+    cmd("garage-sign", "targets", "pull", "--repo", tuf_repo)
+    targets_file = f"./tuf/{tuf_repo}/roles/unsigned/targets.json"
+    with open(targets_file) as f:
+        targets = json.load(f)
+
+    for target_name, target_value in targets["targets"].items():
+        to_hash = target_value["hashes"]["sha256"]
+        if to_hash in delta_stats:
+            target_value["custom"]["delta-stats"] = {
+                "sha256": delta_stats[to_hash]["sha256"],
+                "size": len(delta_stats[to_hash]["canonical-json"])
+            }
+            status(f"Updated Target {target_name}; commit hash: {to_hash}"
+                   f", delta stats ref hash: {delta_stats[to_hash]['sha256']}", prefix='==== ')
+
+    with open(targets_file, "w") as f:
+        json.dump(targets, f)
+
+    cmd("garage-sign", "targets", "sign", "--repo", tuf_repo, "--key-name", "targets")
+    cmd("garage-sign", "targets", "push", "--repo", tuf_repo)
 
 
 def _get_delta_stats(repo: str, from_sha: str, to_sha: str) -> dict:
