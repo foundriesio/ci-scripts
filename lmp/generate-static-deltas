@@ -2,12 +2,13 @@
 from concurrent.futures import ThreadPoolExecutor
 import json
 import os
+import io
 import pty
 import sys
 from tempfile import mkstemp
 import requests
+import tarfile
 from shutil import rmtree
-from subprocess import Popen, PIPE
 from typing import List
 
 from helpers import (
@@ -39,19 +40,19 @@ class ProgressCb:
             self.next_percent += 5
 
 
-def drain(progress: Progress, u, prog_cb: ProgressCb, dst: str, tok_secret_name: str):
+def drain(progress: Progress, u, prog_cb: ProgressCb.cb, dst: str, tok_secret_name: str):
     r = http_get(u, headers={
         "OSF-TOKEN": secret(tok_secret_name),
         "Connection": "keep-alive",
         "Keep-Alive": "timeout=1200, max=1"  # keep connection alive for 1 request for 20m
     }, stream=True)
-    p = Popen(["tar", "-xj"], cwd=dst, stdin=PIPE)
-    for chunk in r.iter_content(chunk_size=1024 * 1024):
-        if chunk:
-            p.stdin.write(chunk)
-            prog_cb(len(chunk))
-    p.stdin.close()
-    p.wait()
+    last_pos = 0
+    with io.BufferedReader(r.raw, buffer_size=1024 * 1024) as br:
+        with tarfile.open(fileobj=br, mode="r|bz2") as tar_stream:
+            for member in tar_stream:
+                tar_stream.extract(member, dst)
+                prog_cb(br.tell() - last_pos)
+                last_pos = br.tell()
     status(f"Downloaded and extracted: {u}")
     progress.tick()
 
@@ -68,7 +69,7 @@ def _download_extract(progress: Progress, tarurls: set[str], dst: str, tok_secre
 
     cb = ProgressCb(total_length)
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = []
         for u in tarurls:
             futures.append(executor.submit(drain, progress, u, cb.cb, dst, tok_secret_name))
