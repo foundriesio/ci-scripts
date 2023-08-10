@@ -8,7 +8,7 @@ from tempfile import mkstemp
 import requests
 from shutil import rmtree
 from subprocess import Popen, PIPE
-from typing import List
+from typing import List, Tuple
 
 from helpers import (
     Progress,
@@ -50,7 +50,7 @@ def drain(progress: Progress, response, prog_cb: ProgressCb, dst: str):
     progress.tick()
 
 
-def _download_extract(progress: Progress, tarurls: List[str], dst: str):
+def _download_extract(progress: Progress, tarurls: set[str], dst: str):
     status("Downloading the following {} ostree repos into the single one -> {}ostree_repo\n\t{}"
            .format(len(tarurls), dst, "\n\t".join(tarurls)))
     total_length = 0
@@ -104,18 +104,18 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
     load_extra_certs()
 
     work = 1  # 1 for the fiopush
-    downloads = []
-    pulls = []
+    downloads = set()  # a set of URLs to ostree repo archives to download from Jobserv
+    pulls = set()  # a set of ostree commit hashes to pull from ostreehub (if no URL to archive)
     for d in deltas:
-        downloads.append(d.to[1]) if d.to[1] else pulls.append(d.to[0])
-        work += 1
+        (e, s) = (d.to[1], downloads) if d.to[1] else (d.to[0], pulls)
+        if e not in s:
+            work += 1
+            s.add(e)
         for x in d.froms:
-            if x[1]:
-                downloads.append(x[1])
-            else:
-                pulls.append(x[0])
-            # 2 for the "from":  download | pull, and generate delta
-            work += 2
+            (e, s) = (x[1], downloads) if x[1] else (x[0], pulls)
+            if e not in s:
+                work += 2  # 2 for the "from":  download | pull, and generate delta
+                s.add(e)
 
     base = fio_dnsbase()
     ostree_url = f"https://api.{base}/ota/ostreehub"
