@@ -51,8 +51,8 @@ def drain(progress: Progress, response, prog_cb: ProgressCb, dst: str):
 
 
 def _download_extract(progress: Progress, tarurls: List[str], dst: str):
-    status(f"Downloading: {tarurls} -> {dst}ostree_repo")
-
+    status("Downloading the following {} ostree repos into the single one -> {}ostree_repo\n\t{}"
+           .format(len(tarurls), dst, "\n\t".join(tarurls)))
     total_length = 0
     responses = []
     for u in tarurls:
