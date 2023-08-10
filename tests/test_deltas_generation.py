@@ -19,12 +19,13 @@
 #
 # <ostree-repo> - a repo that contains all commits referenced in <deltas-file>
 
+import os
 import argparse
 import json
 
 from typing import List
 
-from lmp.static_deltas import Delta, generate_deltas
+from lmp.static_deltas import Delta, generate_deltas, save_delta_stats
 from helpers import Progress
 
 
@@ -33,6 +34,8 @@ def get_args():
     parser.add_argument("-f", "--deltas", help="File with ostree hashes to generate delta for")
     parser.add_argument("-t", "--repo", help="Path to an ostree repo that contains commits"
                                              " to generate delta for")
+    parser.add_argument('-o', '--output-dir',
+                        help='Path to a dir to store generated delta stat files')
     return parser.parse_args()
 
 
@@ -49,4 +52,6 @@ if __name__ == "__main__":
         work += len(d.froms)
 
     prog = Progress(work)
-    generate_deltas(prog, deltas, args.repo)
+    delta_stats = generate_deltas(prog, deltas, args.repo)
+    save_delta_stats(delta_stats, args.output_dir)
+

@@ -23,7 +23,11 @@ from helpers import (
     http_get,
     status,
 )
-from static_deltas import Delta, generate_deltas
+from static_deltas import (
+    Delta,
+    generate_deltas,
+    save_delta_stats
+)
 
 
 class ProgressCb:
@@ -107,10 +111,10 @@ def pull_ostree_commit(factory: str, commit_hash: str, ostree_repo_dir: str, tok
               read_progress)
 
 
-def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str):
+def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name: str, out_dir: str):
     load_extra_certs()
 
-    work = 1  # 1 for the fiopush
+    work = 2  # 1 for the fiopush + 1 for saving delta stats files
     downloads = set()  # a set of URLs to ostree repo archives to download from Jobserv
     pulls = set()  # a set of ostree commit hashes to pull from ostreehub (if no URL to archive)
     for d in deltas:
@@ -135,8 +139,9 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
         status(f"Pulling: {pulls} -> ./ostree_repo")
         for commit in pulls:
             pull_ostree_commit(factory, commit, "./ostree_repo", tok_secret_name, ostree_url)
+            prog.tick()
 
-    generate_deltas(prog, deltas, "./ostree_repo")
+    delta_stats = generate_deltas(prog, deltas, "./ostree_repo")
 
     # update summary and generate a new type of delta indexes
     cmd("ostree", "summary", "-u", "--repo=./ostree_repo")
@@ -158,6 +163,10 @@ def main(creds_zip_file: str, deltas: List[Delta], factory: str, tok_secret_name
     cmd("fiopush", "-summary", "-repo=./ostree_repo", "-creds", creds_zip_file)
     prog.tick()
 
+    status(f"Saving delta statistics files to {out_dir}...")
+    save_delta_stats(delta_stats, out_dir)
+    prog.tick()
+
 
 if __name__ == "__main__":
     require_env("FACTORY")
@@ -172,4 +181,4 @@ if __name__ == "__main__":
     factory = os.environ["FACTORY"]
     repo_parent = os.environ.get("OSTREE_REPO_ROOT", "/")
     os.chdir(repo_parent)
-    main(creds_tmp, deltas, factory, "osftok")
+    main(creds_tmp, deltas, factory, "osftok", os.environ.get("ARCHIVE", "/archive"))
