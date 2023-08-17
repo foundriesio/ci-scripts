@@ -45,6 +45,7 @@ triggers:
               - qemuarm64-secureboot
               - raspberrypi4-64
               - stm32mp15-disco
+              - stm32mp15-disco-sec
               - stm32mp15-eval
               - stm32mp15-eval-sec
               - kv260
@@ -97,6 +98,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - stm32mp15-disco-sec
               - stm32mp15-eval-sec
         params:
           DISTRO: lmp-mfgtool
@@ -227,6 +229,7 @@ triggers:
               - qemuarm64-secureboot
               - raspberrypi4-64
               - stm32mp15-disco
+              - stm32mp15-disco-sec
               - stm32mp15-eval
               - stm32mp15-eval-sec
               - kv260
@@ -279,6 +282,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - stm32mp15-disco-sec
               - stm32mp15-eval-sec
         params:
           DISTRO: lmp-mfgtool
@@ -329,6 +333,7 @@ triggers:
               - qemuarm64-secureboot
               - raspberrypi4-64
               - stm32mp15-disco
+              - stm32mp15-disco-sec
               - stm32mp15-eval
               - stm32mp15-eval-sec
               - kv260
@@ -442,6 +447,7 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
+              - stm32mp15-disco-sec
               - stm32mp15-eval-sec
         params:
           DISTRO: lmp-mfgtool
