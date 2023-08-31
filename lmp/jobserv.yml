@@ -110,6 +110,24 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+      # TI mfgtool
+      - name: mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-partner-gcp-nocache
+        loop-on:
+          - param: MACHINE
+            values:
+              - am62xx-evm
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: ti-mfgtool-files
+          EXTRA_ARTIFACTS: "ti-mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
   - name: build-main-next
     type: git_poller
     email:
@@ -294,6 +312,24 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+      # TI mfgtool
+      - name: mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-partner-gcp-nocache
+        loop-on:
+          - param: MACHINE
+            values:
+              - am62xx-evm
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: ti-mfgtool-files
+          EXTRA_ARTIFACTS: "ti-mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
   - name: Code Review
     type: github_pr
     webhooks:
@@ -453,6 +489,24 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: stm32-mfgtool-files
           EXTRA_ARTIFACTS: "stm32-mfgtool-files.tar.gz"
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
+      # TI mfgtool
+      - name: build-mfgtool-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-partner-gcp-nocache
+        loop-on:
+          - param: MACHINE
+            values:
+              - am62xx-evm
+        params:
+          DISTRO: lmp-mfgtool
+          IMAGE: ti-mfgtool-files
+          EXTRA_ARTIFACTS: "ti-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
