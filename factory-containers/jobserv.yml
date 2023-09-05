@@ -14,7 +14,7 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/containers.git
       GIT_POLL_REFS: "refs/heads/master"
-      OTA_LITE_TAG: postmerge,postmerge-ptest
+      OTA_LITE_TAG: postmerge
       DOCKER_COMPOSE_APP: "1"
     runs:
       - name: build-{loop}
@@ -40,7 +40,7 @@ triggers:
         params:
           DOCKER_COMPOSE_APP: "1"
           MANIFEST_PLATFORMS_DEFAULT: linux/amd64,linux/arm64,linux/arm
-          OTA_LITE_TAG: postmerge,postmerge-ptest
+          OTA_LITE_TAG: postmerge
         script-repo:
           name: fio
           path: factory-containers/publish-containers.sh
@@ -57,7 +57,7 @@ triggers:
         params:
           DOCKER_COMPOSE_APP: "1"
           MANIFEST_PLATFORMS_DEFAULT: linux/amd64,linux/arm64,linux/arm
-          OTA_LITE_TAG: premerge:postmerge,premerge-ptest:postmerge-ptest
+          OTA_LITE_TAG: premerge:postmerge
         script-repo:
           name: fio
           path: factory-containers/publish-containers.sh
@@ -71,7 +71,7 @@ triggers:
         container: foundries/dind-ci:19.03.9_057dbdd
         privileged: true
         params:
-          OTA_LITE_TAG: premerge:postmerge,premerge-ptest:postmerge-ptest
+          OTA_LITE_TAG: premerge:postmerge
           DOCKER_COMPOSE_APP: "1"
         loop-on:
           - param: host-tag
