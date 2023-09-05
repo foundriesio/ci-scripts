@@ -145,10 +145,6 @@ if [ -d "${archive}" ] ; then
 
 	# Compress and publish the ostree repository
 	if [ -d ${DEPLOY_DIR_IMAGE}/ostree_repo ]; then
-		# Update branchname in case ptest is enabled as done by bb-config.sh
-		if [ "$ENABLE_PTEST" = "1" ] ; then
-			OSTREE_BRANCHNAME="${OSTREE_BRANCHNAME}-ptest"
-		fi
 		cat ${DEPLOY_DIR_IMAGE}/ostree_repo/refs/heads/${MACHINE}-${OSTREE_BRANCHNAME} > ${archive}/other/ostree.sha.txt
 		tar --remove-files -C ${DEPLOY_DIR_IMAGE} -cjf ${MACHINE}-ostree_repo.tar.bz2 ostree_repo
 		mv ${MACHINE}-ostree_repo.tar.bz2 ${archive}/other/
