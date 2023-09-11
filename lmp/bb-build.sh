@@ -1,6 +1,9 @@
 #!/bin/bash -e
 
 function finish() {
+    # save the return code
+    rc=$?
+
     # we need to check that because it is not available before kirkstone
     if command -v bitbake-getvar >/dev/null 2>&1; then
         # get buildstats path
@@ -29,6 +32,8 @@ function finish() {
             run $BUILDSTATS_SUMMARY $BUILDSTATS_PATH
         fi
     fi
+
+    exit $rc
 }
 
 HERE=$(dirname $(readlink -f $0))
@@ -52,11 +57,12 @@ bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt
 status "Run bitbake (setscene tasks only)"
 bitbake --setscene-only ${IMAGE} || true
 
+# add trap to do some pending operations on exit
+trap finish TERM INT EXIT
+
 if [ "$BUILD_SDK" == "1" ] && [ "${DISTRO}" != "lmp-mfgtool" ]; then
     status "Run bitbake (populate sdk)"
     bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE} -c populate_sdk
 fi
 status "Run bitbake"
 bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE}
-
-finish
