@@ -40,11 +40,11 @@ if [ -d "$BUILDSTATS_PATH" ]; then
     # we need to check that because it can't be available in old containers
     if command -v xvfb-run >/dev/null 2>&1 ; then
         # producing bootchart.svg
-        run xvfb-run ../layers/openembedded-core/scripts/pybootchartgui/pybootchartgui.py \
+        run xvfb-run $(realpath $BUILDDIR/../layers/openembedded-core/scripts/pybootchartgui/pybootchartgui.py) \
             --minutes --format=svg --output=${archive}/bitbake_buildchart $BUILDSTATS_PATH
     fi
     # write a summary of the buildstats to the terminal
-    BUILDSTATS_SUMMARY="../layers/openembedded-core/scripts/buildstats-summary"
+    BUILDSTATS_SUMMARY="$(realpath $BUILDDIR/../layers/openembedded-core/scripts/buildstats-summary)"
     # we need to check that because it is only available in the kirkstone branch
     if [ -f $BUILDSTATS_SUMMARY ]; then
         # common arguments with bold disabled
