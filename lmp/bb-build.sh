@@ -27,9 +27,12 @@ function finish() {
             BUILDSTATS_SUMMARY="$BUILDSTATS_SUMMARY --sort duration --highlight 0"
             # log all task
             $BUILDSTATS_SUMMARY $BUILDSTATS_PATH > ${archive}/bitbake_buildstats.log
-            # for console hide tasks < Seconds
-            BUILDSTATS_SUMMARY="$BUILDSTATS_SUMMARY --shortest 60"
-            run $BUILDSTATS_SUMMARY $BUILDSTATS_PATH
+            # only run for successfully builds
+            if [ "$rc" -eq "0" ]; then
+                # for console hide tasks < Seconds
+                BUILDSTATS_SUMMARY="$BUILDSTATS_SUMMARY --shortest 60"
+                run $BUILDSTATS_SUMMARY $BUILDSTATS_PATH
+            fi
         fi
     fi
 
