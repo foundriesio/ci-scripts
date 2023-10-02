@@ -4,6 +4,7 @@ function finish() {
     # save the return code
     rc=$?
 
+    status "Post-build process"
     # we need to check that because it is not available before kirkstone
     if command -v bitbake-getvar >/dev/null 2>&1; then
         # get buildstats path
@@ -16,7 +17,7 @@ function finish() {
         # we need to check that because it can't be available in old containers
         if command -v xvfb-run >/dev/null 2>&1 ; then
             # producing bootchart.svg
-            run xvfb-run $(realpath $BUILDDIR/../layers/openembedded-core/scripts/pybootchartgui/pybootchartgui.py) \
+            xvfb-run $(realpath $BUILDDIR/../layers/openembedded-core/scripts/pybootchartgui/pybootchartgui.py) \
                 --minutes --format=svg --output=${archive}/bitbake_buildchart $BUILDSTATS_PATH
         fi
         # write a summary of the buildstats to the terminal
