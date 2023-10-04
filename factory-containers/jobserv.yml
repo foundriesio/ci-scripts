@@ -35,7 +35,7 @@ triggers:
     runs:
       - name: publish-apps
         container: foundries/lmp-image-tools
-        host-tag: amd64-osf
+        host-tag: fio-internal-ci
         privileged: true
         params:
           DOCKER_COMPOSE_APP: "1"
@@ -52,7 +52,7 @@ triggers:
     runs:
       - name: publish-apps
         container: foundries/lmp-image-tools
-        host-tag: amd64-osf
+        host-tag: fio-internal-ci
         privileged: true
         params:
           DOCKER_COMPOSE_APP: "1"
