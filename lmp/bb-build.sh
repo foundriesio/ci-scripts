@@ -3,6 +3,8 @@
 function finish() {
     # save the return code
     rc=$?
+    # allow this block to fail
+    set +e
 
     status "Post-build process"
     # we need to check that because it is not available before kirkstone
