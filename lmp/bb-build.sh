@@ -6,7 +6,8 @@ function finish() {
     # allow this block to fail
     set +e
 
-    status "Post-build process"
+    status "Run bitbake (finish)"
+
     # we need to check that because it is not available before kirkstone
     if command -v bitbake-getvar >/dev/null 2>&1; then
         # get buildstats path
