@@ -71,6 +71,8 @@ if [ -n "$OS_SELFTEST" ]; then
 fi
 su builder -c $HERE/bb-build.sh
 
+status "Post-build processing"
+
 DEPLOY_DIR="$(grep "^DEPLOY_DIR=" ${archive}/bitbake_global_env.txt | cut -d'=' -f2 | tr -d '"')"
 DEPLOY_DIR_IMAGE="${DEPLOY_DIR}/images/${MACHINE}"
 DEPLOY_DIR_SDK="${DEPLOY_DIR}/sdk/"
