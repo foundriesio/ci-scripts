@@ -192,13 +192,16 @@ SSTATE_MIRRORS ?= " \\
 EOFEOF
 
 # Add build id H_BUILD to output files names
+cat << 'EOFEOF' >> conf/local.conf
+DISTRO_VERSION_EXTENDED ?= "-${H_BUILD}-${LMP_VERSION}"
+EOFEOF
 if [ "$CONF_VERSION" == "1" ]; then
-	cat << EOFEOF >> conf/local.conf
-DISTRO_VERSION_append = "-\${H_BUILD}-\${LMP_VERSION}"
+	cat << 'EOFEOF' >> conf/local.conf
+DISTRO_VERSION_append = "${DISTRO_VERSION_EXTENDED}"
 EOFEOF
 else
-	cat << EOFEOF >> conf/local.conf
-DISTRO_VERSION:append = "-\${H_BUILD}-\${LMP_VERSION}"
+	cat << 'EOFEOF' >> conf/local.conf
+DISTRO_VERSION:append = "${DISTRO_VERSION_EXTENDED}"
 EOFEOF
 fi
 
