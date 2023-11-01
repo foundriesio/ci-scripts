@@ -8,6 +8,7 @@ from typing import List, NamedTuple, Tuple
 from helpers import (
     Progress,
     cmd,
+    fio_dnsbase,
     status,
     secret
 )
@@ -54,7 +55,8 @@ def save_delta_stats(delta_stats: dict, out_dir: str):
 
 
 def upload_delta_stats(factory: str, delta_stats: dict, tok_secret_name: str):
-    ostreehub_uri = f"https://api.foundries.io/ota/ostreehub/{factory}/v2/repos/lmp/delta-stats"
+    base = fio_dnsbase()
+    ostreehub_uri = f"https://api.{base}/ota/ostreehub/{factory}/v2/repos/lmp/delta-stats"
     for to_sha, s in delta_stats.items():
         status(f"Uploading delta stats for {to_sha}...")
         r = requests.put(ostreehub_uri,
