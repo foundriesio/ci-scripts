@@ -81,18 +81,31 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.txt
 ## Only publish wic.gz
 rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 
-status "Post-build processing (license)"
+IMAGE_MANIFESTS=""
+if [ "${DISTRO}" != "lmp-mfgtool" ]; then
+	status "Post-build processing (license)"
+	# find image manifests and only consider symbolic links
+	IMAGE_MANIFESTS=$(find ${DEPLOY_DIR_IMAGE} -type l -name "*${MACHINE}*.manifest")
+	if [ "${IMAGE_MANIFESTS}" = "" ]; then
+		status "Image manifest not found on ${DEPLOY_DIR_IMAGE}, license manifest can't be collected"
+		exit 1
+	fi
+fi
 # Link the license manifest for all the images produced by the build
-for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest; do
+for img in ${IMAGE_MANIFESTS}; do
 	image_name=`basename ${img} | sed -e "s/.manifest//"`
-	image_name_id=`readlink ${img} | sed -e "s/\..*manifest//"`
-	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ]; then
-		cp ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
+	image_path=`find ${DEPLOY_DIR}/licenses -name "${image_name}*" -type d`
+	image_name_id=`basename ${image_path}`
+	if [ -f ${image_path}/license.manifest ]; then
+		cp ${image_path}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
 		ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
+	else
+		status "Image ${image_name} license manifest not found on ${DEPLOY_DIR}/licenses, license manifest can't be collected"
+		exit 1
 	fi
 	# Also take care of the image_license, which contains the binaries used by wic outside the rootfs
-	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ]; then
-		cp ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.image_license.manifest
+	if [ -f ${image_path}/image_license.manifest ]; then
+		cp ${image_path}/image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.image_license.manifest
 		ln -sf ${image_name_id}.image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.image_license.manifest
 	fi
 done
