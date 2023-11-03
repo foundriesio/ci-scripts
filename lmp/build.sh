@@ -82,16 +82,32 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.txt
 rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 
 # Link the license manifest for all the images produced by the build
-for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest; do
+for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}*.manifest; do
+	if [ "${DISTRO}" = "lmp-mfgtool" ]; then
+		status "Image manifest not exist in this distro, skipping"
+		break
+	fi
+	if ! [ -e "${img}" ]; then
+		status "Image manifest not found on ${DEPLOY_DIR_IMAGE}, license manifest can't be collected"
+		eixt 1
+	fi
+	# only consider symbolic links
+	if ! [ -h "${img}" ]; then
+		continue
+	fi
 	image_name=`basename ${img} | sed -e "s/.manifest//"`
-	image_name_id=`readlink ${img} | sed -e "s/\..*manifest//"`
-	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ]; then
-		cp ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
+	image_path=`find ${DEPLOY_DIR}/licenses -name "${image_name}*" -type d`
+	image_name_id=`basename ${image_path}`
+	if [ -f ${image_path}/license.manifest ]; then
+		cp ${image_path}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
 		ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
+	else
+		status "Image ${image_name} license manifest not found on ${DEPLOY_DIR}/licenses, license manifest can't be collected"
+		eixt 1
 	fi
 	# Also take care of the image_license, which contains the binaries used by wic outside the rootfs
-	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ]; then
-		cp ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.image_license.manifest
+	if [ -f ${image_path}/image_license.manifest ]; then
+		cp ${image_path}/image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.image_license.manifest
 		ln -sf ${image_name_id}.image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.image_license.manifest
 	fi
 done
