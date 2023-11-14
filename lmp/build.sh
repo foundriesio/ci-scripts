@@ -53,7 +53,10 @@ export FACTORY_SSTATE_CACHE_MIRROR="/var/cache/bitbake/v${LMP_VERSION_CACHE}-sst
 su builder -c $HERE/bb-config.sh
 touch ${archive}/customize-target.log && chown builder ${archive}/customize-target.log
 touch ${archive}/bitbake_buildchart.svg && chown builder ${archive}/bitbake_buildchart.svg
-touch ${archive}/bitbake_debug.log ${archive}/bitbake_warning.log ${archive}/bitbake_buildstats.log && chown builder ${archive}/bitbake_*.log
+touch ${archive}/bitbake_debug.log \
+	${archive}/bitbake_warning.log \
+	${archive}/bitbake_buildstats.log \
+	&& chown builder ${archive}/bitbake_*.log
 touch ${archive}/bitbake_global_env.txt ${archive}/bitbake_image_env.txt && chown builder ${archive}/bitbake_*_env.txt
 touch ${archive}/app-preload.log && chown builder ${archive}/app-preload.log
 touch ${archive}/tuf-root-fetch.log && chown builder ${archive}/tuf-root-fetch.log
