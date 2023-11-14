@@ -17,7 +17,6 @@ DISABLE_GPLV3="${DISABLE_GPLV3-0}"
 DOCKER_MAX_CONCURRENT_DOWNLOADS="${DOCKER_MAX_CONCURRENT_DOWNLOADS-3}"
 DOCKER_MAX_DOWNLOAD_ATTEMPTS="${DOCKER_MAX_DOWNLOAD_ATTEMPTS-5}"
 MFGTOOL_FLASH_IMAGE="${MFGTOOL_FLASH_IMAGE-lmp-factory-image}"
-SSTATE_CACHE_MIRROR="${SSTATE_CACHE_MIRROR-/sstate-cache-mirror/v$LMP_VERSION_CACHE-sstate-cache}"
 USE_FIOTOOLS="${USE_FIOTOOLS-1}"
 FIO_CHECK_CMD="${FIO_CHECK_CMD-/usr/bin/fiocheck}"
 FIO_PUSH_CMD="${FIO_PUSH_CMD-/usr/bin/fiopush}"
@@ -183,11 +182,14 @@ IMAGE_LICENSE_CHECKER_NON_ROOTFS_DENYLIST = "GPL-3.0-only GPL-3.0-or-later LGPL-
 EOFEOF
 fi
 
-if [ -d "$SSTATE_CACHE_MIRROR" ]; then
 	cat << EOFEOF >> conf/local.conf
-SSTATE_MIRRORS ?= "file://.* file://${SSTATE_CACHE_MIRROR}/PATH"
+
+# prioritize local nfs factory mirror over public https lmp
+SSTATE_MIRRORS ?= " \\
+	file://.* file://${FACTORY_SSTATE_CACHE_MIRROR}/PATH \\
+	file://.* https://storage.googleapis.com/lmp-cache/v${LMP_VERSION_CACHE}-sstate-cache/PATH \\
+"
 EOFEOF
-fi
 
 # Add build id H_BUILD to output files names
 if [ "$CONF_VERSION" == "1" ]; then
