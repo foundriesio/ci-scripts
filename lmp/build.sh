@@ -47,11 +47,6 @@ fi
 ln -s $cache downloads
 
 cache="/var/cache/bitbake/v${LMP_VERSION_CACHE}-sstate-cache"
-if [ -d /var/cache/bitbake/sstate-cache-${DISTRO} ] ; then
-	# TODO remove once we've migrated everyone
-	status Migrating to new sstate cache layout
-	mv /var/cache/bitbake/sstate-cache-$DISTRO $cache
-fi
 [ -d $cache ] || (mkdir $cache; chown builder $cache)
 ln -s $cache sstate-cache
 
