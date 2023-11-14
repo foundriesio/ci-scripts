@@ -42,7 +42,7 @@ function finish() {
 
     status "Run bitbake (rsync factory sstate-cache mirror)"
     SSTATE_DIR="$(grep "^SSTATE_DIR=" ${archive}/bitbake_global_env.txt | cut -d'=' -f2 | tr -d '"')"
-    rsync -a --copy-links --copy-dirlinks --hard-links ${SSTATE_DIR}/ ${FACTORY_SSTATE_CACHE_MIRROR}/
+    rsync -vv -a --copy-links --copy-dirlinks --hard-links ${SSTATE_DIR}/ ${FACTORY_SSTATE_CACHE_MIRROR}/ > ${archive}/bitbake_sstatemirror.log
 
     exit $rc
 }

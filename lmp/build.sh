@@ -56,6 +56,7 @@ touch ${archive}/bitbake_buildchart.svg && chown builder ${archive}/bitbake_buil
 touch ${archive}/bitbake_debug.log \
 	${archive}/bitbake_warning.log \
 	${archive}/bitbake_buildstats.log \
+	${archive}/bitbake_sstatemirror.log \
 	&& chown builder ${archive}/bitbake_*.log
 touch ${archive}/bitbake_global_env.txt ${archive}/bitbake_image_env.txt && chown builder ${archive}/bitbake_*_env.txt
 touch ${archive}/app-preload.log && chown builder ${archive}/app-preload.log
@@ -134,6 +135,8 @@ if [ -d "${archive}" ] ; then
 	mv ${archive}/bitbake_warning.log ${archive}/other/
 	mv ${archive}/bitbake_buildstats.log ${archive}/other/
 	mv ${archive}/bitbake_buildchart.svg ${archive}/other/
+	gzip -f ${archive}/bitbake_sstatemirror.log
+	mv ${archive}/bitbake_sstatemirror.log.gz ${archive}/other/
 
 	# Compress and publish source tarball (for *GPL* packages)
 	if [ -d ${DEPLOY_DIR_IMAGE}/source-release ]; then
