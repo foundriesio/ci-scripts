@@ -46,10 +46,6 @@ fi
 [ -d $cache ] || (mkdir -p $cache; chown builder $cache)
 ln -s $cache downloads
 
-cache="/var/cache/bitbake/v${LMP_VERSION_CACHE}-sstate-cache"
-[ -d $cache ] || (mkdir $cache; chown builder $cache)
-ln -s $cache sstate-cache
-
 chown -R builder .
 
 su builder -c $HERE/bb-config.sh
