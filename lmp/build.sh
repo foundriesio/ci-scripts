@@ -55,6 +55,7 @@ touch ${archive}/customize-target.log && chown builder ${archive}/customize-targ
 touch ${archive}/bitbake_buildchart.svg && chown builder ${archive}/bitbake_buildchart.svg
 touch ${archive}/bitbake_debug.log \
 	${archive}/bitbake_warning.log \
+	${archive}/bitbake_cookerdaemon.log \
 	${archive}/bitbake_buildstats.log \
 	${archive}/bitbake_sstatemirror.log \
 	&& chown builder ${archive}/bitbake_*.log
@@ -133,6 +134,7 @@ if [ -d "${archive}" ] ; then
 	gzip -f ${archive}/bitbake_debug.log
 	mv ${archive}/bitbake_debug.log.gz ${archive}/other/
 	mv ${archive}/bitbake_warning.log ${archive}/other/
+	mv ${archive}/bitbake_cookerdaemon.log ${archive}/other/
 	mv ${archive}/bitbake_buildstats.log ${archive}/other/
 	mv ${archive}/bitbake_buildchart.svg ${archive}/other/
 	gzip -f ${archive}/bitbake_sstatemirror.log

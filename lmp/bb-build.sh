@@ -55,6 +55,9 @@ start_ssh_agent
 
 source setup-environment build
 
+# store bitbake-cookerdaemon log
+ln -s ${archive}/bitbake_cookerdaemon.log bitbake-cookerdaemon.log
+
 # Parsing first, to stop in case of parsing issues
 status "Run bitbake (parsing)"
 bitbake -p
