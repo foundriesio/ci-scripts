@@ -157,6 +157,17 @@ class SkopeAppFetcher(TargetAppsFetcher):
                     with open(os.path.join(blobs_dir, lm_uri.hash), 'wb') as f:
                         f.write(layers_index)
 
+            # If present, then download and store the app layers metadata that contains precise
+            # sizes of extracted layers.
+            # The metadata are used to calculate exact update size during offline update
+            if len(manifest.get('layers', [])) > 1 and \
+                    manifest['layers'][1].get('annotations', {}).get('layers-meta') == 'v1':
+                layer_desc = manifest['layers'][1]
+                blob = self._registry_client.pull_layer(uri, layer_desc['digest'])
+                blob_file = os.path.join(blobs_dir, layer_desc['digest'][len('sha256:'):])
+                with open(blob_file, 'wb') as f:
+                    f.write(blob)
+
             fetched_apps.append(ComposeApps.App(app_name, app_dir))
         return fetched_apps
 
