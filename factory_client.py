@@ -3,7 +3,7 @@ import logging
 import requests
 import subprocess
 
-from helpers import Progress, http_get
+from helpers import Progress, fio_dnsbase, http_get
 from typing import NamedTuple
 
 
@@ -97,8 +97,9 @@ class FactoryClient:
             yocto_version = version_data[0] if len(version_data) >= 1 else None
             return cls(lmp_version, yocto_version)
 
-    def __init__(self, factory: str, token: str,
-                 factory_api_base_url='https://api.foundries.io'):
+    def __init__(self, factory: str, token: str, factory_api_base_url=None):
+        if not factory_api_base_url:
+            factory_api_base_url = "https://api." + fio_dnsbase()
         factory_resource = 'ota/factories/'
         targets_resource = 'targets/'
 
@@ -146,7 +147,7 @@ class FactoryClient:
         image_machine = target['custom']['hardwareIds'][0]
         image_filename = target['custom']['image-file']
 
-        base_url = image_base_url.replace('https://ci.foundries.io', self.api_base_url)
+        base_url = image_base_url.replace("https://ci." + fio_dnsbase(), self.api_base_url)
         if format == ".wic":
             image_url = os.path.join(base_url, 'runs', image_machine, image_filename)
         elif format == ".ota-ext4":

@@ -12,11 +12,11 @@ import requests
 from io import BytesIO as BIO
 from pathlib import Path
 
-from helpers import http_get, status
+from helpers import fio_dnsbase, http_get, status
 
 
 class DockerRegistryClient:
-    DefaultRegistryHost = 'hub.foundries.io'
+    DefaultRegistryHost = 'hub.' + fio_dnsbase()
 
     def __init__(self, token: str, registry_host=DefaultRegistryHost, schema='https', client='docker'):
         self._token = token
