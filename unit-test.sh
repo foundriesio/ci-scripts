@@ -13,4 +13,4 @@ function cleanup {
 trap cleanup EXIT
 
 # run tests
-PYTHONPATH=./ python3 -m unittest discover -v -s tests
+H_RUN_URL="https://api.foundries.io/projects/factory/lmp/builds/1/runs/some-run" PYTHONPATH=./ python3 -m unittest discover -v -s tests
