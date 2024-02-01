@@ -180,7 +180,7 @@ class FactoryClient:
 
     def get_target_release_info(self, target: Target):
         image_base_url = target['custom']['origUri'] if 'origUri' in target['custom'] else target['custom']['uri']
-        base_url = image_base_url.replace('https://ci.foundries.io', self.api_base_url)
+        base_url = image_base_url.replace("https://ci." + fio_dnsbase(), self.api_base_url)
         image_machine = target['custom']['hardwareIds'][0]
         os_release_url = os.path.join(base_url, 'runs', image_machine, 'os-release')
         release_info = self.Release(0, '')
