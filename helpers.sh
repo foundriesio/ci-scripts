@@ -71,8 +71,8 @@ function repo_sync {
 
 	if [ -f /secrets/git.http.extraheader ] ; then
 		domain=$(echo $GIT_URL | cut -d/  -f3)
-		status "Adding git config extraheader for $domain"
-		git config --global http.https://${domain}.extraheader "$(cat /secrets/git.http.extraheader)"
+		status "Adding git config extraheader for $domain/factories"
+		git config --global http.https://${domain}/factories.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
 	for i in $(seq 4); do
 		run repo init --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES} && break
