@@ -33,6 +33,10 @@ PLATFORMS=${MANIFEST_PLATFORMS_DEFAULT-""}
 
 TUF_TARGETS_EXPIRE=${TUF_TARGETS_EXPIRE-1Y}
 
+FETCH_APPS=${FETCH_APPS-""}
+FETCH_APPS_DIR="${FETCH_APPS_DIR-$(mktemp -u -d -p /var/cache/apps)}"
+FETCH_APPS_SHORTLIST="${FETCH_APPS_SHORTLIST-""}"
+
 require_params FACTORY ARCHIVE TARGET_TAG TUF_TARGETS_EXPIRE
 #-- END: Input params
 
@@ -90,6 +94,18 @@ status "Publishing apps; version: ${APPS_VERSION}, Target tag: ${TARGET_TAG}"
     --git-sha "${GIT_SHA}" \
     --target-version="${TARGET_VERSION}" \
     --new-targets-file="${ARCHIVE}/targets-created.json"
+
+if [ "${FETCH_APPS}" == "1" ]; then
+  status "Fetching and archiving apps..."
+  "${HERE}/fetch.py" \
+      --factory "${FACTORY}" \
+      --targets-file="${ARCHIVE}/targets-created.json" \
+      --token-file="${SECRETS}/osftok" \
+      --fetch-dir="${FETCH_APPS_DIR}" \
+      --apps-shortlist="${FETCH_APPS_SHORTLIST}" \
+      --dst-dir="${ARCHIVE}" \
+      --tuf-targets="${TUF_REPO}/roles/unsigned/targets.json"
+fi
 
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
 

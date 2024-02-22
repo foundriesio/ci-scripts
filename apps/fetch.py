@@ -41,6 +41,8 @@ def get_args():
                         help='Comma separated list of Target Apps to fetch', default=None)
     parser.add_argument('-o', '--dst-dir',
                         help='Directory to output the tarred apps data to', required=True)
+    parser.add_argument('-tt', '--tuf-targets',
+                        help='TUF targets to be updated with URI to fetched app archive')
 
     args = parser.parse_args()
     return args
@@ -55,10 +57,25 @@ def main(args: argparse.Namespace):
             targets = json.load(f)
 
         fetch_target_apps(targets, args.apps_shortlist, token, args.fetch_dir)
-        for target in targets.keys():
+        for target, target_json in targets.items():
             out_file = os.path.join(args.dst_dir, f"{target}.apps.tar")
             logging.info(f"Tarring fetched apps of {target} to {out_file}...")
             tar_fetched_apps(os.path.join(args.fetch_dir, target), out_file)
+            target_json["custom"]["fetched-apps"] = {
+                "uri": os.path.join(os.environ["H_RUN_URL"], f"{target}.apps.tar"),
+                "shortlist": args.apps_shortlist,
+            }
+        with open(args.targets_file, "w") as f:
+            json.dump(targets, f)
+
+        if args.tuf_targets:
+            with open(args.tuf_targets, "r") as f:
+                tuf_targets = json.load(f)
+
+            tuf_targets["targets"].update(targets)
+
+            with open(args.tuf_targets, "w") as f:
+                json.dump(tuf_targets, f)
 
     except Exception as exc:
         logging.error('Failed to pull Target apps and images: {}\n{}'.format(exc, traceback.format_exc()))
