@@ -18,7 +18,7 @@ def get_args():
                                      'store them on a file system')
     parser.add_argument('-f', '--factory', help='Apps Factory', required=True)
     parser.add_argument('-t', '--targets', help='Comma separated list of Targets to dump/fetch', required=True)
-    parser.add_argument('-a', '--token', help='Factory API Token, aka OSF Token', required=True)
+    parser.add_argument('-a', '--token-file', help='File where the Factory API Token is stored', required=True)
     parser.add_argument('-d', '--dst-dir', help='Directory to store apps and images in', required=True)
     parser.add_argument('-s', '--apps-shortlist', help='A coma separated list of Target Apps to fetch', default=None)
 
@@ -30,11 +30,14 @@ def main(args: argparse.Namespace):
     exit_code = os.EX_OK
     try:
         target_list = args.targets.split(',')
-        factory_client = FactoryClient(args.factory, args.token)
+        with open(args.token_file) as f:
+            token = f.read()
+        factory_client = FactoryClient(args.factory, token)
 
         targets = factory_client.get_targets(target_list)
-
-        apps_fetcher = SkopeAppFetcher(args.token, args.dst_dir)
+        if len(targets) == 0:
+            raise Exception(f"No targets found in the factory; factory: {args.factory}, {target_list}")
+        apps_fetcher = SkopeAppFetcher(token, args.dst_dir)
         for target in targets:
             target.shortlist = args.apps_shortlist
             apps_fetcher.fetch_target(target, force=True)
