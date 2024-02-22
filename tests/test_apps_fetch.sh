@@ -9,7 +9,8 @@ TARGETS_FILE=$3
 FETCH_DIR=$4
 DST_DIR=$5
 APPS_SHORTLIST=${6-""}
-API_HOST=${7-"api.foundries.io"}
+TUF_TARGETS_FILE=$7
+API_HOST=${8-"api.foundries.io"}
 
 CMD=./apps/fetch.py
 PARAMS="\
@@ -19,6 +20,7 @@ PARAMS="\
   --fetch-dir=/fetched-apps \
   --apps-shortlist=${APPS_SHORTLIST} \
   --dst-dir=/dst-dir \
+  --tuf-targets=${TUF_TARGETS_FILE} \
 "
 
 docker run -v -it --rm \
@@ -29,5 +31,6 @@ docker run -v -it --rm \
   -v "${DST_DIR}":/dst-dir \
   -v "${TOKEN_FILE}":"${TOKEN_FILE}" \
   -v "${TARGETS_FILE}":"${TARGETS_FILE}" \
+  -v "${TUF_TARGETS_FILE}":"${TUF_TARGETS_FILE}" \
   -w /ci-scripts \
   foundries/lmp-image-tools ${CMD} ${PARAMS}
