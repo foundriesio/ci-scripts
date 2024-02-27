@@ -7,15 +7,23 @@ import subprocess
 import os
 import json
 import argparse
+import io
 import logging
 import shutil
+import tarfile
 
 import requests
 from math import ceil
 from time import sleep
 from typing import NamedTuple
 
-from helpers import cmd, Progress
+from helpers import (
+    cmd,
+    http_get,
+    Progress,
+    status,
+)
+
 from apps.target_apps_fetcher import TargetAppsFetcher, SkopeAppFetcher
 from factory_client import FactoryClient
 
@@ -265,6 +273,51 @@ def fetch_restorable_apps(target: FactoryClient.Target, dst_dir: str, shortlist:
     return AppsDesc(apps_fetcher.target_dir(target.name), apps_fetcher.get_target_apps_size(target))
 
 
+def check_and_get_fetched_apps_uri(target: FactoryClient.Target, shortlist: [str] = None):
+    fetched_apps = None
+    fetched_apps_uri = None
+    if "fetched-apps" in target.json.get("custom", {}):
+        fetched_apps_str = target.json["custom"]["fetched-apps"].get("shortlist")
+        if fetched_apps_str:
+            fetched_apps = set(
+                x.strip() for x in fetched_apps_str.split(',') if x)
+        else:
+            # if `shortlist` is not defined or empty then all target apps were fetched
+            fetched_apps = set(target.apps().keys())
+
+        apps_to_fetch = set(shortlist) if shortlist else set(target.apps().keys())
+
+        if fetched_apps.issubset(apps_to_fetch):
+            # if the previously fetched apps is a sub-set of the apps to be fetched then
+            # enable getting and reusing the previously fetched apps
+            fetched_apps_uri = target.json["custom"]["fetched-apps"]["uri"]
+
+    return fetched_apps_uri, fetched_apps
+
+
+def get_and_extract_fetched_apps(uri: str, token: str, out_dir: str):
+    resp = http_get(uri, headers={
+        "OSF-TOKEN": token,
+        "Connection": "keep-alive",
+        "Keep-Alive": "timeout=1200, max=1"
+        # keep connection alive for 1 request for 20m
+    }, stream=True)
+
+    total_length = int(resp.headers["content-length"])
+    progress_percent = 5
+    progress_step = total_length * (progress_percent / 100)
+
+    last_reported_pos = 0
+    with io.BufferedReader(resp.raw, buffer_size=1024 * 1024) as buf_reader:
+        with tarfile.open(fileobj=buf_reader, mode="r|") as ts:
+            for m in ts:
+                ts.extract(m, out_dir)
+                if buf_reader.tell() - last_reported_pos > progress_step:
+                    percent = round(buf_reader.tell() / total_length * 100)
+                    status("Downloaded %d%% " % percent, with_ts=True)
+                    last_reported_pos = buf_reader.tell()
+
+
 def archive_and_output_assembled_wic(wic_image: str, out_image_dir: str):
     logger.info('Gzip and move resultant system image to the specified destination folder: {}'.format(out_image_dir))
     subprocess.check_call(['bmaptool', 'create', wic_image, '-o', wic_image + '.bmap'])
@@ -336,6 +389,15 @@ if __name__ == '__main__':
             target.lmp_version = release_info.lmp_version
             if args.app_type == 'restorable' or (not args.app_type and release_info.lmp_version > 84):
                 logger.info('Fetching Restorable Apps...')
+                previously_fetched_apps_uri, previously_fetched_apps \
+                    = check_and_get_fetched_apps_uri(target, args.app_shortlist)
+                if previously_fetched_apps_uri:
+                    target_apps_dir = os.path.join(apps_root_dir, target.name)
+                    logger.info("Fetching the app archive from the publish run; uri:"
+                                f" {previously_fetched_apps_uri}, apps: {previously_fetched_apps}")
+                    get_and_extract_fetched_apps(previously_fetched_apps_uri, args.token,
+                                                 target_apps_dir)
+                    logger.info(f"The fetched app archive is extracted to {target_apps_dir}")
                 apps_desc = fetch_restorable_apps(target, apps_root_dir, args.app_shortlist, args.token)
                 fetched_apps[target.name] = (apps_desc, os.path.join(args.out_image_dir, target.tags[0]))
             fetch_progress.tick()
