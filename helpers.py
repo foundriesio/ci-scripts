@@ -120,9 +120,13 @@ def fio_dnsbase():
     '''Find the dns base hosting jobserv. For example when running under
        api.foundries.io, this would return foundries.io
     '''
-    parts = urlparse(os.environ["H_RUN_URL"])
-    _, base = parts.netloc.split(".", 1)
-    return base
+    run_url = os.environ.get("H_RUN_URL")
+    if run_url:
+        parts = urlparse(run_url)
+        _, base = parts.netloc.split(".", 1)
+        return base
+    status("WARNING: H_RUN_URL not defined, defaulting fio_dnsbase to be foundries.io")
+    return "foundries.io"
 
 
 def jobserv_get(url):
