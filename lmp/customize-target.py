@@ -131,6 +131,9 @@ def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
                     u['tgt']['custom']['origUriApps'] = apps_uri
                 else:
                     u['tgt']['custom']['origUriApps'] = u['prev']['custom']['uri']
+                fetched_apps = u['prev']['custom'].get('fetched-apps')
+                if fetched_apps:
+                    u['tgt']['custom']['fetched-apps'] = fetched_apps
                 changed = True
 
     if changed:
