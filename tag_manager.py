@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2019 Foundries.io
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: BSD-3-Clause
 
 class TagMgr:
     def __init__(self, ota_lite_tag=''):

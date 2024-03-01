@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #
 # Copyright (c) 2020 Foundries.io
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: BSD-3-Clause
 
 import json
 import logging

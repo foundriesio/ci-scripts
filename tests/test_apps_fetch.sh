@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2024 Foundries.io
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: BSD-3-Clause
 set -euo pipefail
 
 FACTORY=$1

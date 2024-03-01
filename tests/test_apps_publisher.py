@@ -1,5 +1,5 @@
 # Copyright (c) 2020 Foundries.io
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: BSD-3-Clause
 
 from apps.compose_apps import ComposeApps
 from apps.apps_publisher import AppsPublisher
