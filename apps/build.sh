@@ -1,5 +1,5 @@
 #!/bin/sh -e
-# Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: BSD-3-Clause
 #
 # This script will handle the follow scenarios for building containers
 #   * If NOCACHE flag is set, it will rebuild all container images without cache.

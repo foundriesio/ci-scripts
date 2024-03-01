@@ -1,5 +1,5 @@
 #!/bin/sh -eu
-# Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2019 Foundries.io, SPDX-License-Identifier: BSD-3-Clause
 
 HERE=$(dirname $(readlink -f $0))
 TMPDIR=${TMPDIR-/var/tmp}
