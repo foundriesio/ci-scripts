@@ -283,7 +283,7 @@ def check_and_get_fetched_apps_uri(target: FactoryClient.Target, shortlist: [str
                 x.strip() for x in fetched_apps_str.split(',') if x)
         else:
             # if `shortlist` is not defined or empty then all target apps were fetched
-            fetched_apps = set(target.apps().keys())
+            fetched_apps = [x[0] for x in target.apps()]
 
         apps_to_fetch = set(shortlist) if shortlist else set(target.apps().keys())
 
