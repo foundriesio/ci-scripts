@@ -283,9 +283,9 @@ def check_and_get_fetched_apps_uri(target: FactoryClient.Target, shortlist: [str
                 x.strip() for x in fetched_apps_str.split(',') if x)
         else:
             # if `shortlist` is not defined or empty then all target apps were fetched
-            fetched_apps = [x[0] for x in target.apps()]
+            fetched_apps = set(app[0] for app in target.apps())
 
-        apps_to_fetch = set(shortlist) if shortlist else set(target.apps().keys())
+        apps_to_fetch = set(shortlist) if shortlist else set(app[0] for app in target.apps())
 
         if fetched_apps.issubset(apps_to_fetch):
             # if the previously fetched apps is a sub-set of the apps to be fetched then
