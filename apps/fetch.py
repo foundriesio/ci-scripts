@@ -19,7 +19,8 @@ def fetch_target_apps(targets: dict, apps_shortlist: str, token: str, dst_dir: s
     apps_fetcher = SkopeAppFetcher(token, dst_dir)
     for target_name, target_json in targets.items():
         apps_fetcher.fetch_target(FactoryClient.Target(target_name, target_json),
-                                  apps_shortlist, force=True)
+                                  [x.strip() for x in apps_shortlist.split(',') if x]
+                                  if apps_shortlist else None, force=True)
 
 
 def tar_fetched_apps(src_dir: str, out_file: str):
