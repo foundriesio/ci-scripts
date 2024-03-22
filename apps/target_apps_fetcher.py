@@ -41,12 +41,12 @@ class TargetAppsFetcher:
     def images_dir(self, target_name):
         return os.path.join(self.target_dir(target_name), self.ImagesDir)
 
-    def fetch_target(self, target: FactoryClient.Target, shortlist=None, force=False):
+    def fetch_target(self, target: FactoryClient.Target, shortlist: [str] = None, force=False):
         self.target_apps.clear()
         self.fetch_target_apps(target, apps_shortlist=target.shortlist or shortlist, force=force)
         self.fetch_apps_images(force=force)
 
-    def fetch_target_apps(self, target: FactoryClient.Target, apps_shortlist=None, force=False):
+    def fetch_target_apps(self, target: FactoryClient.Target, apps_shortlist: [str] = None, force=False):
         self.target_apps[target] = self._fetch_apps(target, apps_shortlist=apps_shortlist, force=force)
 
     def fetch_apps_images(self, graphdriver='overlay2', force=False):
@@ -71,7 +71,7 @@ class TargetAppsFetcher:
             for app in apps:
                 app.download_images(platform, dockerd.host)
 
-    def _fetch_apps(self, target, apps_shortlist=None, force=False):
+    def _fetch_apps(self, target, apps_shortlist: [str] = None, force=False):
         for app_name, app_uri in target.apps():
             if apps_shortlist and app_name not in apps_shortlist:
                 logger.info('{} is not in the shortlist, skipping it'.format(app_name))
