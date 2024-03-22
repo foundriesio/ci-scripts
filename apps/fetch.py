@@ -15,7 +15,7 @@ from factory_client import FactoryClient
 from helpers import cmd
 
 
-def fetch_target_apps(targets: dict, apps_shortlist: [str], token: str, dst_dir: str):
+def fetch_target_apps(targets: dict, apps_shortlist: str, token: str, dst_dir: str):
     apps_fetcher = SkopeAppFetcher(token, dst_dir)
     for target_name, target_json in targets.items():
         apps_fetcher.fetch_target(FactoryClient.Target(target_name, target_json),
@@ -45,8 +45,6 @@ def get_args():
                         help='TUF targets to be updated with URI to fetched app archive')
 
     args = parser.parse_args()
-    if args.apps_shortlist:
-        args.apps_shortlist = [x.strip() for x in args.apps_shortlist.split(',') if x]
     return args
 
 
