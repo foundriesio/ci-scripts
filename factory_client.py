@@ -17,7 +17,8 @@ class FactoryClient:
         def __init__(self, target_name, target_json, shortlist=None):
             self.name = target_name
             self.json = target_json
-            self.shortlist = shortlist
+            if shortlist is not None:
+                self.shortlist = shortlist
             self._set_apps_commit_hash()
 
         @property
