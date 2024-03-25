@@ -276,21 +276,24 @@ def fetch_restorable_apps(target: FactoryClient.Target, dst_dir: str, shortlist:
 def check_and_get_fetched_apps_uri(target: FactoryClient.Target, shortlist: [str] = None):
     fetched_apps = None
     fetched_apps_uri = None
-    if "fetched-apps" in target.json.get("custom", {}):
-        fetched_apps_str = target.json["custom"]["fetched-apps"].get("shortlist")
-        if fetched_apps_str:
-            fetched_apps = set(
-                x.strip() for x in fetched_apps_str.split(',') if x)
-        else:
-            # if `shortlist` is not defined or empty then all target apps were fetched
-            fetched_apps = set(app[0] for app in target.apps())
+    try:
+        if "fetched-apps" in target.json.get("custom", {}):
+            fetched_apps_str = target.json["custom"]["fetched-apps"].get("shortlist")
+            if fetched_apps_str:
+                fetched_apps = set(
+                    x.strip() for x in fetched_apps_str.split(',') if x)
+            else:
+                # if `shortlist` is not defined or empty then all target apps were fetched
+                fetched_apps = set(app[0] for app in target.apps())
 
-        apps_to_fetch = set(shortlist) if shortlist else set(app[0] for app in target.apps())
+            apps_to_fetch = set(shortlist) if shortlist else set(app[0] for app in target.apps())
 
-        if fetched_apps.issubset(apps_to_fetch):
-            # if the previously fetched apps is a sub-set of the apps to be fetched then
-            # enable getting and reusing the previously fetched apps
-            fetched_apps_uri = target.json["custom"]["fetched-apps"]["uri"]
+            if fetched_apps.issubset(apps_to_fetch):
+                # if the previously fetched apps is a sub-set of the apps to be fetched then
+                # enable getting and reusing the previously fetched apps
+                fetched_apps_uri = target.json["custom"]["fetched-apps"]["uri"]
+    except Exception as err:
+        logger.error(f"Failed to get info about fetched apps: {err}")
 
     return fetched_apps_uri, fetched_apps
 
