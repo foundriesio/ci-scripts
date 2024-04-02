@@ -204,6 +204,8 @@ if [ -d "${archive}" ] ; then
 	# Make the main img.gz and respective bmap file be in the root of the archive
 	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
 	mv ${archive}/other/lmp-*.wic.bmap ${archive}/ || true
+	# Qcom targets use a qcomflash tarball
+	mv ${archive}/other/lmp-*.qcomflash.tar.gz ${archive}/ || true
 	# NVIDIA targets use a tegraflash tarball
 	mv ${archive}/other/lmp-*.tegraflash.tar.gz ${archive}/ || true
 	# Telechips targets use a fai image
