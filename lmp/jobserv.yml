@@ -204,6 +204,24 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+      # wayland distro flavor
+      - name: build-lmp-wayland-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-partner-gcp-nocache
+        loop-on:
+          - param: MACHINE
+            values:
+              - imx8mm-lpddr4-evk
+              - intel-corei7-64
+        params:
+          DISTRO: lmp-wayland
+          IMAGE: lmp-base-console-image
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
   - name: build-release-stable
     type: git_poller
     email:
