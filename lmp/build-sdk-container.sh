@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
