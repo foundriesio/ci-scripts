@@ -47,6 +47,7 @@ triggers:
               - imx8mq-evk
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
+              - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
@@ -172,6 +173,7 @@ triggers:
               - imx8mq-evk
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
+              - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
@@ -265,6 +267,7 @@ triggers:
               - imx8mq-evk
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
+              - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
@@ -387,6 +390,7 @@ triggers:
               - imx8mq-evk
               - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
+              - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
