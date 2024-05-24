@@ -64,8 +64,10 @@ def main(args: argparse.Namespace):
             tar_fetched_apps(os.path.join(args.fetch_dir, target), out_file)
             target_json["custom"]["fetched-apps"] = {
                 "uri": os.path.join(os.environ["H_RUN_URL"], f"{target}.apps.tar"),
-                "shortlist": args.apps_shortlist,
             }
+            if args.apps_shortlist:
+                target_json["custom"]["fetched-apps"]["shortlist"] = args.apps_shortlist
+
         with open(args.targets_file, "w") as f:
             json.dump(targets, f)
 
