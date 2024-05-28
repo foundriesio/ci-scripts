@@ -15,12 +15,26 @@ from factory_client import FactoryClient
 from helpers import cmd
 
 
-def fetch_target_apps(targets: dict, apps_shortlist: str, token: str, dst_dir: str):
+def fetch_target_apps(targets: dict, apps_shortlist: set[str], token: str, dst_dir: str) -> dict[str, set[str]]:
     apps_fetcher = SkopeAppFetcher(token, dst_dir)
+    fetched_target_apps: dict[str, set[str]] = {}
     for target_name, target_json in targets.items():
-        apps_fetcher.fetch_target(FactoryClient.Target(target_name, target_json),
-                                  [x.strip() for x in apps_shortlist.split(',') if x]
-                                  if apps_shortlist else None, force=True)
+        target = FactoryClient.Target(target_name, target_json)
+        target_apps = set(app for app, _ in target.apps())
+        target_app_shortlist: set[str] = None
+        if apps_shortlist:
+            target_app_shortlist = target_apps.intersection(apps_shortlist)
+
+        if apps_shortlist and not target_app_shortlist:
+            raise Exception(f'No apps found to fetch; target: {target_name};'
+                            f' target apps: {",".join(target_apps)};'
+                            f' shortlist: {",".join(apps_shortlist)}')
+        logging.info(f'"{",".join(target_app_shortlist if target_app_shortlist else target_apps)}"'
+                     f' will be pulled for {target_name}')
+        apps_fetcher.fetch_target(target, target_app_shortlist, force=True)
+        fetched_target_apps[target_name] = target_app_shortlist
+
+    return fetched_target_apps
 
 
 def tar_fetched_apps(src_dir: str, out_file: str):
@@ -57,7 +71,10 @@ def main(args: argparse.Namespace):
         with open(args.targets_file) as f:
             targets = json.load(f)
 
-        fetch_target_apps(targets, args.apps_shortlist, token, args.fetch_dir)
+        shortlist = [x.strip() for x in args.apps_shortlist.split(',') if x] \
+            if args.apps_shortlist else None
+
+        fetched_target_apps = fetch_target_apps(targets, shortlist, token, args.fetch_dir)
         for target, target_json in targets.items():
             out_file = os.path.join(args.dst_dir, f"{target}.apps.tar")
             logging.info(f"Tarring fetched apps of {target} to {out_file}...")
@@ -65,8 +82,9 @@ def main(args: argparse.Namespace):
             target_json["custom"]["fetched-apps"] = {
                 "uri": os.path.join(os.environ["H_RUN_URL"], f"{target}.apps.tar"),
             }
-            if args.apps_shortlist:
-                target_json["custom"]["fetched-apps"]["shortlist"] = args.apps_shortlist
+            if fetched_target_apps[target] and len(fetched_target_apps[target]) > 0:
+                target_json["custom"]["fetched-apps"]["shortlist"] = \
+                                                            ",".join(fetched_target_apps[target])
 
         with open(args.targets_file, "w") as f:
             json.dump(targets, f)
