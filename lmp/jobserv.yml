@@ -44,7 +44,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
@@ -86,7 +85,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
@@ -169,7 +167,6 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mn-lpddr4-evk
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
@@ -199,7 +196,6 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mn-lpddr4-evk
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
@@ -263,7 +259,6 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mn-lpddr4-evk
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
@@ -294,7 +289,6 @@ triggers:
               - imx8mn-ddr4-evk
               - imx8mn-lpddr4-evk
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
@@ -357,7 +351,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
@@ -399,7 +392,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
@@ -479,7 +471,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
               - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
@@ -582,7 +573,6 @@ triggers:
               - imx8mn-lpddr4-evk
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
-              - imx8ulp-lpddr4-evk
               - imx93-11x11-lpddr4x-evk
         params:
           DISTRO: lmp-mfgtool
