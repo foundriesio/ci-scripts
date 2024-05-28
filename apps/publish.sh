@@ -105,6 +105,15 @@ if [ "${FETCH_APPS}" == "1" ]; then
       --apps-shortlist="${FETCH_APPS_SHORTLIST}" \
       --dst-dir="${ARCHIVE}" \
       --tuf-targets="${TUF_REPO}/roles/unsigned/targets.json"
+elif [ "${FETCH_APPS}" == "0" ]; then
+  status "Disabling apps update for offline update..."
+  "${HERE}/fetch.py" \
+      --factory "${FACTORY}" \
+      --targets-file="${ARCHIVE}/targets-created.json" \
+      --token-file="${SECRETS}/osftok" \
+      --disable \
+      --dst-dir="${ARCHIVE}" \
+      --tuf-targets="${TUF_REPO}/roles/unsigned/targets.json"
 fi
 
 cp "${TUF_REPO}/roles/unsigned/targets.json" "${ARCHIVE}/targets-after.json"
