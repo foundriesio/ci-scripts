@@ -222,6 +222,8 @@ done
 
 if [ -z "$DISABLE_SBOM" ] ; then
 	PYTHONPATH=${HERE}/.. python3 ${HERE}/generate_non_factory_sboms.py --arch=$ARCH
+else
+  PYTHONPATH="${HERE}"/.. python3 "${HERE}"/fetch_app_images.py --apps-root "${REPO_ROOT}" --tag "${TAG}-${ARCH}"
 fi
 # 1. Parse the local docker store (the one where the built images are stored).
 # 2. Extract layers metadata (size, usage) of all Apps' images
