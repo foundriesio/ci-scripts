@@ -8,15 +8,14 @@ class DockerStore:
     _REPO_PATH = "image/overlay2/repositories.json"
 
     class Layer:
-        _DISTRIBUTION_DIGEST_PATH = "image/overlay2/distribution/v2metadata-by-diffid/sha256"
         _LAYER_DB_PATH = "image/overlay2/layerdb/sha256"
         _LAYER_DATA_BASE_PATH = "overlay2"
         _SUPPORTED_HASH_TYPE = "sha256:"
 
-        def __init__(self, data_root, layer_diff_id, parent_chain_id):
+        def __init__(self, data_root, layer_digest, layer_diff_id, parent_chain_id):
             self._data_root = data_root
             self.diff_id = layer_diff_id
-            self.digest = self._get_layer_archive_digest()
+            self.digest = layer_digest
             self.chain_id = self._get_chain_id(parent_chain_id)
             # Wire/transfer size (in bytes) of unarchived layer
             self.size = self._get_layer_size_from_meta()
@@ -39,17 +38,6 @@ class DockerStore:
             #                   --output /dev/null`
             self.tar_split_size = self._get_tar_split_size()
             self.overall_usage = self.usage_with_meta + self.tar_split_size
-
-        def _get_layer_archive_digest(self):
-            digest_file_path = os.path.join(self._data_root, self._DISTRIBUTION_DIGEST_PATH,
-                                            self.diff_id[len(self._SUPPORTED_HASH_TYPE):])
-            if not os.path.exists(digest_file_path):
-                raise Exception(
-                    f"Image layer diff ID to digest mapping is not found in: {digest_file_path}")
-
-            with open(digest_file_path) as f:
-                digests = json.load(f)
-                return digests[0]["Digest"]
 
         def _get_chain_id(self, parent_chain_id):
             if not parent_chain_id:
@@ -99,8 +87,12 @@ class DockerStore:
         _IMAGE_DB_ROOT_PATH = "image/overlay2/imagedb"
         _IMAGE_DB_CONTENT_PATH = "content/sha256"
         _SUPPORTED_HASH_TYPE = "sha256:"
+        _DISTRIBUTION_DIGEST_PATH = "image/overlay2/distribution/v2metadata-by-diffid/sha256"
 
-        def __init__(self, data_root, image_conf_hash):
+        def __init__(self, image_ref, data_root, image_conf_hash):
+            self._image_ref = image_ref
+            self._data_root = data_root
+            self._layer_digests = []
             if not image_conf_hash.startswith(self._SUPPORTED_HASH_TYPE):
                 raise Exception(f"Unsupported image config hash type: {image_conf_hash}")
 
@@ -115,10 +107,47 @@ class DockerStore:
             with open(image_conf_path) as f:
                 image_conf = json.load(f)
                 cur_chain_id = None
+                layer_indx = 0
                 for layer_diff_id in image_conf["rootfs"]["diff_ids"]:
-                    layer = DockerStore.Layer(data_root, layer_diff_id, cur_chain_id)
+                    layer_digest = self.get_layer_digest(layer_diff_id, layer_indx)
+                    layer = DockerStore.Layer(data_root, layer_digest, layer_diff_id, cur_chain_id)
                     self.layers.append(layer)
                     cur_chain_id = layer.chain_id
+                    layer_indx += 1
+
+        def get_layer_digest(self, diff_id, idx):
+            # If image layer digests were fetched before then just get the given layer digest value
+            # by its index. The image spec guarantees that order of layer diffIDs and digests listed
+            # in an image config and manifest respectively is the same - it starts from the base
+            # layer up to the top image layer.
+            if len(self._layer_digests) > idx:
+                return self._layer_digests[idx]
+
+            # If image layers digests were not fetched then try to get it from
+            # the image/overlay2/distribution/v2metadata-by-diffid/ where the mapping between
+            # diffID and digest is supposed to be stored if an image was `docker pull` or
+            # `docker push`.
+            digest_file_path = os.path.join(self._data_root, self._DISTRIBUTION_DIGEST_PATH,
+                                            diff_id[len(self._SUPPORTED_HASH_TYPE):])
+            if os.path.exists(digest_file_path):
+                with open(digest_file_path) as f:
+                    digests = json.load(f)
+                    return digests[0]["Digest"]
+            else:
+                print(f"Image layer diff ID to digest mapping is not found in: {digest_file_path}, "
+                      f"fetching image manifest to get its layer digests; uri: {self._image_ref}...")
+                output = subprocess.check_output(
+                    ["skopeo", "inspect", f"docker://{self._image_ref}"])
+                image_desc = json.loads(output)
+                for layer in image_desc["Layers"]:
+                    self._layer_digests.append(layer[len(self._SUPPORTED_HASH_TYPE):])
+
+                if len(self._layer_digests) <= idx:
+                    raise Exception("the number of image layer diffIDs and layer digests does not"
+                                    f" match; digests number: {len(self._layer_digests)},"
+                                    f" diffID index: {idx}, image: {self._image_ref}")
+
+                return self._layer_digests[idx]
 
     def __init__(self, data_root="/var/lib/docker"):
         self.data_root = data_root
@@ -138,5 +167,5 @@ class DockerStore:
         for image_base_ref, image_refs in repos["Repositories"].items():
             for ref, image_conf_hash in image_refs.items():
                 if image_conf_hash not in self._cfg_to_image:
-                    self._cfg_to_image[image_conf_hash] = self.Image(self.data_root, image_conf_hash)
+                    self._cfg_to_image[image_conf_hash] = self.Image(ref, self.data_root, image_conf_hash)
                 self.images_by_ref[ref] = self._cfg_to_image[image_conf_hash]
