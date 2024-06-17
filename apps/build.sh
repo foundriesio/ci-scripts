@@ -16,8 +16,22 @@ HERE=$(dirname $(readlink -f $0))
 
 require_params FACTORY
 
+compare_versions() {
+    local ver1=$1
+    local ver2=$2
+
+    if [[ "$(echo -e "$ver1\n$ver2" | sort -V | head -n1)" == "$ver1" ]]; then
+        return 0    # true, ver1 is less than or equal to ver2
+    else
+        return 1    # false, ver1 is greater than ver2
+    fi
+}
+
 export DOCKER_BUILDKIT=1
 BUILDKIT_VERSION="${BUILDKIT_VERSION-v0.10.3}"
+BUILDX_VERSION=$(docker buildx version | awk '{print $2}')
+echo "BuildKit version: ${BUILDKIT_VERSION}"
+echo "Buildx version: ${BUILDX_VERSION}"
 
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
@@ -127,7 +141,14 @@ for x in $IMAGES ; do
 		docker_cmd="$docker_cmd  --no-cache"
 	fi
 
-	docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+	# Load built images into the local docker store and push them to registry if the buildx and buildkit
+	# supports multiple outputs in the `build` command.
+	# Consider removing the "if" condition once all customers are moved to the newer versions of buildkit/buildx.
+	if compare_versions "v0.13.1" "${BUILDX_VERSION}" && compare_versions "v0.13.1" "${BUILDKIT_VERSION}"; then
+		docker_cmd="$docker_cmd --load --output=type=registry,oci-mediatypes=false --provenance=false --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+	else
+		docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+	fi
 
 	if [ -n "$DOCKER_SECRETS" ] ; then
 		status "DOCKER_SECRETS defined - building --secrets for $(ls /secrets)"
