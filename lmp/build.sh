@@ -81,17 +81,25 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.txt
 rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 
 # Link the license manifest for all the images produced by the build
-for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest; do
+imgs="$(ls ${DEPLOY_DIR_IMAGE}/*${MACHINE}.manifest)"
+if [ "$imgs" = "" ]; then
+	status "Image manifest not found, license manifest will be skipped"
+fi
+for img in $imgs; do
 	image_name=`basename ${img} | sed -e "s/.manifest//"`
 	image_name_id=`readlink ${img} | sed -e "s/\..*manifest//"`
 	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ]; then
 		cp ${DEPLOY_DIR}/licenses/${image_name_id}/license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.license.manifest
 		ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
+	else
+		status "Image ${image_name_id} license.manifest not found, skipping"
 	fi
 	# Also take care of the image_license, which contains the binaries used by wic outside the rootfs
 	if [ -f ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ]; then
 		cp ${DEPLOY_DIR}/licenses/${image_name_id}/image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name_id}.image_license.manifest
 		ln -sf ${image_name_id}.image_license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.image_license.manifest
+	else
+		status "Image ${image_name_id} image_license.manifest not found, skipping"
 	fi
 done
 
