@@ -67,6 +67,13 @@ status "Run bitbake (save the global and image specific environments)"
 bitbake -e > ${archive}/bitbake_global_env.txt
 bitbake -e ${IMAGE} > ${archive}/bitbake_image_env.txt
 
+# Public LmP build and we are building the major release
+if [[ "${H_PROJECT}" == "lmp" ]] && [[ "${LMP_VERSION_MINOR}" == "0" ]] ; then
+    status "Run bitbake (generate mirror tarball)"
+    echo 'BB_GENERATE_MIRROR_TARBALLS = "1"' >> conf/local.conf
+    bitbake --runall fetch --no-setscene ${IMAGE}
+fi
+
 # Setscene (cache), failures not critical
 status "Run bitbake (setscene tasks only)"
 bitbake --setscene-only ${IMAGE} || true
