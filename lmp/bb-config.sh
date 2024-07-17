@@ -193,12 +193,16 @@ IMAGE_LICENSE_CHECKER_NON_ROOTFS_DENYLIST = "GPL-3.0-only GPL-3.0-or-later LGPL-
 EOFEOF
 fi
 
+sstate_mirror="https://storage.googleapis.com/lmp-cache/v${LMP_VERSION_CACHE}-sstate-cache"
+if [[ "${FORKED_FROM}" != "lmp" ]] ; then
+	sstate_mirror="https://storage.googleapis.com/lmp-cache/${FORKED_FROM}/v${LMP_VERSION_CACHE}-sstate-cache"
+fi
 	cat << EOFEOF >> conf/local.conf
 
 # prioritize local nfs factory mirror over public https lmp
 SSTATE_MIRRORS ?= " \\
 	file://.* file://${FACTORY_SSTATE_CACHE_MIRROR}/PATH \\
-	file://.* https://storage.googleapis.com/lmp-cache/v${LMP_VERSION_CACHE}-sstate-cache/PATH \\
+	file://.* ${sstate_mirror}/PATH \\
 "
 EOFEOF
 
