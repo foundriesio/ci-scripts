@@ -143,11 +143,16 @@ for x in $IMAGES ; do
 		docker_cmd="$docker_cmd  --no-cache"
 	fi
 
+  enable_oci=false
+  if [ "${ENABLE_OCI_IMAGES}" == "1" ] ; then
+    enable_oci=true
+  fi
+
 	# Load built images into the local docker store and push them to registry if the buildx and buildkit
 	# supports multiple outputs in the `build` command.
 	# Consider removing the "if" condition once all customers are moved to the newer versions of buildkit/buildx.
 	if compare_versions "v0.13.1" "${BUILDX_VERSION}" && compare_versions "v0.13.1" "${BUILDKIT_VERSION}"; then
-		docker_cmd="$docker_cmd --load --output=type=registry,oci-mediatypes=false --provenance=false --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+		docker_cmd="$docker_cmd --load --output=type=registry,oci-mediatypes=${enable_oci} --provenance=false --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 	else
 		docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 	fi
