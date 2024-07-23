@@ -145,7 +145,7 @@ for x in $IMAGES ; do
 	# supports multiple outputs in the `build` command.
 	# Consider removing the "if" condition once all customers are moved to the newer versions of buildkit/buildx.
 	if compare_versions "v0.13.1" "${BUILDX_VERSION}" && compare_versions "v0.13.1" "${BUILDKIT_VERSION}"; then
-		docker_cmd="$docker_cmd --load --output=type=registry,oci-mediatypes=false --provenance=false --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
+		docker_cmd="$docker_cmd --load --output=type=registry,oci-mediatypes=true,compression=zstd,force-compression=true --provenance=false --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 	else
 		docker_cmd="$docker_cmd --push --cache-to type=registry,ref=${ct_base}:${LATEST}-${ARCH}_cache,mode=max"
 	fi
