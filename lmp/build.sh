@@ -10,6 +10,7 @@ start_ssh_agent
 git_config
 load_extra_certs
 
+mkdir -p /srv/oe
 if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
 	status "Build triggered by change to lmp-manifest"
 	manifest="file://$(pwd)/.git -b $GIT_SHA"
@@ -18,14 +19,14 @@ if [[ $GIT_URL == *"/lmp-manifest.git"* ]]; then
 	# Check to make sure REPO_INIT_OVERRIDES isn't setting a "-b <ref>".
 	# That will break our logic for checking out the exact GIT_SHA above
 	export REPO_INIT_OVERRIDES=$(echo $REPO_INIT_OVERRIDES | sed -e 's/-b\s*\S*//')
-	mkdir /srv/oe && cd /srv/oe
+	cd /srv/oe
 	repo_sync $manifest
 else
 	repourl="$(dirname ${GIT_URL})/lmp-manifest.git"
 	layer="$(basename ${GIT_URL%.git})"
 	status "Build triggered by change to OE layer: $layer"
 	status "Will repo sync from $repourl"
-	mkdir /srv/oe && cd /srv/oe
+	cd /srv/oe
 	repo_sync $repourl
 	run rm -rf layers/$layer
 	run ln -s /repo layers/$layer
@@ -36,7 +37,7 @@ cp /root/.netrc /home/builder/.netrc || true
 
 set_base_lmp_version
 
-mkdir build conf
+mkdir -p build conf
 cache="/var/cache/bitbake/v${LMP_VERSION_CACHE}-downloads"
 if [ -d /var/cache/bitbake/downloads ] ; then
 	# TODO remove once we've migrated everyone
