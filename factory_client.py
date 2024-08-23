@@ -94,7 +94,7 @@ class FactoryClient:
             # <yocto-version>-<commit-numb-after-tag>-<lmp-version>-<commit-numb-after-tag>-<abbreviated commit hash>
             version = release_info['VERSION'].strip('"')
             version_data = version.split('-')
-            lmp_version = int(version_data[2]) if len(version_data) > 2 else 0
+            lmp_version = int(float(version_data[2])) if len(version_data) > 2 else 0
             yocto_version = version_data[0] if len(version_data) >= 1 else None
             return cls(lmp_version, yocto_version)
 
