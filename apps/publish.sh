@@ -55,6 +55,8 @@ if [ ! -f "${PUBLISH_TOOL}" ]; then
   PUBLISH_TOOL="/tmp/compose-publish"
   run wget -O ${PUBLISH_TOOL} https://storage.googleapis.com/subscriber_registry/compose-publish
   chmod +x ${PUBLISH_TOOL}
+else
+  status "${PUBLISH_TOOL} will be used for publishing apps"
 fi
 
 export PYTHONPATH=${HERE}/../
