@@ -136,7 +136,7 @@ DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
 MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
 
 # Bitbake custom logconfig
-BB_LOGCONFIG = "${PWD}/bb_logconfig.json"
+#BB_LOGCONFIG = "${PWD}/bb_logconfig.json"
 
 # Custom repo for OP-TEE
 OPTEE_OS_REPO ?= "git://git.codelinaro.org/clo/foundriesio/optee_os.git"
