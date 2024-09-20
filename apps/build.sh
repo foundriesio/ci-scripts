@@ -33,6 +33,8 @@ BUILDX_VERSION=$(docker buildx version | awk '{print $2}')
 echo "BuildKit version: ${BUILDKIT_VERSION}"
 echo "Buildx version: ${BUILDX_VERSION}"
 
+status "Detected architecture: $(arch)"
+
 MANIFEST_PLATFORMS_DEFAULT="${MANIFEST_PLATFORMS_DEFAULT-linux/amd64,linux/arm,linux/arm64}"
 status Default container platforms will be: $MANIFEST_PLATFORMS_DEFAULT
 
