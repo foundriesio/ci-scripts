@@ -24,6 +24,7 @@ OSTREE_API_VERSION="${OSTREE_API_VERSION-v2}"
 DEV_MODE="${DEV_MODE-0}"
 BUILD_SDK="${BUILD_SDK-0}"
 LMP_ROLLBACK_PROTECTION_ENABLE="${LMP_ROLLBACK_PROTECTION_ENABLE-0}"
+DISABLE_LOGCONFIG="${DISABLE_LOGCONFIG-0}"
 
 GARAGE_CUSTOMIZE_TARGET_PARAMS='${MACHINE} ${IMAGE_BASENAME} ${TARGET_ARCH} ${DISTRO_VERSION}'
 TUF_TARGETS_EXPIRE="${TUF_TARGETS_EXPIRE-1Y}"
@@ -135,12 +136,17 @@ DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
 # mfgtool params
 MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
 
-# Bitbake custom logconfig
-BB_LOGCONFIG = "${PWD}/bb_logconfig.json"
-
 # Custom repo for OP-TEE
 OPTEE_OS_REPO ?= "git://git.codelinaro.org/clo/foundriesio/optee_os.git"
 EOFEOF
+
+if [ "${DISABLE_LOGCONFIG}" != "1" ]; then
+	cat << EOFEOF >> conf/local.conf
+
+# Bitbake custom logconfig
+BB_LOGCONFIG = "${PWD}/bb_logconfig.json"
+EOFEOF
+fi
 
 # Configure path for the debug/warning logs
 sed -e "s|@@ARCHIVE@@|${archive}|" ${HERE}/bb_logconfig.json > bb_logconfig.json
