@@ -76,7 +76,7 @@ fi
 
 # Setscene (cache), failures not critical
 status "Run bitbake (setscene tasks only)"
-bitbake --setscene-only ${IMAGE} || true
+bitbake -DD --setscene-only ${IMAGE} || true
 
 # add trap to do some pending operations on exit
 trap finish TERM INT EXIT
@@ -86,4 +86,4 @@ if [ "$BUILD_SDK" == "1" ] && [ "${DISTRO}" != "lmp-mfgtool" ]; then
     bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE} -c populate_sdk
 fi
 status "Run bitbake"
-bitbake -D ${BITBAKE_EXTRA_ARGS} ${IMAGE}
+bitbake -DD ${BITBAKE_EXTRA_ARGS} ${IMAGE}
