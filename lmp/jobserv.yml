@@ -250,8 +250,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - am62xx-evm
-              - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
               - intel-corei7-64
