@@ -173,6 +173,7 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_IMAGE}/bl*.img ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/fip.bin ${archive}/other/ || true
 	cp ${DEPLOY_DIR_IMAGE}/lk.bin ${archive}/other/ || true
+	cp ${DEPLOY_DIR_IMAGE}/LockDown.efi ${archive}/other/ || true
 	# BSP specific files
 	cp ${DEPLOY_DIR_IMAGE}/rity.json ${archive}/other/ || true
 	# Copy boot.cmd and boot.itb (signed boot script) if available
