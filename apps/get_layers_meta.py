@@ -64,9 +64,23 @@ if __name__ == '__main__':
 
             image = docker_store.images_by_ref.get(img_uri)
             if not image:
-                status("Image metadata are not found in local store; "
-                       f"`SKIP_ARCHS` must be set for the image: {img_uri}", prefix="==== ")
-                continue
+                # Docker daemon stores image refs in repositories.json without the docker
+                # hub prefixes regardless whether an image is specified in a short or full format
+                # during docker pull or in docker-compose.yml. There are two possible short formats:
+                # 1. <name>:<tag> --> docker.io/library/<name>:<tag>
+                # 2. <org>/<name>:<tag> --> docker.io/<org>/<name>:<tag>
+                # Let's check if the image hosted in docker/.io and specified in a long format
+                # matches one of the images stored in the local docker store and references in
+                # the short form.
+                for docker_hub_prefix in ["docker.io/library/", "docker.io/"]:
+                    if img_uri.startswith(docker_hub_prefix):
+                        image = docker_store.images_by_ref.get(img_uri[len(docker_hub_prefix):])
+                        if image:
+                            break
+                if not image:
+                    status("Image metadata are not found in local store; "
+                           f"`SKIP_ARCHS` must be set for the image: {img_uri}", prefix="==== ")
+                    continue
 
             status(f"Image: {img_uri}", prefix="==== ")
             for layer in image.layers:
