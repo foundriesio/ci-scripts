@@ -89,6 +89,8 @@ class AppsPublisher:
         with NamedTemporaryFile(mode="w+") as layers_meta_file:
             json.dump(self._layers_meta, layers_meta_file)
             layers_meta_file.flush()
+            print(">>> All apps layers meta\n")
+            print(json.dumps(self._layers_meta, indent=4))
             with NamedTemporaryFile(mode="w+") as f:
                 cmd_exe(self._publish_tool, '-d', f.name, '-l',  layers_meta_file.name,
                         self._app_tagged_url, self._archs, cwd=app.dir)
