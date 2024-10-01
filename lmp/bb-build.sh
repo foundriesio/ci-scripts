@@ -76,7 +76,7 @@ fi
 
 # Setscene (cache), failures not critical
 status "Run bitbake (setscene tasks only)"
-bitbake -DD --setscene-only ${IMAGE} || true
+bitbake -DD --setscene-only --continue ${IMAGE} || true
 
 # add trap to do some pending operations on exit
 trap finish TERM INT EXIT
