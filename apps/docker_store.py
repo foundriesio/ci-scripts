@@ -140,7 +140,7 @@ class DockerStore:
                     ["skopeo", "inspect", f"docker://{self._image_ref}"])
                 image_desc = json.loads(output)
                 for layer in image_desc["Layers"]:
-                    self._layer_digests.append(layer[len(self._SUPPORTED_HASH_TYPE):])
+                    self._layer_digests.append(layer)
 
                 if len(self._layer_digests) <= idx:
                     raise Exception("the number of image layer diffIDs and layer digests does not"
