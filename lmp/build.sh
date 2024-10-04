@@ -103,7 +103,9 @@ for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}*.manifest; do
 		ln -sf ${image_name_id}.license.manifest ${DEPLOY_DIR_IMAGE}/${image_name}.license.manifest
 	else
 		status "Image ${image_name} license manifest not found on ${DEPLOY_DIR}/licenses, license manifest can't be collected"
-		eixt 1
+		# FIXME: there is a bug in oe-core and sometimes the lic folder is empty
+		# https://bugzilla.yoctoproject.org/show_bug.cgi?id=15394
+		#eixt 1
 	fi
 	# Also take care of the image_license, which contains the binaries used by wic outside the rootfs
 	if [ -f ${image_path}/image_license.manifest ]; then
