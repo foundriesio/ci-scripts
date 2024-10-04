@@ -81,8 +81,11 @@ rm -f ${DEPLOY_DIR_IMAGE}/*.txt
 ## Only publish wic.gz
 rm -f ${DEPLOY_DIR_IMAGE}/*.wic
 
+set -x
+
 # Link the license manifest for all the images produced by the build
 for img in ${DEPLOY_DIR_IMAGE}/*${MACHINE}*.manifest; do
+	status "Post-build processing (license)"
 	if [ "${DISTRO}" = "lmp-mfgtool" ]; then
 		status "Image manifest not exist in this distro, skipping"
 		break
@@ -117,6 +120,7 @@ done
 # Generate a tarball containing the source code of *GPL* packages (based on yocto dev-manual)
 DEPLOY_SOURCES="${DEPLOY_DIR_IMAGE}/source-release"
 if [ -d ${DEPLOY_DIR}/sources ]; then
+	status "Post-build processing (source release)"
 	mkdir -p ${DEPLOY_SOURCES}
 	for sarch in ${DEPLOY_DIR}/sources/*; do
 		for pkg in ${sarch}/*; do
@@ -140,6 +144,7 @@ if [ -d ${DEPLOY_DIR}/sources ]; then
 fi
 
 if [ -d "${archive}" ] ; then
+	status "Post-build processing (archive)"
 	mkdir ${archive}/other
 	mkdir ${archive}/sdk
 
