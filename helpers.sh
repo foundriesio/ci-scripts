@@ -74,19 +74,19 @@ function repo_sync {
 		status "Adding git config extraheader for $domain/factories"
 		git config --global http.https://${domain}/factories.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
-	_repo_extra_args = ""
+	_repo_extra_args=""
 	for i in $(seq 4); do
 		run repo init $_repo_extra_args --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES} && break
-		_repo_extra_args = "--verbose"
+		_repo_extra_args="--verbose"
 		status "repo init failed with error $?"
 		[ $i -eq 4 ] && exit 1
 		status "sleeping and trying again"
 		sleep $(($i*2))
 	done
-	_repo_extra_args = ""
+	_repo_extra_args=""
 	for i in $(seq 4); do
 		run timeout 4m repo sync $_repo_extra_args && break
-		_repo_extra_args = "--verbose"
+		_repo_extra_args="--verbose"
 		if [ $? -eq 124 ] ; then
 			msg="Command timed out"
 			if [ $i -ne 4 ] ; then
