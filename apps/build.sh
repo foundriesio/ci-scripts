@@ -194,11 +194,11 @@ for x in $IMAGES ; do
 
 		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${H_BUILD}_${TAG}
 		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
-		run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t
+		run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t --variant v8
 
 		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${LATEST}
 		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
-		run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t
+		run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t --variant v8
 	done
 
 	echo "Build step $((completed+2)) of $total is complete"
