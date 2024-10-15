@@ -192,13 +192,19 @@ for x in $IMAGES ; do
 	for t in $(eval echo "\$$var") ; do
 		status "Handling manifest logic for $var"
 
+		variant=""
+		if [ "${t}" = "arm64" ]; then
+			variant="--variant v8"
+		elif [ "${t}" = "arm" ]; then
+			variant="--variant v7"
+		fi
 		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${H_BUILD}_${TAG}
 		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
-		run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t
+		run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t "${variant}"
 
 		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${LATEST}
 		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
-		run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t
+		run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t "${variant}"
 	done
 
 	echo "Build step $((completed+2)) of $total is complete"
