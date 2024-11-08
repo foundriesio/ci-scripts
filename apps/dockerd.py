@@ -47,7 +47,7 @@ class ContainerDaemon:
 
 
 class DockerDaemon:
-    def __init__(self, dst_dir: str, graphdriver='overlay2', output_logs=False):
+    def __init__(self, dst_dir: str, graphdriver='overlay2', output_logs=True):
         self.data_root = dst_dir
         self._graphdriver = graphdriver
 
@@ -62,6 +62,7 @@ class DockerDaemon:
         self.host = 'unix://{}/docker-device.sock'.format(self.docker_dir)
         self.pid = '{}/docker-device.pid'.format(self.docker_dir)
 
+        logger.info("Docker daemon data root: " + self.data_root)
         logger.info("Starting docker daemon...")
         cmd = [self.cmd, '-H', self.host, '-p', self.pid,
                                           '--storage-driver', self._graphdriver,
