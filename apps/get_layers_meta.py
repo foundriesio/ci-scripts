@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from helpers import status
+from helpers import status, fio_dnsbase
 from apps.docker_store import DockerStore
 from apps.compose_apps import ComposeApps
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         for img in app.images(expand_env=True):
             img_uri = img
             # if it's a factory image and is not pinned then we need to figure out its tag
-            if img_uri.startswith("hub.foundries.io") and -1 == img_uri.find("@sha256:"):
+            if img_uri.startswith(f"hub.{fio_dnsbase}") and -1 == img_uri.find("@sha256:"):
                 # Find out if the image reference is tagged
                 end_pos = img_uri.rfind(":")
                 # The image should be referenced with the tag that the builder has tagged
