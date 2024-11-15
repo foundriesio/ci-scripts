@@ -76,16 +76,22 @@ function repo_sync {
 	fi
 	_repo_extra_args=""
 	for i in $(seq 4); do
-		run repo init $_repo_extra_args --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES} && break
+		if run repo init $_repo_extra_args --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}; then
+			break
+		fi
 		_repo_extra_args="--verbose"
 		status "repo init failed with error $?"
-		[ $i -eq 4 ] && exit 1
+		if [ $i -eq 4 ]; then
+			exit 1
+		fi
 		status "sleeping and trying again"
 		sleep $(($i*2))
 	done
 	_repo_extra_args=""
 	for i in $(seq 4); do
-		run timeout 4m repo sync $_repo_extra_args && break
+		if run timeout 4m repo sync $_repo_extra_args; then
+			break
+		fi
 		_repo_extra_args="--verbose"
 		if [ $? -eq 124 ] ; then
 			msg="Command timed out"
