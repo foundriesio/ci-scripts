@@ -6,7 +6,7 @@ function finish() {
     # allow this block to fail
     set +e
 
-    status "Run bitbake (finish)"
+    status "Run bitbake (post processing)"
 
     # we need to check that because it is not available before kirkstone
     if command -v bitbake-getvar >/dev/null 2>&1; then
@@ -44,6 +44,7 @@ function finish() {
     SSTATE_DIR="$(grep "^SSTATE_DIR=" ${archive}/bitbake_global_env.txt | cut -d'=' -f2 | tr -d '"')"
     rsync -vv -a --copy-links --copy-dirlinks --hard-links ${SSTATE_DIR}/ ${FACTORY_SSTATE_CACHE_MIRROR}/ > ${archive}/bitbake_sstatemirror.log
 
+    status "Run bitbake (done)"
     exit $rc
 }
 
