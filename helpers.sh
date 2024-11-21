@@ -66,6 +66,25 @@ function start_ssh_agent {
 	fi
 }
 
+function repo_sync_helper {
+	_repo_retries=4
+	_repo_extra_args=""
+	for i in $(seq $_repo_retries); do
+		if run timeout --preserve-status $@ $_repo_extra_args; then
+			break
+		else
+			status "repo [$i/$_repo_retries] failed with error $?"
+			if [ $i -eq $_repo_retries ]; then
+				exit 1
+			fi
+			_sleep=$(($i*2))
+			status "sleeping ${_sleep}s and trying again"
+			sleep $_sleep
+			_repo_extra_args="--verbose"
+		fi
+	done
+}
+
 function repo_sync {
 	status "Repo syncing sources..."
 
@@ -74,39 +93,10 @@ function repo_sync {
 		status "Adding git config extraheader for $domain/factories"
 		git config --global http.https://${domain}/factories.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
-	_repo_extra_args=""
-	for i in $(seq 4); do
-		if run repo init $_repo_extra_args --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}; then
-			break
-		fi
-		_repo_extra_args="--verbose"
-		status "repo init failed with error $?"
-		if [ $i -eq 4 ]; then
-			exit 1
-		fi
-		status "sleeping and trying again"
-		sleep $(($i*2))
-	done
-	_repo_extra_args=""
-	for i in $(seq 4); do
-		if run timeout 4m repo sync $_repo_extra_args; then
-			break
-		fi
-		_repo_extra_args="--verbose"
-		if [ $? -eq 124 ] ; then
-			msg="Command timed out"
-			if [ $i -ne 4 ] ; then
-				msg="${msg}, trying again"
-			else
-				status ${msg}
-				exit 1
-			fi
-			status ${msg}
-			sleep $(($i*2))
-		else
-			exit $?
-		fi
-	done
+
+	repo_sync_helper 1m repo init --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
+	repo_sync_helper 4m repo sync
+
 	if [ -d "$archive" ] ; then
 		status "Generating pinned manifest"
 		repo manifest -r -o $archive/manifest.pinned.xml
