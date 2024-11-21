@@ -94,7 +94,7 @@ function repo_sync {
 		git config --global http.https://${domain}/factories.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
 
-	repo_sync_helper repo init --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
+	repo_sync_helper repo init --repo-rev=v2.49.3 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
 	repo_sync_helper repo sync
 
 	if [ -d "$archive" ] ; then
