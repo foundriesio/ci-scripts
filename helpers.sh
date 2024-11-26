@@ -70,7 +70,7 @@ function repo_sync_helper {
 	_repo_retries=4
 	_repo_extra_args=""
 	for i in $(seq $_repo_retries); do
-		if run timeout --preserve-status 4m $@ $_repo_extra_args; then
+		if run timeout --preserve-status $@ $_repo_extra_args; then
 			break
 		else
 			status "repo [$i/$_repo_retries] failed with error $?"
@@ -94,8 +94,8 @@ function repo_sync {
 		git config --global http.https://${domain}/factories.extraheader "$(cat /secrets/git.http.extraheader)"
 	fi
 
-	repo_sync_helper repo init --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
-	repo_sync_helper repo sync
+	repo_sync_helper 1m  repo init --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}
+	repo_sync_helper 10m repo sync
 
 	if [ -d "$archive" ] ; then
 		status "Generating pinned manifest"
