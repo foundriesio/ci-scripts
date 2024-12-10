@@ -76,7 +76,7 @@ function repo_sync {
 	fi
 	_repo_extra_args=""
 	for i in $(seq 4); do
-		if run repo init $_repo_extra_args --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}; then
+		if run repo init $_repo_extra_args --depth=1 --repo-rev=v2.35 --no-clone-bundle -u $* ${REPO_INIT_OVERRIDES}; then
 			break
 		fi
 		_repo_extra_args="--verbose"
@@ -107,6 +107,19 @@ function repo_sync {
 			exit $?
 		fi
 	done
+
+	# NOTE: we need a shallow copy of all the repos, but a deep copy of
+	# lmp-manifests so we can include the LmP version into the build.
+	pushd .repo/manifests.git >/dev/null
+	for i in $(seq 4); do
+		run git fetch --unshallow && break
+		status "git-fetch of lmp-manifests failed with error $?"
+		[ $i -eq 4 ] && exit 1
+		status "sleeping and trying again"
+		sleep $(($i*2))
+	done
+	popd
+
 	if [ -d "$archive" ] ; then
 		status "Generating pinned manifest"
 		repo manifest -r -o $archive/manifest.pinned.xml
