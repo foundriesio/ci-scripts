@@ -276,8 +276,6 @@ triggers:
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
-          EULA_stm32mp1eval: "1"
-          EULA_stm32mp1disco: "1"
         script-repo:
           name: fio
           path: lmp/build.sh
