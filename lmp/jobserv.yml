@@ -227,7 +227,7 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-  - name: build-scarthgap-next
+  - name: build-scarthgap
     type: git_poller
     email:
       users: 'ci-notifications@foundries.io'
@@ -239,8 +239,8 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
-        refs/heads/scarthgap-next
-      OTA_LITE_TAG: 'scarthgap-next:scarthgap'
+        refs/heads/scarthgap
+      OTA_LITE_TAG: 'scarthgap'
       AKLITE_TAG: promoted-scarthgap
     runs:
       # images with no OTA
@@ -258,11 +258,16 @@ triggers:
               - imx6ullevk
               - imx6ullevk-sec
               - imx8mm-lpddr4-evk
+              - imx8mm-lpddr4-evk-sec
               - imx8mp-lpddr4-evk
+              - imx8mp-lpddr4-evk-sec
               - imx8mn-ddr4-evk
+              - imx8mn-ddr4-evk-sec
               - imx8mn-lpddr4-evk
+              - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx93-11x11-lpddr4x-evk
+              - jetson-orin-nano-devkit-nvme
               - jetson-agx-xavier-devkit
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
