@@ -1,6 +1,6 @@
 timeout: 540  # a build with no cache is quite slow
 triggers:
-  - name: build-release
+  - name: build-kirkstone
     type: git_poller
     email:
       users: 'ci-notifications@foundries.io'
@@ -12,8 +12,8 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
-        refs/heads/main
-      OTA_LITE_TAG: main
+        refs/heads/kirkstone
+      OTA_LITE_TAG: kirkstone
     runs:
       - name: lmp-sdk
         host-tag: amd64
