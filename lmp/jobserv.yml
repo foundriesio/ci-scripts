@@ -470,27 +470,6 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-      - name: build-lmp-base-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-partner-gcp-nocache
-        loop-on:
-          - param: MACHINE
-            values:
-              - raspberrypi4-64
-              - imx6ullevk
-              - imx8mm-lpddr4-evk
-              - imx8mn-lpddr4-evk
-              - imx8mp-lpddr4-evk
-        params:
-          BITBAKE_EXTRA_ARGS: --continue
-          DISTRO: lmp-base
-          IMAGE: lmp-base-console-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
       - name: build-lmp-wayland-{loop}
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-partner-gcp-nocache
