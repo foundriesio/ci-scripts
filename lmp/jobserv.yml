@@ -486,12 +486,6 @@ triggers:
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
               - raspberrypi4-64
-              - stm32mp15-disco
-              - stm32mp15-disco-sec
-              - stm32mp15-eval
-              - stm32mp15-eval-sec
-              - kv260
-              - vck190-versal
         params:
           BITBAKE_EXTRA_ARGS: --continue
           IMAGE: lmp-base-console-image
