@@ -51,6 +51,7 @@ triggers:
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
               - raspberrypi4-64
+              - raspberrypi5
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
