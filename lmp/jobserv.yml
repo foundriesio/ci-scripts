@@ -490,8 +490,6 @@ triggers:
           BITBAKE_EXTRA_ARGS: --continue
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
-          EULA_stm32mp15eval: "1"
-          EULA_stm32mp15disco: "1"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -509,7 +507,6 @@ triggers:
               - imx8mm-lpddr4-evk
               - imx8mn-lpddr4-evk
               - imx8mp-lpddr4-evk
-              - stm32mp15-disco
         params:
           BITBAKE_EXTRA_ARGS: --continue
           DISTRO: lmp-base
@@ -528,7 +525,6 @@ triggers:
             values:
               - imx8mm-lpddr4-evk
               - intel-corei7-64
-              - stm32mp15-disco
         params:
           BITBAKE_EXTRA_ARGS: --continue
           DISTRO: lmp-wayland
@@ -547,7 +543,6 @@ triggers:
             values:
               - imx8mm-lpddr4-evk
               - intel-corei7-64
-              - stm32mp15-disco
         params:
           BITBAKE_EXTRA_ARGS: --continue
           DISTRO: lmp-xwayland
@@ -581,25 +576,6 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # STM32 mfgtool
-      - name: build-mfgtool-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-partner-gcp-nocache
-        loop-on:
-          - param: MACHINE
-            values:
-              - stm32mp15-disco-sec
-              - stm32mp15-eval-sec
-        params:
-          DISTRO: lmp-mfgtool
-          IMAGE: stm32-mfgtool-files
-          EXTRA_ARTIFACTS: "stm32-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
