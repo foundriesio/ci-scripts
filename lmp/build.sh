@@ -199,8 +199,8 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_SDK}/lmp*.sh ${archive}/sdk/ || true
 
 	# Remove ota-ext4 in case the compressed format is available (to reduce time spent uploading)
-	if [ -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4.gz ]; then
-		rm -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4
+	if [ -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4.gz ] || [ -f ${archive}/other/${IMAGE}-${MACHINE}.rootfs.ota-ext4.gz ]; then
+		rm -f ${archive}/other/${IMAGE}-${MACHINE}*.ota-ext4
 	fi
 
 	# Make the main img.gz and respective bmap file be in the root of the archive
