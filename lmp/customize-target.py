@@ -129,7 +129,7 @@ def merge(targets_json, target_name, lmp_manifest_sha, arch, image_name,
                 apps_uri = u['prev']['custom'].get('origUriApps')
                 if apps_uri:
                     u['tgt']['custom']['origUriApps'] = apps_uri
-                else:
+                elif 'uri' in u['prev']['custom']:
                     u['tgt']['custom']['origUriApps'] = u['prev']['custom']['uri']
                 fetched_apps = u['prev']['custom'].get('fetched-apps')
                 if fetched_apps:
