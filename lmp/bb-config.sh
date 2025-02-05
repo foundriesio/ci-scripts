@@ -137,9 +137,6 @@ DOCKER_MAX_DOWNLOAD_ATTEMPTS = "${DOCKER_MAX_DOWNLOAD_ATTEMPTS}"
 
 # mfgtool params
 MFGTOOL_FLASH_IMAGE = "${MFGTOOL_FLASH_IMAGE}"
-
-# Custom repo for OP-TEE
-OPTEE_OS_REPO ?= "git://git.codelinaro.org/clo/foundriesio/optee_os.git"
 EOFEOF
 
 if [ "${DISABLE_LOGCONFIG}" != "1" ]; then
