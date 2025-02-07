@@ -199,13 +199,13 @@ if [ -d "${archive}" ] ; then
 	cp ${DEPLOY_DIR_SDK}/lmp*.sh ${archive}/sdk/ || true
 
 	# Remove ota-ext4 in case the compressed format is available (to reduce time spent uploading)
-	if [ -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4.gz ]; then
-		rm -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4
+	if [ -f ${archive}/other/${IMAGE}-${MACHINE}.ota-ext4.gz ] || [ -f ${archive}/other/${IMAGE}-${MACHINE}.rootfs.ota-ext4.gz ]; then
+		rm -f ${archive}/other/${IMAGE}-${MACHINE}*.ota-ext4
 	fi
 
 	# Make the main img.gz and respective bmap file be in the root of the archive
-	mv ${archive}/other/lmp-*.wic.gz ${archive}/ || true
-	mv ${archive}/other/lmp-*.wic.bmap ${archive}/ || true
+	mv ${archive}/other/lmp-*.wic.gz ${archive}/${IMAGE}-${MACHINE}.wic.gz || true
+	mv ${archive}/other/lmp-*.wic.bmap ${archive}/${IMAGE}-${MACHINE}.wic.bmap || true
 	# Qcom targets use a qcomflash tarball
 	mv ${archive}/other/lmp-*.qcomflash.tar.gz ${archive}/ || true
 	# NVIDIA targets use a tegraflash tarball
