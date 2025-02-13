@@ -114,7 +114,7 @@ done
 
 # Generate a tarball containing the source code of *GPL* packages (based on yocto dev-manual)
 DEPLOY_SOURCES="${DEPLOY_DIR_IMAGE}/source-release"
-if [ -d ${DEPLOY_DIR}/sources ]; then
+if [ -d ${DEPLOY_DIR}/sources ] && [ "${IMAGE_MANIFESTS}" != "" ]; then
 	status "Post-build processing (source release)"
 	mkdir -p ${DEPLOY_SOURCES}
 	for sarch in ${DEPLOY_DIR}/sources/*; do
@@ -125,15 +125,23 @@ if [ -d ${DEPLOY_DIR}/sources ]; then
 			p=${p%-*}
 
 			# Check if package is part of any of the produced images
-			grep -q "NAME: ${p}$" ${DEPLOY_DIR_IMAGE}/*.manifest || continue
+			if ! grep -q "NAME: ${p}$" ${DEPLOY_DIR_IMAGE}/*.manifest; then
+				continue
+			fi
+
+			lic=$(find ${DEPLOY_DIR}/licenses -type d -name "${p}" | head -1)
+			if ! [ -d "${lic}" ]; then
+				status "License '${lic}' path not found"
+				exit 1
+			fi
 
 			# Only archive GPL packages (update *GPL* regex for additional licenses)
-			numfiles=`ls ${DEPLOY_DIR}/licenses/${p}/*GPL* 2> /dev/null | wc -l`
-			if [ ${numfiles} -gt 0 ]; then
+			numfiles=$(find ${lic} -name "*GPL*")
+			if [ "${numfiles}" != "" ]; then
 				mkdir -p ${DEPLOY_SOURCES}/${p}/source
 				cp -f ${pkg}/* ${DEPLOY_SOURCES}/${p}/source 2> /dev/null
 				mkdir -p ${DEPLOY_SOURCES}/${p}/license
-				cp -f ${DEPLOY_DIR}/licenses/${p}/* ${DEPLOY_SOURCES}/${p}/license 2> /dev/null
+				cp -f ${lic}/* ${DEPLOY_SOURCES}/${p}/license 2> /dev/null
 			fi
 		done
 	done
