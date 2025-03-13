@@ -137,7 +137,7 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-  - name: build-main-next
+  - name: build-main
     type: git_poller
     email:
       users: 'ci-notifications@foundries.io'
@@ -149,9 +149,9 @@ triggers:
       GIT_URL: |
         https://github.com/foundriesio/lmp-manifest.git
       GIT_POLL_REFS: |
-        refs/heads/main-next
-      OTA_LITE_TAG: 'main-next:main'
-      AKLITE_TAG: promoted-next
+        refs/heads/main
+      OTA_LITE_TAG: 'main'
+      AKLITE_TAG: promoted-main
     runs:
       # images with no OTA
       - name: "{loop}"
@@ -160,24 +160,8 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - am62xx-evm
-              - am64xx-evm
-              - beaglebone-yocto
-              - generic-arm64
               - intel-corei7-64
-              - imx6ullevk
-              - imx6ullevk-sec
-              - imx8mm-lpddr4-evk
-              - imx8mp-lpddr4-evk
-              - imx8mn-ddr4-evk
-              - imx8mn-lpddr4-evk
-              - imx8mq-evk
-              - imx93-11x11-lpddr4x-evk
-              - jetson-orin-nano-devkit-nvme
-              - jetson-agx-xavier-devkit
-              - jetson-agx-orin-devkit
               - qemuarm64-secureboot
-              - raspberrypi4-64
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
