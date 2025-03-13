@@ -251,6 +251,16 @@ triggers:
       OTA_LITE_TAG: 'main'
       AKLITE_TAG: promoted-main
     runs:
+      # FIXME:
+      # I need to tag this container with a different name
+      # so that it is used only here
+      - name: lmp-sdk
+        host-tag: amd64
+        container: foundries/dind-ci:19.03.9_b38f166
+        privileged: true
+        script-repo:
+          name: fio
+          path: lmp/build-sdk-container.sh
       # images with no OTA
       - name: "{loop}"
         container: hub.foundries.io/lmp-sdk
