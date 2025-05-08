@@ -3,7 +3,7 @@
 HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
 
-TAG=$(git log -1 --format=%h)
+LATEST=${LATEST:-latest}
 
 status Launching dockerd
 unset DOCKER_HOST
@@ -18,11 +18,15 @@ for i in `seq 12` ; do
 done
 
 container="hub.foundries.io/lmp-sdk"
-tagged="${container}:${TAG}"
-latest="${container}:latest"
+# override tag if passed as argument
+tags="${LATEST}"
+if [ "${tags}" == "latest" ]; then
+	# add latest tag
+	tags="$(git log -1 --format=%h) ${tags}"
+fi
 
 docker_login
-
-run docker build -t ${tagged} -t ${latest} .
-run docker push ${tagged}
-run docker push ${latest}
+for t in ${tags}; do
+	run docker build -t ${container}:${t}
+	run docker push ${container}:${t}
+done
