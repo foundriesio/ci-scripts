@@ -201,7 +201,7 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-  - name: build-scarthgap
+  - name: build-lts
     type: git_poller
     email:
       users: 'ci-notifications@foundries.io'
