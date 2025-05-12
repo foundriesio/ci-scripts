@@ -27,6 +27,6 @@ fi
 
 docker_login
 for t in ${tags}; do
-	run docker build -t ${container}:${t}
+	run docker build -t ${container}:${t} .
 	run docker push ${container}:${t}
 done
