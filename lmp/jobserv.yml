@@ -278,31 +278,6 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-      # mfgtool / uuu related build files
-      - name: mfgtool-{loop}
-        container: hub.foundries.io/lmp-sdk:next
-        host-tag: amd64-partner-gcp-nocache
-        loop-on:
-          - param: MACHINE
-            values:
-              - imx6ullevk
-              - imx6ullevk-sec
-              - imx8mm-lpddr4-evk
-              - imx8mp-lpddr4-evk
-              - imx8mn-ddr4-evk
-              - imx8mn-lpddr4-evk
-              - imx8mq-evk
-              - imx93-11x11-lpddr4x-evk
-        params:
-          DISTRO: lmp-mfgtool
-          IMAGE: mfgtool-files
-          EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
       # wayland distro flavor
       - name: build-lmp-wayland-{loop}
         container: hub.foundries.io/lmp-sdk:next
