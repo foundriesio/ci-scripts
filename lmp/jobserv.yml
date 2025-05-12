@@ -285,7 +285,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx8mm-lpddr4-evk
               - intel-corei7-64
         params:
           DISTRO: lmp-wayland
