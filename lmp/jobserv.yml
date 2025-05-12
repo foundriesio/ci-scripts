@@ -256,7 +256,7 @@ triggers:
         container: foundries/dind-ci:19.03.9_b38f166
         privileged: true
         params:
-           LATEST=next
+           LATEST: next
         script-repo:
           name: fio
           path: lmp/build-sdk-container.sh
