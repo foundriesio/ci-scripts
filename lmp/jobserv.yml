@@ -295,6 +295,40 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+  - name: build-main-next
+    type: git_poller
+    email:
+      users: 'ci-notifications@foundries.io'
+    webhooks:
+      - url: https://conductor.infra.foundries.io/api/lmp/
+        only_failures: false
+        secret_name: lava-webhook-key
+    params:
+      GIT_URL: |
+        https://github.com/foundriesio/lmp-manifest.git
+      GIT_POLL_REFS: |
+        refs/heads/main-next
+      OTA_LITE_TAG: 'main-next'
+      AKLITE_TAG: promoted-main-next
+    runs:
+      # images with no OTA
+      - name: "{loop}"
+        container: hub.foundries.io/lmp-sdk:next
+        host-tag: amd64-partner-gcp-nocache
+        loop-on:
+          - param: MACHINE
+            values:
+              - intel-corei7-64
+              - qemuarm64-secureboot
+        params:
+          IMAGE: lmp-base-console-image
+          MFGTOOL_FLASH_IMAGE: lmp-base-console-image
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
   - name: Code Review
     type: github_pr
     webhooks:
