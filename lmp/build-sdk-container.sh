@@ -6,10 +6,9 @@ source $HERE/../helpers.sh
 LATEST=${LATEST:-latest}
 
 status Launching dockerd
-unset DOCKER_HOST
 /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12` ; do
-	sleep 1
+	sleep 2
 	docker info >/dev/null 2>&1 && break
 	if [ $i = 12 ] ; then
 		status Timed out trying to connect to internal docker host

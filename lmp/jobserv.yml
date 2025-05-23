@@ -148,7 +148,7 @@ triggers:
     runs:
       - name: lmp-sdk
         host-tag: amd64
-        container: foundries/dind-ci:19.03.9_b38f166
+        container: foundries/dind-ci:27.2.1_0a2cd6a
         privileged: true
         script-repo:
           name: fio
@@ -253,7 +253,7 @@ triggers:
     runs:
       - name: lmp-sdk-next
         host-tag: amd64
-        container: foundries/dind-ci:19.03.9_b38f166
+        container: foundries/dind-ci:27.2.1_0a2cd6a
         privileged: true
         params:
            LATEST: next
