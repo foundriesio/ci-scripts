@@ -7,10 +7,10 @@ LATEST=${LATEST:-latest}
 
 status Launching dockerd
 /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
-for i in `seq 12` ; do
-	sleep 2
+for i in `seq 12 -1 0` ; do
+	sleep 5
 	docker info >/dev/null 2>&1 && break
-	if [ $i = 12 ] ; then
+	if [ $i = 0 ] ; then
 		status Timed out trying to connect to internal docker host
 		exit 1
 	fi
