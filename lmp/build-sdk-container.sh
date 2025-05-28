@@ -6,6 +6,7 @@ source $HERE/../helpers.sh
 LATEST=${LATEST:-latest}
 
 status Launching dockerd
+unset DOCKER_HOST
 /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12 -1 0` ; do
 	sleep 5
