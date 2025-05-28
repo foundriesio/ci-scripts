@@ -183,8 +183,9 @@ class SkopeAppFetcher(TargetAppsFetcher):
         image_dir = os.path.join(dst_root_dir, uri.host, uri.name, uri.hash)
         os.makedirs(image_dir, exist_ok=True)
         subprocess.check_call(['skopeo', '--insecure-policy', '--override-arch', arch, 'copy',
-                               '--retry-times', '3', '--format', 'v2s2', '--dest-shared-blob-dir',
-                               self.blobs_dir(target_name), 'docker://' + image, 'oci:' + image_dir])
+                               '--preserve-digests', '--retry-times', '3', '--format', 'v2s2',
+                               '--dest-shared-blob-dir', self.blobs_dir(target_name),
+                               'docker://' + image, 'oci:' + image_dir])
 
         # Store the image manifest in the blob directory, as result it contains all blobs/nodes of
         # the app's merkle tree. It allows to check app integrity on devices with preloaded apps and
