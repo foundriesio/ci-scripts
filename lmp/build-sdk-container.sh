@@ -9,7 +9,7 @@ status Launching dockerd
 unset DOCKER_HOST
 /usr/local/bin/dockerd-entrypoint.sh --experimental --raw-logs >/archive/dockerd.log 2>&1 &
 for i in `seq 12 -1 0` ; do
-	sleep 5
+	sleep 1
 	docker info >/dev/null 2>&1 && break
 	if [ $i = 0 ] ; then
 		status Timed out trying to connect to internal docker host
