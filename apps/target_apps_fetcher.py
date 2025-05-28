@@ -143,6 +143,14 @@ class SkopeAppFetcher(TargetAppsFetcher):
             with tarfile.open(fileobj=BIO(app_blob)) as t:
                 t.extract('docker-compose.yml', app_dir)
 
+            if 'annotations' in manifest['layers'][0] and \
+                    'org.foundries.app.bundle.index.digest' in manifest['layers'][0]['annotations']:
+                app_index_digest = manifest['layers'][0]['annotations']['org.foundries.app.bundle.index.digest']
+                app_index_hash = app_index_digest[len('sha256:'):]
+                app_index = self._registry_client.pull_layer(uri, app_index_digest)
+                with open(os.path.join(blobs_dir, app_index_hash), 'wb') as f:
+                    f.write(app_index)
+
             # Download and store the layers' manifest that contains a list of all layers that app's images are based on.
             # It's needed for aklite to calculate an update size in an offline update case.
             for lm in manifest.get('manifests', []):
