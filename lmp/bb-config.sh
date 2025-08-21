@@ -113,7 +113,7 @@ APP_SHORTLIST = "${APP_SHORTLIST}"
 APP_PRELOAD_TOKEN_FILE = "/secrets/osftok"
 APP_PRELOAD_REGISTRY_SECRETS_FILE = "/secrets/container-registries"
 APP_PRELOAD_LOG_FILE = "/archive/app-preload.log"
-COMPOSE_APP_TYPE="${COMPOSE_APP_TYPE-restorable}"
+COMPOSE_APP_TYPE = "${COMPOSE_APP_TYPE-restorable}"
 
 # TUF root meta provisioning parameters
 SOTA_TUF_ROOT_PROVISION = "${SOTA_TUF_ROOT_PROVISION-1}"
