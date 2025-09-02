@@ -366,6 +366,7 @@ triggers:
               - jetson-agx-orin-devkit
               - qemuarm64-secureboot
               - raspberrypi4-64
+              - raspberrypi5
         params:
           BITBAKE_EXTRA_ARGS: --continue
           IMAGE: lmp-base-console-image
