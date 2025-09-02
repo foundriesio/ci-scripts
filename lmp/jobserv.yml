@@ -160,8 +160,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - am62xx-evm
-              - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
               - intel-corei7-64
@@ -177,9 +175,6 @@ triggers:
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx93-11x11-lpddr4x-evk
-              - jetson-orin-nano-devkit-nvme
-              - jetson-agx-xavier-devkit
-              - jetson-agx-orin-devkit
               - qemuarm64-secureboot
               - raspberrypi4-64
               - raspberrypi5
@@ -344,8 +339,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - am62xx-evm
-              - am64xx-evm
               - beaglebone-yocto
               - generic-arm64
               - intel-corei7-64
@@ -361,9 +354,6 @@ triggers:
               - imx8mn-lpddr4-evk-sec
               - imx8mq-evk
               - imx93-11x11-lpddr4x-evk
-              - jetson-orin-nano-devkit-nvme
-              - jetson-agx-xavier-devkit
-              - jetson-agx-orin-devkit
               - qemuarm64-secureboot
               - raspberrypi4-64
               - raspberrypi5
@@ -436,24 +426,6 @@ triggers:
           DISTRO: lmp-mfgtool
           IMAGE: mfgtool-files
           EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # TI mfgtool
-      - name: build-mfgtool-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-partner-gcp-nocache
-        loop-on:
-          - param: MACHINE
-            values:
-              - am62xx-evm
-        params:
-          DISTRO: lmp-mfgtool
-          IMAGE: ti-mfgtool-files
-          EXTRA_ARTIFACTS: "ti-mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
