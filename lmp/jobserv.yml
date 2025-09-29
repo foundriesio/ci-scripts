@@ -163,49 +163,12 @@ triggers:
               - beaglebone-yocto
               - generic-arm64
               - intel-corei7-64
-              - imx6ullevk
-              - imx6ullevk-sec
-              - imx8mm-lpddr4-evk
-              - imx8mm-lpddr4-evk-sec
-              - imx8mp-lpddr4-evk
-              - imx8mp-lpddr4-evk-sec
-              - imx8mn-ddr4-evk
-              - imx8mn-ddr4-evk-sec
-              - imx8mn-lpddr4-evk
-              - imx8mn-lpddr4-evk-sec
-              - imx8mq-evk
-              - imx93-11x11-lpddr4x-evk
               - qemuarm64-secureboot
               - raspberrypi4-64
               - raspberrypi5
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # mfgtool / uuu related build files
-      - name: mfgtool-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-partner-gcp-nocache
-        loop-on:
-          - param: MACHINE
-            values:
-              - imx6ullevk
-              - imx6ullevk-sec
-              - imx8mm-lpddr4-evk
-              - imx8mp-lpddr4-evk
-              - imx8mn-ddr4-evk
-              - imx8mn-lpddr4-evk
-              - imx8mq-evk
-              - imx93-11x11-lpddr4x-evk
-        params:
-          DISTRO: lmp-mfgtool
-          IMAGE: mfgtool-files
-          EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -219,7 +182,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx8mm-lpddr4-evk
               - intel-corei7-64
         params:
           DISTRO: lmp-wayland
@@ -342,25 +304,12 @@ triggers:
               - beaglebone-yocto
               - generic-arm64
               - intel-corei7-64
-              - imx6ullevk
-              - imx6ullevk-sec
-              - imx8mm-lpddr4-evk
-              - imx8mm-lpddr4-evk-sec
-              - imx8mp-lpddr4-evk
-              - imx8mp-lpddr4-evk-sec
-              - imx8mn-ddr4-evk
-              - imx8mn-ddr4-evk-sec
-              - imx8mn-lpddr4-evk
-              - imx8mn-lpddr4-evk-sec
-              - imx8mq-evk
-              - imx93-11x11-lpddr4x-evk
               - qemuarm64-secureboot
               - raspberrypi4-64
               - raspberrypi5
         params:
           BITBAKE_EXTRA_ARGS: --continue
           IMAGE: lmp-base-console-image
-          MFGTOOL_FLASH_IMAGE: lmp-base-console-image
         script-repo:
           name: fio
           path: lmp/build.sh
@@ -373,7 +322,6 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx8mm-lpddr4-evk
               - intel-corei7-64
         params:
           BITBAKE_EXTRA_ARGS: --continue
@@ -391,41 +339,11 @@ triggers:
         loop-on:
           - param: MACHINE
             values:
-              - imx8mm-lpddr4-evk
               - intel-corei7-64
         params:
           BITBAKE_EXTRA_ARGS: --continue
           DISTRO: lmp-xwayland
           IMAGE: lmp-base-console-image
-        script-repo:
-          name: fio
-          path: lmp/build.sh
-        persistent-volumes:
-          bitbake: /var/cache/bitbake
-
-      # mfgtool / uuu related build files
-      - name: build-mfgtool-{loop}
-        container: hub.foundries.io/lmp-sdk
-        host-tag: amd64-partner-gcp-nocache
-        loop-on:
-          - param: MACHINE
-            values:
-              - imx6ullevk
-              - imx6ullevk-sec
-              - imx8mm-lpddr4-evk
-              - imx8mm-lpddr4-evk-sec
-              - imx8mp-lpddr4-evk
-              - imx8mp-lpddr4-evk-sec
-              - imx8mn-ddr4-evk
-              - imx8mn-ddr4-evk-sec
-              - imx8mn-lpddr4-evk
-              - imx8mn-lpddr4-evk-sec
-              - imx8mq-evk
-              - imx93-11x11-lpddr4x-evk
-        params:
-          DISTRO: lmp-mfgtool
-          IMAGE: mfgtool-files
-          EXTRA_ARTIFACTS: "mfgtool-files.tar.gz"
         script-repo:
           name: fio
           path: lmp/build.sh
