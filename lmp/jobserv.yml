@@ -175,6 +175,28 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
+       - name: build-lmp-base-{loop}
+        container: hub.foundries.io/lmp-sdk
+        host-tag: amd64-partner-gcp-nocache
+        loop-on:
+          - param: MACHINE
+            values:
+              - beaglebone-yocto
+              - generic-arm64
+              - intel-corei7-64
+              - qemuarm64-secureboot
+              - raspberrypi4-64
+              - raspberrypi5
+        params:
+          BITBAKE_EXTRA_ARGS: --continue
+          DISTRO: lmp-base
+          IMAGE: lmp-base-console-image
+        script-repo:
+          name: fio
+          path: lmp/build.sh
+        persistent-volumes:
+          bitbake: /var/cache/bitbake
+
       # wayland distro flavor
       - name: build-lmp-wayland-{loop}
         container: hub.foundries.io/lmp-sdk
