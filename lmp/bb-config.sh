@@ -189,13 +189,19 @@ EOFEOF
 fi
 
 if [ "${DISABLE_GPLV3}" = "1" ]; then
-	cat << EOFEOF >> conf/local.conf
+	if [ -f ../layers/meta-lmp-base/classes/lmp-no-gplv3.bbclass ]; then
+		cat << EOFEOF >> conf/local.conf
+INHERIT += "lmp-no-gplv3"
+EOFEOF
+	else
+		cat << EOFEOF >> conf/local.conf
 INHERIT += "image-license-checker lmp-disable-gplv3"
 IMAGE_LICENSE_CHECKER_ROOTFS_BLACKLIST = "GPL-3.0 LGPL-3.0 AGPL-3.0"
 IMAGE_LICENSE_CHECKER_NON_ROOTFS_BLACKLIST = "GPL-3.0 LGPL-3.0 AGPL-3.0"
 IMAGE_LICENSE_CHECKER_ROOTFS_DENYLIST = "GPL-3.0-only GPL-3.0-or-later LGPL-3.0* AGPL-3.0*"
 IMAGE_LICENSE_CHECKER_NON_ROOTFS_DENYLIST = "GPL-3.0-only GPL-3.0-or-later LGPL-3.0* AGPL-3.0*"
 EOFEOF
+	fi
 fi
 
 sstate_mirror="https://storage.googleapis.com/lmp-cache/v${LMP_VERSION_CACHE}-sstate-cache"
