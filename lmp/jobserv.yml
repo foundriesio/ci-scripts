@@ -175,7 +175,7 @@ triggers:
         persistent-volumes:
           bitbake: /var/cache/bitbake
 
-       - name: build-lmp-base-{loop}
+      - name: build-lmp-base-{loop}
         container: hub.foundries.io/lmp-sdk
         host-tag: amd64-partner-gcp-nocache
         loop-on:
