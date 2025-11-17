@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
 VENV_DIR=$(mktemp -d -p $PWD)
 python3 -m venv "${VENV_DIR}"

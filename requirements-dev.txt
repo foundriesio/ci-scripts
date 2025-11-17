@@ -1,3 +1,4 @@
+requests==2.32.5
 requests-mock==1.8.0
 PyYAML==6.0.1
 expandvars==0.6.5
