@@ -247,7 +247,6 @@ triggers:
           - param: MACHINE
             values:
               - intel-corei7-64
-              - qemuarm64-secureboot
         params:
           IMAGE: lmp-base-console-image
           MFGTOOL_FLASH_IMAGE: lmp-base-console-image
