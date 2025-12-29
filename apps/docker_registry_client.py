@@ -209,5 +209,14 @@ class ThirdPartyRegistry:
                     subprocess.run(cmd, check=True)
                 except subprocess.CalledProcessError as e:
                     sys.exit(e.returncode)
+            elif reg["type"] == "generic":
+                secrets_file = Path("/secrets") / reg["generic_secret_name"]
+                creds = secrets_file.read_text().strip()
+                user, token = creds.split(":")
+                try:
+                    cmd = [self._client, "login", "--password-stdin", "-u", user, reg["url"]]
+                    subprocess.run(cmd, check=True, input=token.encode())
+                except subprocess.CalledProcessError as e:
+                    sys.exit(e.returncode)
             else:
                 sys.exit("Unsupported registry type")
