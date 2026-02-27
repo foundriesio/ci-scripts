@@ -87,6 +87,11 @@ fi
 if [ -z "$IMAGES" ] ; then
 	# Look through the first level of subdirectories for Dockerfile
 	IMAGES=$(find ./ -mindepth 2 -maxdepth 2 -name Dockerfile | cut -d / -f2)
+	# Check top-level directories for .ci-search-subdirs marker;
+	# images found under subdirectories get appended
+	for dir in $(find ./ -mindepth 2 -maxdepth 2 -name .ci-search-subdirs | cut -d / -f2) ; do
+		IMAGES="$IMAGES $(find ./$dir -mindepth 2 -maxdepth 2 -name Dockerfile | sed 's|^\./||; s|/Dockerfile$||')"
+	done
 fi
 
 
@@ -106,6 +111,9 @@ for x in $IMAGES ; do
 	# Skip building things that end with .disabled
 	echo $x | grep -q -E \\.disabled$ && continue
 	unset TEST_JUNIT_RESULTS CHANGED SKIP_ARCHS MANIFEST_PLATFORMS EXTRA_TAGS_$ARCH TEST_CMD BUILD_CONTEXT DOCKERFILE
+
+	# For subdirectory images (e.g. foo/bar), replace / with - for the container name
+	name=$(echo $x | tr '/' '-')
 
 	conf=$x/docker-build.conf
 	if [ -f $conf ] ; then
@@ -131,7 +139,7 @@ for x in $IMAGES ; do
 	# allow the docker-build.conf to override our manifest platforms
 	MANIFEST_PLATFORMS="${MANIFEST_PLATFORMS-${MANIFEST_PLATFORMS_DEFAULT}}"
 
-	ct_base="${hub_fio}/${FACTORY}/$x"
+	ct_base="${hub_fio}/${FACTORY}/$name"
 
 	docker_cmd="$docker_build -t ${ct_base}:$TAG-$ARCH -t ${ct_base}:$LATEST-$ARCH --force-rm"
 	if [ -z "$NOCACHE" ] ; then
@@ -182,7 +190,7 @@ for x in $IMAGES ; do
 	run eval "$docker_cmd -f $DOCKERFILE $BUILD_CONTEXT"
 
 	# Publish a list of md5sum checksums for the source code of each image build
-	find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${x}-md5sum.txt
+	find ${BUILD_CONTEXT} -type f -exec md5sum '{}' \; > /archive/${name}-md5sum.txt
 	echo "Build step $((completed+1)) of $total is complete"
 
 	run docker manifest create ${ct_base}:${H_BUILD}_$TAG ${ct_base}:$TAG-$ARCH
@@ -198,12 +206,12 @@ for x in $IMAGES ; do
 		elif [ "${t}" = "arm" ]; then
 			variant="--variant v7"
 		fi
-		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${H_BUILD}_${TAG}
-		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
+		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${name}-${H_BUILD}_${TAG}
+		cp ${tmp}/${hub_fio}_${FACTORY}_${name}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${name}-${TAG}-${t}
 		run docker manifest annotate ${ct_base}:${H_BUILD}_${TAG} ${ct_base}:${TAG}-$t --arch $t "${variant}"
 
-		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${x}-${LATEST}
-		cp ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${x}-${TAG}-${t}
+		tmp=$HOME/.docker/manifests/${hub_fio}_${FACTORY}_${name}-${LATEST}
+		cp ${tmp}/${hub_fio}_${FACTORY}_${name}-${TAG}-${ARCH} ${tmp}/${hub_fio}_${FACTORY}_${name}-${TAG}-${t}
 		run docker manifest annotate ${ct_base}:${LATEST} ${ct_base}:${TAG}-$t --arch $t "${variant}"
 	done
 
@@ -222,26 +230,26 @@ for x in $IMAGES ; do
 		status Running test command inside container: $TEST_CMD
 		if [ -n "$TEST_JUNIT_RESULTS" ] ; then
 			# The test command produce junit xml file(s)
-			testdir="/tmp/$x-test"
+			testdir="/tmp/$name-test"
 			mkdir $testdir
-			docker run -v ${testdir}:${TEST_JUNIT_RESULTS} --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$x-test.log 2>&1
+			docker run -v ${testdir}:${TEST_JUNIT_RESULTS} --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$name-test.log 2>&1
 			# we need to copy these to /archive in a way they won't
 			# collide with a junit.xml from another test run:
 			for result in $(ls $testdir) ; do
 				# Jobserv will look at all /archive/junit.xml* files
-				cp $testdir/$result /archive/$result.$x
+				cp $testdir/$result /archive/$result.$name
 			done
 		else
 			if [ ! -f /archive/junit.xml ] ; then
 				echo '<testsuite name="unit-tests">' > /archive/junit.xml
 			fi
-			echo "<testcase name=\"test-$x\">" >> /archive/junit.xml
+			echo "<testcase name=\"test-$name\">" >> /archive/junit.xml
 			echo "   docker run --rm --entrypoint=\"\" ${ct_base}:$TAG-$ARCH $TEST_CMD"
-			if ! docker run --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$x-test.log 2>&1 ; then
-				status "Testing for $x failed"
+			if ! docker run --rm --entrypoint="" ${ct_base}:$TAG-$ARCH $TEST_CMD > /archive/$name-test.log 2>&1 ; then
+				status "Testing for $name failed"
 				echo "<failure>" >> /archive/junit.xml
 				# convert < and > to &lt and &gt and decolorize the output (remove ansi escapes for color)
-				cat /archive/$x-test.log | sed -e 's/</\&lt;/g' -e 's/>/\&gt;/g' | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,3})*)?[mGK]//g" >> /archive/junit.xml
+				cat /archive/$name-test.log | sed -e 's/</\&lt;/g' -e 's/>/\&gt;/g' | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,3})*)?[mGK]//g" >> /archive/junit.xml
 				echo "</failure>" >> /archive/junit.xml
 			fi
 			echo "</testcase>" >> /archive/junit.xml
