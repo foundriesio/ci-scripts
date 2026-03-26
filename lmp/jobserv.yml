@@ -334,7 +334,7 @@ triggers:
       AKLITE_TAG: premerge
     runs:
       - name: build-{loop}
-        container: hub.foundries.io/lmp-sdk
+        container: hub.foundries.io/lmp-sdk:next
         host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
@@ -355,7 +355,7 @@ triggers:
           bitbake: /var/cache/bitbake
 
       - name: build-lmp-wayland-{loop}
-        container: hub.foundries.io/lmp-sdk
+        container: hub.foundries.io/lmp-sdk:next
         host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
@@ -372,7 +372,7 @@ triggers:
           bitbake: /var/cache/bitbake
 
       - name: build-lmp-xwayland-{loop}
-        container: hub.foundries.io/lmp-sdk
+        container: hub.foundries.io/lmp-sdk:next
         host-tag: amd64-partner-gcp-nocache
         loop-on:
           - param: MACHINE
