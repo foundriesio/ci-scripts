@@ -115,9 +115,22 @@ function set_base_lmp_version {
 	git remote set-url origin https://github.com/foundriesio/lmp-manifest
 	git fetch origin --tags --quiet
 
-	# 3: Find our base LMP version based on the HEAD
-	export LMP_VERSION=$(git describe --tags --abbrev=0 HEAD)
-	export LMP_VERSION_MINOR="$(git rev-list ${LMP_VERSION}..HEAD --count)"
+	# 3: Find our base LMP version based on the branch
+	# repo always checks out manifests.git on a local branch named 'default'
+	# regardless of the actual remote branch; resolve the real branch via tracking config
+	_local_branch=$(git rev-parse --abbrev-ref HEAD)
+	MANIFEST_BRANCH=$(git config branch.${_local_branch}.merge 2>/dev/null | sed 's|refs/heads/||')
+	if [ -z "$MANIFEST_BRANCH" ] ; then
+		# detached HEAD or no tracking info — fall back to the checked-out commit
+		LMP_REF=HEAD
+		MANIFEST_BRANCH="${_local_branch} (no tracking)"
+	else
+		git fetch origin "$MANIFEST_BRANCH" --quiet
+		LMP_REF="refs/remotes/origin/${MANIFEST_BRANCH}"
+	fi
+	status "Detecting LmP version from branch: ${MANIFEST_BRANCH} (ref: ${LMP_REF})"
+	export LMP_VERSION=$(git describe --tags --abbrev=0 $LMP_REF)
+	export LMP_VERSION_MINOR="$(git rev-list ${LMP_VERSION}..${LMP_REF} --count)"
 	export LMP_VERSION_CACHE="$(echo $LMP_VERSION | sed 's/\.[0-9]*$//')"
 	if [[ "${H_PROJECT}" == "lmp" ]] || [ -v LMP_VERSION_CACHE_DEV ] ; then
 		# Public LmP build - we are building for the *next* release
