@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+set -x
+
 source setup-environment build
 
 # The oe-selftest reproducible is build in two step (A and B) and sharing

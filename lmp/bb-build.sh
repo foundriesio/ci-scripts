@@ -1,4 +1,5 @@
 #!/bin/bash -e
+set -x 
 
 function finish() {
     # save the return code

@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+set -x
+
 HERE=$(dirname $(readlink -f $0))
 source $HERE/../helpers.sh
 require_params MACHINE IMAGE OTA_LITE_TAG
