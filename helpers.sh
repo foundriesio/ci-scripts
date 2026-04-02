@@ -1,6 +1,7 @@
 # Common helper functions for all scripts
 
 set -o pipefail
+[ "${CI_SCRIPT_DEBUG-0}" = "1" ] && set -x
 
 function indent { sed 's/^/|  /'; echo "|--" ;}
 function status { echo == $(date "+%F %T") $* ; }

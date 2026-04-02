@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+[ "${CI_SCRIPT_DEBUG-0}" = "1" ] && set -x
+
 source setup-environment build
 
 # The oe-selftest reproducible is build in two step (A and B) and sharing
