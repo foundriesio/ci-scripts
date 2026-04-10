@@ -398,4 +398,3 @@ params:
 script-repos:
   fio:
     clone-url: https://github.com/foundriesio/ci-scripts
-    git-ref: debug-branch
