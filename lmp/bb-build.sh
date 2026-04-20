@@ -78,6 +78,8 @@ fi
 # Setscene (cache), failures not critical
 status "Run bitbake (setscene tasks only)"
 bitbake -DD --setscene-only --continue ${IMAGE} || true
+# we have now everything from the mirror so we don't need that anymore
+echo 'SSTATE_MIRRORS = ""' >> conf/local.conf
 
 # add trap to do some pending operations on exit
 trap finish TERM INT EXIT
