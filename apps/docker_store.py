@@ -91,6 +91,7 @@ class DockerStore:
 
         def __init__(self, image_ref, data_root, image_conf_hash):
             self._image_ref = image_ref
+            self._image_src_rep = get_source_repository(image_ref)
             self._data_root = data_root
             self._layer_digests = []
             if not image_conf_hash.startswith(self._SUPPORTED_HASH_TYPE):
@@ -129,25 +130,41 @@ class DockerStore:
             # `docker push`.
             digest_file_path = os.path.join(self._data_root, self._DISTRIBUTION_DIGEST_PATH,
                                             diff_id[len(self._SUPPORTED_HASH_TYPE):])
-            if os.path.exists(digest_file_path):
-                with open(digest_file_path) as f:
-                    digests = json.load(f)
-                    return digests[0]["Digest"]
-            else:
-                print(f"Image layer diff ID to digest mapping is not found in: {digest_file_path}, "
-                      f"fetching image manifest to get its layer digests; uri: {self._image_ref}...")
-                output = subprocess.check_output(
-                    ["skopeo", "inspect", f"docker://{self._image_ref}"])
-                image_desc = json.loads(output)
-                for layer in image_desc["Layers"]:
-                    self._layer_digests.append(layer)
+            if self._image_src_rep and os.path.exists(digest_file_path):
+                try:
+                    with open(digest_file_path) as f:
+                        digests = json.load(f)
 
-                if len(self._layer_digests) <= idx:
-                    raise Exception("the number of image layer diffIDs and layer digests does not"
-                                    f" match; digests number: {len(self._layer_digests)},"
-                                    f" diffID index: {idx}, image: {self._image_ref}")
+                    for mapping in digests:
+                        if mapping.get("SourceRepository") == self._image_src_rep:
+                            digest = mapping.get("Digest")
+                            if digest:
+                                return digest
 
-                return self._layer_digests[idx]
+                except (OSError, json.JSONDecodeError, TypeError) as err:
+                    print(
+                        "Failed to get layer digest from the diff-ID-to-digest mapping; "
+                        f"image: {self._image_ref}, diff_id: {diff_id}, err: {err}"
+                    )
+
+            # If the image source repo is unknown or if the diffid to digest mapping file does
+            # not exist or the digest is not found for the given diff_id and image source repo,
+            # then fallback to fetching an image manifest containing a list of layer digests
+            # and get the digest for the given diff_if from it by using its index.
+            print(f"Image layer diff ID to digest mapping is not found in: {digest_file_path}, "
+                  f"fetching image manifest to get its layer digests; uri: {self._image_ref}...")
+            output = subprocess.check_output(
+                ["skopeo", "inspect", f"docker://{self._image_ref}"])
+            image_desc = json.loads(output)
+            for layer in image_desc["Layers"]:
+                self._layer_digests.append(layer)
+
+            if len(self._layer_digests) <= idx:
+                raise Exception("the number of image layer diffIDs and layer digests does not"
+                                f" match; digests number: {len(self._layer_digests)},"
+                                f" diffID index: {idx}, image: {self._image_ref}")
+
+            return self._layer_digests[idx]
 
     def __init__(self, data_root="/var/lib/docker"):
         self.data_root = data_root
@@ -169,3 +186,16 @@ class DockerStore:
                 if image_conf_hash not in self._cfg_to_image:
                     self._cfg_to_image[image_conf_hash] = self.Image(ref, self.data_root, image_conf_hash)
                 self.images_by_ref[ref] = self._cfg_to_image[image_conf_hash]
+
+
+def get_source_repository(image_ref) -> str:
+    if not isinstance(image_ref, str) or not image_ref:
+        return ""
+
+    repository = image_ref.split("@", 1)[0]
+
+    last_part = repository.rsplit("/", 1)[-1]
+    if ":" in last_part:
+        repository = repository.rsplit(":", 1)[0]
+
+    return repository
