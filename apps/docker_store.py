@@ -154,7 +154,7 @@ class DockerStore:
             print(f"Image layer diff ID to digest mapping is not found in: {digest_file_path}, "
                   f"fetching image manifest to get its layer digests; uri: {self._image_ref}...")
             output = subprocess.check_output(
-                ["skopeo", "inspect", f"docker://{self._image_ref}"])
+                ["skopeo", "inspect", "--no-tags", f"docker://{self._image_ref}"])
             image_desc = json.loads(output)
             for layer in image_desc["Layers"]:
                 self._layer_digests.append(layer)
